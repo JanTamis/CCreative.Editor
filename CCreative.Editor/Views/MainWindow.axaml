@@ -1,0 +1,82 @@
+<FluentWindow xmlns="https://github.com/avaloniaui"
+							xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+							xmlns:vm="using:CCreative.Editor.ViewModels"
+							xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+							xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+							mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+							x:Class="CCreative.Editor.Views.MainWindow"
+							Icon="/Assets/avalonia-logo.ico"
+							Title="CCreative"
+							x:Name="MainWindow"
+							Background="{DynamicResource Background}"
+							MinWidth="600"
+							MinHeight="400"
+							Width="900"
+							Height="600"
+							WindowStartupLocation="CenterScreen" >
+
+	<Design.DataContext>
+		<vm:MainWindowViewModel/>
+	</Design.DataContext>
+	
+	<Panel Margin="{Binding #MainWindow.OffScreenMargin}">
+		<Grid RowDefinitions="Auto, Auto, Auto, *">
+
+			<Border Grid.RowSpan="3"
+							Background="{DynamicResource MenuBackground}" />
+			<Menu Margin="0 0 0 5">
+				<MenuItem Header="File" />
+			</Menu>
+
+			<StackPanel Orientation="Horizontal"
+									Margin="5 0 0 5"
+									Grid.Row="1">
+				<Button CornerRadius="5"
+								Width="50"
+								Height="50">
+					<Viewbox>
+						<Image Source="{SvgImage /Assets/UIAssets/Play.svg}" />
+					</Viewbox>
+				</Button>
+
+				<Button CornerRadius="5"
+								Width="50"
+								Margin="5 0 0 0"
+								Height="50">
+					<Viewbox>
+						<Image Source="{SvgImage /Assets/UIAssets/Stop.svg}" />
+					</Viewbox>
+				</Button>
+			</StackPanel>
+
+			<TabStrip Items="{Binding Tabs}"
+								Margin="5 0 0 0"
+								Grid.Row="2"
+								HorizontalAlignment="Left">
+				<TabStrip.ItemsPanel>
+					<ItemsPanelTemplate>
+						<UniformGrid Rows="1" />
+					</ItemsPanelTemplate>
+				</TabStrip.ItemsPanel>
+				<TabStrip.DataTemplates>
+					<DataTemplate>
+						<StackPanel>
+							<TextBlock Text="{Binding Title}" />
+						</StackPanel>
+					</DataTemplate>
+				</TabStrip.DataTemplates>
+
+				<TabStrip.Styles>
+					<Style Selector="TabStripItem">
+						<Setter Property="Padding" Value="5 0" />
+						<Setter Property="MaxWidth" Value="300" />
+						<Setter Property="MinHeight" Value="30" />
+						<Setter Property="Cursor" Value="Hand" />
+						<Setter Property="FontSize" Value="25" />
+						<Setter Property="HorizontalContentAlignment" Value="Center" />
+					</Style>
+				</TabStrip.Styles>
+			</TabStrip>
+		</Grid>
+	</Panel>
+</FluentWindow>
