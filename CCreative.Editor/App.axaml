@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:CCreative.Editor"
+						 xmlns:aura="using:Aura.UI"
              x:Class="CCreative.Editor.App">
 	<Application.DataTemplates>
 		<local:ViewLocator/>
@@ -8,7 +9,7 @@
 
 	<Application.Resources>
 		<SolidColorBrush Color="#454545" x:Key="Background" />
-		<SolidColorBrush Color="#404040" x:Key="ContentBackground" />
+		<SolidColorBrush Color="#393939" x:Key="ContentBackground" />
 		<SolidColorBrush Color="#505050" x:Key="MenuBackground" />
 		<SolidColorBrush Color="#4C4C4C" x:Key="CardBackground" />
 		<SolidColorBrush Color="#666" x:Key="CardPointerOverBackground" />
@@ -17,14 +18,20 @@
 
 	<Application.Styles>
 		<FluentTheme Mode="Dark"/>
+		<aura:AuraUITheme />
 
-		<Style Selector="Button">
+		<StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
+
+	<Style Selector="Button">
 			<Setter Property="Cursor" Value="Hand" />
 		</Style>
 
 		<Style Selector="MenuItem">
-			<Setter Property="FontSize" Value="21" />
 			<Setter Property="Cursor" Value="Hand" />
+		</Style>
+
+		<Style Selector="AuraTabItem /template/ Border#PART_Separator">
+			<Setter Property="Opacity" Value="0"></Setter>
 		</Style>
 
 		<!--<Style Selector="TabStripItem">

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31605.320
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCreative.Editor", "CCreative.Editor\CCreative.Editor.csproj", "{7E8A2056-9B7C-400C-A69D-BFAE86E9E5D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCreative.Editor", "CCreative.Editor\CCreative.Editor.csproj", "{7E8A2056-9B7C-400C-A69D-BFAE86E9E5D2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCreative", "..\..\Workspaces\CCreative\CCreativeEditor-ToNetCore\CCreative\CCreative.csproj", "{B1F04A05-F57F-4B1A-B5BD-6091F2122891}"
 EndProject
