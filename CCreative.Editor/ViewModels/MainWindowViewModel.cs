@@ -11,5 +11,10 @@ namespace CCreative.Editor.ViewModels
 			new TabViewModel("Test"),
 			new TabViewModel("Testing"),
 		};
+
+		public MainWindowViewModel()
+		{
+			var compiler = new Compiler.Compiler();
+		}
 	}
 }

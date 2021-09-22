@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using System;
+using Material.Dialog;
 
 namespace CCreative.Editor.Views
 {
@@ -13,10 +14,13 @@ namespace CCreative.Editor.Views
 
 		public FluentWindow()
 		{
-			ExtendClientAreaToDecorationsHint = true;
-			ExtendClientAreaTitleBarHeightHint = -1;
+			if (Environment.OSVersion.Platform != PlatformID.Unix)
+			{
+				ExtendClientAreaToDecorationsHint = true;
+				ExtendClientAreaTitleBarHeightHint = -1;
+			}
+			
 			SystemDecorations = SystemDecorations.Full;
-
 			TransparencyLevelHint = WindowTransparencyLevel.AcrylicBlur;
 
 			if (ActualTransparencyLevel != WindowTransparencyLevel.AcrylicBlur)

@@ -1,78 +1,29 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="using:CCreative.Editor"
-						 xmlns:aura="using:Aura.UI"
+             xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
+             xmlns:aura="using:Aura.UI"
              x:Class="CCreative.Editor.App">
 	<Application.DataTemplates>
-		<local:ViewLocator/>
+		<local:ViewLocator />
 	</Application.DataTemplates>
 
 	<Application.Resources>
-		<SolidColorBrush Color="#454545" x:Key="Background" />
-		<SolidColorBrush Color="#393939" x:Key="ContentBackground" />
-		<SolidColorBrush Color="#505050" x:Key="MenuBackground" />
-		<SolidColorBrush Color="#4C4C4C" x:Key="CardBackground" />
-		<SolidColorBrush Color="#666" x:Key="CardPointerOverBackground" />
-		<SolidColorBrush Color="#4C4C4C" x:Key="CardHighBackground" />
+		<!-- <SolidColorBrush Color="#454545" x:Key="Background" /> -->
+		<!-- <SolidColorBrush Color="#393939" x:Key="ContentBackground" /> -->
+		<!-- <SolidColorBrush Color="#505050" x:Key="MenuBackground" /> -->
+		<!-- <SolidColorBrush Color="#4C4C4C" x:Key="CardBackground" /> -->
+		<!-- <SolidColorBrush Color="#666" x:Key="CardPointerOverBackground" /> -->
+		<!-- <SolidColorBrush Color="#4C4C4C" x:Key="CardHighBackground" /> -->
+
+		<themes:BundledTheme BaseTheme="Dark" PrimaryColor="Green" SecondaryColor="Green" />
 	</Application.Resources>
 
 	<Application.Styles>
-		<FluentTheme Mode="Dark"/>
 		<aura:AuraUITheme />
-
+		
+		<StyleInclude Source="avares://Material.Avalonia/Material.Avalonia.Templates.xaml" />
+		<StyleInclude Source="avares://Material.DataGrid/DataGrid.xaml"/>
 		<StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
-
-	<Style Selector="Button">
-			<Setter Property="Cursor" Value="Hand" />
-		</Style>
-
-		<Style Selector="MenuItem">
-			<Setter Property="Cursor" Value="Hand" />
-		</Style>
-
-		<Style Selector="AuraTabItem /template/ Border#PART_Separator">
-			<Setter Property="Opacity" Value="0"></Setter>
-		</Style>
-
-		<!--<Style Selector="TabStripItem">
-			<Setter Property="FontSize" Value="{DynamicResource TabItemHeaderFontSize}" />
-			<Setter Property="FontWeight" Value="{DynamicResource TabItemHeaderThemeFontWeight}" />
-			<Setter Property="Foreground" Value="{DynamicResource TabItemHeaderForegroundUnselected}" />
-			<Setter Property="Padding" Value="{DynamicResource TabItemHeaderMargin}" />
-			<Setter Property="Margin" Value="0" />
-			<Setter Property="MinHeight" Value="{DynamicResource TabStripItemMinHeight}" />
-			<Setter Property="VerticalContentAlignment" Value="Center" />
-			<Setter Property="Template">
-				<ControlTemplate>
-					<Border Name="PART_LayoutRoot"
-									BorderBrush="{TemplateBinding BorderBrush}"
-									BorderThickness="{TemplateBinding BorderThickness}"
-									Padding="{TemplateBinding Padding}">
-						<Panel>
-							<ContentPresenter Name="PART_ContentPresenter"
-																ContentTemplate="{TemplateBinding ContentTemplate}"
-																Content="{TemplateBinding Content}"
-																HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-																VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-																TextBlock.FontFamily="{TemplateBinding FontFamily}"
-																TextBlock.FontSize="{TemplateBinding FontSize}"
-																TextBlock.FontWeight="{TemplateBinding FontWeight}" />
-						</Panel>
-					</Border>
-				</ControlTemplate>
-			</Setter>
-		</Style>-->
-
-		<Style Selector="TabStripItem:selected">
-			<Setter Property="Background" Value="{DynamicResource CardPointerOverBackground}" />
-		</Style>
-
-		<Style Selector="TabStripItem">
-			<Setter Property="CornerRadius" Value="7.5 7.5 0 0" />
-		</Style>
-
-		<Style Selector="TabStripItem:pointerover">
-			<Setter Property="Background" Value="{DynamicResource CardPointerOverBackground}" />
-		</Style>
 	</Application.Styles>
 </Application>

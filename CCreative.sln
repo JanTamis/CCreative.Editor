@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCreative.Editor", "CCreati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCreative", "..\..\Workspaces\CCreative\CCreativeEditor-ToNetCore\CCreative\CCreative.csproj", "{B1F04A05-F57F-4B1A-B5BD-6091F2122891}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCreative.Compiler", "CCreative.Compiler\CCreative.Compiler.csproj", "{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B1F04A05-F57F-4B1A-B5BD-6091F2122891}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1F04A05-F57F-4B1A-B5BD-6091F2122891}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1F04A05-F57F-4B1A-B5BD-6091F2122891}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
