@@ -1,17 +1,20 @@
-<FluentWindow xmlns="https://github.com/avaloniaui"
+<views:FluentWindow xmlns="https://github.com/avaloniaui"
 							xmlns:svg="using:Avalonia.Svg.Skia"
 							xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 							xmlns:vm="using:CCreative.Editor.ViewModels"
 							xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 							xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 							xmlns:aura="using:Aura.UI.Controls"
-							xmlns:AvalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+							xmlns:styles="clr-namespace:Material.Styles;assembly=Material.Styles"
+							xmlns:assist="clr-namespace:Material.Styles.Assists;assembly=Material.Styles"
+							xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+							xmlns:avalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+							xmlns:views="clr-namespace:CCreative.Editor.Views"
 							mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 							x:Class="CCreative.Editor.Views.MainWindow"
 							Icon="/Assets/avalonia-logo.ico"
 							Title="CCreative"
 							x:Name="MainWindow"
-							Background="{DynamicResource ContentBackground}"
 							MinWidth="600"
 							MinHeight="400"
 							Width="900"
@@ -24,7 +27,7 @@
 	
 	<Panel Margin="{Binding #MainWindow.OffScreenMargin}">
 
-		<Border VerticalAlignment="Top"
+		<Border VerticalAlignment="Stretch"
 						IsHitTestVisible="False"
 						Height="{Binding #MainWindow.WindowDecorationMargin.Top}"
 						Background="{DynamicResource Background}"
@@ -45,72 +48,73 @@
 		</Menu>
 		
 		<Border Margin="{Binding #MainWindow.WindowDecorationMargin}">
-			<Grid RowDefinitions="Auto, *">
-
-				<Border VerticalAlignment="Top"
-								HorizontalAlignment="Left"
-								CornerRadius="10"
-								Margin="10 10 10 0"
-								Background="{DynamicResource Background}"
-								BoxShadow="{BoxShadow BlurRadius=2, ShadowColor=black}">
-					<StackPanel Orientation="Horizontal" >
-
-						<Button Padding="5"
-										CornerRadius="10 0 0 10"
-										Background="{DynamicResource Background}">
-							<Viewbox Margin="0"
-											 Width="35">
-								<Image Source="{svg:SvgImage /Assets/UIAssets/Play.svg}" />
-							</Viewbox>
-						</Button>
-
-						<Button Padding="5"
-										CornerRadius="0 10 10 0"
-										Background="{DynamicResource Background}">
-							<Viewbox Margin="0"
-											 Width="35">
-								<Image Source="{svg:SvgImage /Assets/UIAssets/Stop.svg}" />
-							</Viewbox>
-						</Button>
-
-					</StackPanel>
-				</Border>
-
-				<Border Background="{DynamicResource Background}"
-								BoxShadow="{BoxShadow BlurRadius=2, ShadowColor=black}"
-								Margin="10"
-								CornerRadius="10"
-								Padding="0 5"
-								Grid.Row="2">
-					<AvalonEdit:TextEditor Name="Editor"
-																	FontFamily="Cascadia Code"
-																	Background="Transparent"
-																	ShowLineNumbers="True"
-																	SyntaxHighlighting="C#"
-																	HorizontalScrollBarVisibility="Auto"
-																	VerticalScrollBarVisibility="Auto"
-																	FontWeight="Light"
-																	FontSize="18" />
-				</Border>
-
+			
+			<Grid RowDefinitions="Auto,Auto,*">
 				
+				<StackPanel Orientation="Horizontal"
+				            Margin="10">
+					<Button assist:ButtonAssist.CornerRadius="50"
+					        assist:ShadowAssist.ShadowDepth="Depth0"
+					        Classes="Dark"
+					        Padding="5"
+					        Margin="0 0 5 0"
+					        HorizontalAlignment="Left">
+						<avalonia:MaterialIcon Kind="Play" Width="40" Height="40"/>
+					</Button>
+						
+					<Button assist:ButtonAssist.CornerRadius="50"
+					        assist:ShadowAssist.ShadowDepth="Depth0"
+					        Classes="Dark"
+					        Padding="5"
+					        HorizontalAlignment="Left">
+						<avalonia:MaterialIcon Kind="Stop" Width="40" Height="40"/>
+					</Button>
+				</StackPanel>
 
-				<!--<aura:AuraTabView Background="Transparent"
-													BorderThickness="0"
-													Grid.Row="2">
-					<AuraTabItem Background="{DynamicResource Background}"
-											 Opacity="1"
-											 Header="hello" >
-
-					</AuraTabItem>
-
-					<AuraTabItem Background="{DynamicResource Background}"
-											 Opacity="1"
-											 Header="world" >
-
-					</AuraTabItem>
-				</aura:AuraTabView>-->
+				<!-- <Border VerticalAlignment="Top" -->
+				<!-- 				HorizontalAlignment="Left" -->
+				<!-- 				CornerRadius="10" -->
+				<!-- 				Margin="10 10 10 0" -->
+				<!-- 				Background="{DynamicResource Background}" > -->
+				<!-- 	<StackPanel Orientation="Horizontal" > -->
+				<!-- -->
+				<!-- 		<Button Padding="5" -->
+				<!-- 						CornerRadius="10 0 0 10" -->
+				<!-- 						Background="{DynamicResource Background}"> -->
+				<!-- 			<Viewbox Margin="0" -->
+				<!-- 							 Width="35"> -->
+				<!-- 				<Image Source="{svg:SvgImage /Assets/UIAssets/Play.svg}" /> -->
+				<!-- 			</Viewbox> -->
+				<!-- 		</Button> -->
+				<!-- -->
+				<!-- 		<Button Padding="5" -->
+				<!-- 						CornerRadius="0 10 10 0" -->
+				<!-- 						Background="{DynamicResource Background}"> -->
+				<!-- 			<Viewbox Margin="0" -->
+				<!-- 							 Width="35"> -->
+				<!-- 				<Image Source="{svg:SvgImage /Assets/UIAssets/Stop.svg}" /> -->
+				<!-- 			</Viewbox> -->
+				<!-- 		</Button> -->
+				<!-- -->
+				<!-- 	</StackPanel> -->
+				<!-- </Border> -->
+				
+				<TabStrip Grid.Row="1">
+					<TabStripItem Content="hello" />
+				</TabStrip>
+				
+				<avalonEdit:TextEditor Name="Editor"
+				                       Grid.Row="2"
+				                       FontFamily="avares://CCreative.Editor/Assets/CascadiaCode.ttf#Cascadia Code"
+				                       Background="Transparent"
+				                       ShowLineNumbers="True"
+				                       SyntaxHighlighting="C#"
+				                       HorizontalScrollBarVisibility="Auto"
+				                       VerticalScrollBarVisibility="Auto"
+				                       FontWeight="Light"
+				                       FontSize="18" />
+				
 			</Grid>
 		</Border>
 	</Panel>
-</FluentWindow>
+</views:FluentWindow>
