@@ -7,7 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="RoslynPad.Roslyn" Version="3.6.0" />
+      <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
+      <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.0.0-4.final" />
     </ItemGroup>
 
 </Project>

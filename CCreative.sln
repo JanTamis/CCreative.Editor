@@ -9,6 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CCreative", "..\..\Workspac
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCreative.Compiler", "CCreative.Compiler\CCreative.Compiler.csproj", "{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Roslyn", "..\RoslynPad\src\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj", "{C8CE113E-5428-40F4-B36E-C8A51AE0C513}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Roslyn.Avalonia", "..\RoslynPad\src\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj", "{82E8D988-097A-4176-9315-6281B7C5261A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoslynPad.Editor.Avalonia", "..\RoslynPad\src\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj", "{304967F7-95E2-4652-8B9B-F71B55D30669}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +33,18 @@ Global
 		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FF4B1AD-F9AE-4A25-A5EA-F98CEC88B2D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8CE113E-5428-40F4-B36E-C8A51AE0C513}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8CE113E-5428-40F4-B36E-C8A51AE0C513}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8CE113E-5428-40F4-B36E-C8A51AE0C513}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8CE113E-5428-40F4-B36E-C8A51AE0C513}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82E8D988-097A-4176-9315-6281B7C5261A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82E8D988-097A-4176-9315-6281B7C5261A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82E8D988-097A-4176-9315-6281B7C5261A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82E8D988-097A-4176-9315-6281B7C5261A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{304967F7-95E2-4652-8B9B-F71B55D30669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{304967F7-95E2-4652-8B9B-F71B55D30669}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{304967F7-95E2-4652-8B9B-F71B55D30669}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{304967F7-95E2-4652-8B9B-F71B55D30669}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

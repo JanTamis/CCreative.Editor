@@ -4,7 +4,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Platform;
 using Avalonia.Styling;
 using System;
-using Material.Dialog;
 
 namespace CCreative.Editor.Views
 {
@@ -21,7 +20,7 @@ namespace CCreative.Editor.Views
 			}
 			
 			SystemDecorations = SystemDecorations.Full;
-			TransparencyLevelHint = WindowTransparencyLevel.AcrylicBlur;
+			TransparencyLevelHint = WindowTransparencyLevel.AcrylicBlur; 
 
 			if (ActualTransparencyLevel != WindowTransparencyLevel.AcrylicBlur)
 			{

@@ -9,6 +9,7 @@
 							xmlns:assist="clr-namespace:Material.Styles.Assists;assembly=Material.Styles"
 							xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
 							xmlns:avalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+							xmlns:roslynPad="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
 							xmlns:views="clr-namespace:CCreative.Editor.Views"
 							mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 							x:Class="CCreative.Editor.Views.MainWindow"
@@ -47,6 +48,21 @@
 			<MenuItem Header="Plugins" />
 		</Menu>
 		
+		<!-- <NativeMenuBar> -->
+		<!-- 	<NativeMenuItem Header="File"> -->
+		<!-- 		 -->
+		<!-- 	</NativeMenuItem> -->
+		<!-- 	<NativeMenuItem Header="Edit"> -->
+		<!-- 		 -->
+		<!-- 	</NativeMenuItem> -->
+		<!-- 	<NativeMenuItem Header="View"> -->
+		<!-- 		 -->
+		<!-- 	</NativeMenuItem> -->
+		<!-- 	<NativeMenuItem Header="Plugins"> -->
+		<!-- 		 -->
+		<!-- 	</NativeMenuItem> -->
+		<!-- </NativeMenuBar> -->
+		
 		<Border Margin="{Binding #MainWindow.WindowDecorationMargin}">
 			
 			<Grid RowDefinitions="Auto,Auto,*">
@@ -55,7 +71,6 @@
 				            Margin="10">
 					<Button assist:ButtonAssist.CornerRadius="50"
 					        assist:ShadowAssist.ShadowDepth="Depth0"
-					        Classes="Dark"
 					        Padding="5"
 					        Margin="0 0 5 0"
 					        HorizontalAlignment="Left">
@@ -64,50 +79,36 @@
 						
 					<Button assist:ButtonAssist.CornerRadius="50"
 					        assist:ShadowAssist.ShadowDepth="Depth0"
-					        Classes="Dark"
 					        Padding="5"
 					        HorizontalAlignment="Left">
 						<avalonia:MaterialIcon Kind="Stop" Width="40" Height="40"/>
 					</Button>
 				</StackPanel>
-
-				<!-- <Border VerticalAlignment="Top" -->
-				<!-- 				HorizontalAlignment="Left" -->
-				<!-- 				CornerRadius="10" -->
-				<!-- 				Margin="10 10 10 0" -->
-				<!-- 				Background="{DynamicResource Background}" > -->
-				<!-- 	<StackPanel Orientation="Horizontal" > -->
-				<!-- -->
-				<!-- 		<Button Padding="5" -->
-				<!-- 						CornerRadius="10 0 0 10" -->
-				<!-- 						Background="{DynamicResource Background}"> -->
-				<!-- 			<Viewbox Margin="0" -->
-				<!-- 							 Width="35"> -->
-				<!-- 				<Image Source="{svg:SvgImage /Assets/UIAssets/Play.svg}" /> -->
-				<!-- 			</Viewbox> -->
-				<!-- 		</Button> -->
-				<!-- -->
-				<!-- 		<Button Padding="5" -->
-				<!-- 						CornerRadius="0 10 10 0" -->
-				<!-- 						Background="{DynamicResource Background}"> -->
-				<!-- 			<Viewbox Margin="0" -->
-				<!-- 							 Width="35"> -->
-				<!-- 				<Image Source="{svg:SvgImage /Assets/UIAssets/Stop.svg}" /> -->
-				<!-- 			</Viewbox> -->
-				<!-- 		</Button> -->
-				<!-- -->
-				<!-- 	</StackPanel> -->
-				<!-- </Border> -->
 				
 				<TabStrip Grid.Row="1">
-					<TabStripItem Content="hello" />
+					<TabStrip.ItemsPanel>
+						<ItemsPanelTemplate>
+							<UniformGrid Rows="1" 
+							             HorizontalAlignment="Stretch" />
+						</ItemsPanelTemplate>
+					</TabStrip.ItemsPanel>
+					<TabStripItem >
+						<Viewbox MaxHeight="30">
+							<TextBlock Text="Hello" />
+						</Viewbox>
+					</TabStripItem>
+					
+					<TabStripItem >
+						<Viewbox MaxHeight="30">
+							<TextBlock Text="Hello" />
+						</Viewbox>
+					</TabStripItem>
 				</TabStrip>
 				
-				<avalonEdit:TextEditor Name="Editor"
+				<roslynPad:RoslynCodeEditor Name="Editor"
 				                       Grid.Row="2"
 				                       FontFamily="avares://CCreative.Editor/Assets/CascadiaCode.ttf#Cascadia Code"
 				                       Background="Transparent"
-				                       ShowLineNumbers="True"
 				                       SyntaxHighlighting="C#"
 				                       HorizontalScrollBarVisibility="Auto"
 				                       VerticalScrollBarVisibility="Auto"

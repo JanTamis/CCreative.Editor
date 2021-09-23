@@ -27,6 +27,9 @@
     <Folder Include="Helpers\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Editor.Avalonia\RoslynPad.Editor.Avalonia.csproj" />
+    <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
+    <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
     <ProjectReference Include="..\CCreative.Compiler\CCreative.Compiler.csproj" />
   </ItemGroup>
 </Project>

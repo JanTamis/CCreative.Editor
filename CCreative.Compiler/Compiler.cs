@@ -1,21 +1,46 @@
+using System;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Roslyn;
-using RoslynPad.Roslyn.BraceMatching;
 
 namespace CCreative.Compiler
 {
-	public class Compiler
+	public class Compiler : RoslynHost, IDisposable
 	{
-		// private readonly AdhocWorkspace space;
+		private readonly RoslynWorkspace workspace;
 
-		public Compiler()
+		private Solution Solution => workspace.CurrentSolution;
+		
+		public Compiler() : base(additionalAssemblies: new[]
 		{
-			var host = new RoslynHost(references: RoslynHostReferences.NamespaceDefault.With(new[]
-			{ 
-				MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-			}));
+			typeof(GlyphExtensions).Assembly,
+			Assembly.Load("RoslynPad.Editor.Avalonia"), 
+		}, RoslynHostReferences.NamespaceDefault.With(new[]
+		{ 
+			MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
+		}))
+		{
+			workspace = this.CreateWorkspace();
+		}
 
-			var service = host.GetService<IBraceMatchingService>();
+		public DocumentId AddDocument(DocumentCreationArgs args)
+		{
+			return this.AddDocument(args);
+		}
+
+		public void CreateProject(string name, string assemblyName, string language = "C#")
+		{
+			var projectId = ProjectId.CreateNewId();
+			var solution = Solution.AddProject(projectId, name, assemblyName, language);
+
+			workspace.SetCurrentSolution(solution);
+		}
+
+		public void Dispose()
+		{
+			workspace.Dispose();
+			
+			GC.SuppressFinalize(this);
 		}
 	}
 }
