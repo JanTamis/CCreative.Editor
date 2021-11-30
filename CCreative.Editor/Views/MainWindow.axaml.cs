@@ -1,10 +1,5 @@
-using System;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using Material.Dialog;
-using Microsoft.CodeAnalysis;
-using RoslynPad.Editor;
 
 namespace CCreative.Editor.Views
 {
@@ -22,11 +17,11 @@ namespace CCreative.Editor.Views
 		{
 			AvaloniaXamlLoader.Load(this);
 
-			var compiler = new Compiler.Compiler();
+			//var compiler = new Compiler.Compiler();
 
-			var editor = this.FindControl<RoslynCodeEditor>("Editor");
-			
-			editor.Initialize(compiler, new ClassificationHighlightColors(), Environment.CurrentDirectory, String.Empty ,SourceCodeKind.Regular);
+			// var editor = this.FindControl<RoslynCodeEditor>("Editor");
+			//
+			// editor.Initialize(compiler, new ClassificationHighlightColors(), Environment.CurrentDirectory, String.Empty ,SourceCodeKind.Regular);
 		}
 	}
 }

@@ -4,15 +4,13 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <RootNamespace>CCreative.Compilers</RootNamespace>
+        <PackageId>CCreative.Compiler</PackageId>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Roslyn.Avalonia\RoslynPad.Roslyn.Avalonia.csproj" />
-      <ProjectReference Include="..\..\RoslynPad\src\RoslynPad.Roslyn\RoslynPad.Roslyn.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.0.0-4.final" />
+      <PackageReference Include="RoslynPad.Editor.Avalonia" Version="1.2.0" />
+      <PackageReference Include="RoslynPad.Roslyn.Avalonia" Version="3.6.0" />
     </ItemGroup>
 
 </Project>

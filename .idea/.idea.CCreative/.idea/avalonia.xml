@@ -5,7 +5,9 @@
       <map>
         <entry key="../RoslynPad/src/RoslynPad.Roslyn.Avalonia/LanguageServices/ChangeSignature/ChangeSignatureDialog.xaml" value="CCreative.Editor/CCreative.Editor.csproj" />
         <entry key="CCreative.Editor/App.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
+        <entry key="CCreative.Editor/Views/MainView.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
         <entry key="CCreative.Editor/Views/MainWindow.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
+        <entry key="CCreative.Editor/Views/ProjectView.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
       </map>
     </option>
   </component>

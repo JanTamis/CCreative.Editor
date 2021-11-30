@@ -1,9 +1,8 @@
 using System;
-using System.Reflection;
 using Microsoft.CodeAnalysis;
 using RoslynPad.Roslyn;
 
-namespace CCreative.Compiler
+namespace CCreative.Compilers
 {
 	public class Compiler : RoslynHost, IDisposable
 	{
@@ -13,27 +12,22 @@ namespace CCreative.Compiler
 		
 		public Compiler() : base(additionalAssemblies: new[]
 		{
-			typeof(GlyphExtensions).Assembly,
-			Assembly.Load("RoslynPad.Editor.Avalonia"), 
+			typeof(GlyphExtensions).Assembly
 		}, RoslynHostReferences.NamespaceDefault.With(new[]
 		{ 
 			MetadataReference.CreateFromFile(typeof(object).Assembly.Location)
 		}))
 		{
-			workspace = this.CreateWorkspace();
+			workspace = new RoslynWorkspace(HostServices, roslynHost: this);
 		}
 
-		public DocumentId AddDocument(DocumentCreationArgs args)
+		public Project CreateProject(string name, string assemblyName, string language = "C#")
 		{
-			return this.AddDocument(args);
-		}
+			var project = Solution.AddProject(name, assemblyName, language);
 
-		public void CreateProject(string name, string assemblyName, string language = "C#")
-		{
-			var projectId = ProjectId.CreateNewId();
-			var solution = Solution.AddProject(projectId, name, assemblyName, language);
+			workspace.SetCurrentSolution(project.Solution);
 
-			workspace.SetCurrentSolution(solution);
+			return project;
 		}
 
 		public void Dispose()

@@ -16,7 +16,7 @@ namespace CCreative.Editor
 
 			if (type != null)
 			{
-				return (Control)Activator.CreateInstance(type)!;
+				return Activator.CreateInstance(type) as IControl;
 			}
 			else
 			{
