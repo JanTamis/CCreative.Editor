@@ -661,7 +661,7 @@
         <member name="M:CCreative.Math.Unhex(System.String)">
             <summary> Converts a String representation of a hexadecimal number to its equivalent integer value </summary>
             <param name="value"> String to convert to an integer </param>
-            <returns> Returns a interger from a hexadecimal number </returns>
+            <returns> Returns a integer from a hexadecimal number </returns>
         </member>
         <member name="M:CCreative.Math.Str``1(``0)">
             <summary>
@@ -795,14 +795,14 @@
             </summary>
             <param name="image">PImage to set as background</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Background(System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Background(System.Single)">
             <summary>
             Sets the background of the window and erases all drawings on the screen
             </summary>
             <param name="gray">specifies a value between white and black</param>
             <returns>the window background color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Background(System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Background(System.Single,System.Single)">
             <summary>
             Sets the background of the window and erases all drawings on the screen
             </summary>
@@ -810,7 +810,7 @@
             <param name="alpha">the opacity of the background</param>
             <returns>the window background color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Background(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Background(System.Single,System.Single,System.Single)">
             <summary>
             Sets the background of the window and erases all drawings on the screen
             </summary>
@@ -819,7 +819,7 @@
             <param name="v3">the red or brightness value of the background</param>
             <returns>the window background color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Background(System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Background(System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Sets the background of the window and erases all drawings on the screen
             </summary>
@@ -829,14 +829,14 @@
             <param name="alpha">the opacity of the background</param>
             <returns>the window background color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Single)">
             <summary>
             Changes the way CCreative interprets color data
             </summary>
             <param name="mode">Either <see cref="F:CCreative.PConstants.RGB"/> or <see cref="F:CCreative.PConstants.RGB"/>, corresponding to Red/Green/Blue and Hue/Saturation/Brightness</param>
             <param name="max">range for all color elements</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Single,System.Single,System.Single)">
             <summary>
             Changes the way CCreative interprets color data
             </summary>
@@ -845,7 +845,7 @@
             <param name="max2">range for the green or saturation depending on the current color mode</param>
             <param name="max3">range for the blue or brightness depending on the current color mode</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Changes the way CCreative interprets color data
             </summary>
@@ -855,14 +855,14 @@
             <param name="max3">range for the blue or brightness depending on the current color mode</param>
             <param name="maxA">range for the alpha</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Color(System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Color(System.Single)">
             <summary>
             Creates a grayscale color
             </summary>
             <param name="gray">number specifying value between white and black</param>
             <returns>the created color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Color(CCreative.Color,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Color(CCreative.Color,System.Single)">
             <summary>
             Creates a new color based on <paramref name="color"/> with a given transparency
             </summary>
@@ -870,7 +870,7 @@
             <param name="alpha">the opacity of the color</param>
             <returns>a new color based from <paramref name="color"/> with the given alpha</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Color(System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Color(System.Single,System.Single)">
             <summary>
             Creates a grayscale color with a given transparency
             </summary>
@@ -878,18 +878,18 @@
             <param name="alpha">the opacity of the color</param>
             <returns>a new grayscale color with the given alpha</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Color(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Color(System.Single,System.Single,System.Single)">
             <summary>
-            Creates a color from RGB values or HSB value based on the given colormode, use <see cref="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Double)"/> to change the colormode
+            Creates a color from RGB values or HSB value based on the given colormode, use <see cref="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Single)"/> to change the colormode
             </summary>
             <param name="v1">the red or hue value of the color</param>
             <param name="v2">the green of saturation value of the color</param>
             <param name="v3">the red or brightness value of the color</param>
             <returns>the created color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Color(System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Color(System.Single,System.Single,System.Single,System.Single)">
             <summary>
-            Creates a color from RGB values or HSB value based on the given colormode, use <see cref="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Double)"/> to change the colormode
+            Creates a color from RGB values or HSB value based on the given colormode, use <see cref="M:CCreative.Rendering.PGraphics.ColorMode(CCreative.ColorModes,System.Single)"/> to change the colormode
             </summary>
             <param name="v1">the red or hue value of the color</param>
             <param name="v2">the green of saturation value of the color</param>
@@ -953,7 +953,7 @@
             <param name="color">the color to calculate the contrast color of</param>
             <returns>the contrast color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.LerpColor(CCreative.Color,CCreative.Color,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.LerpColor(CCreative.Color,CCreative.Color,System.Single)">
             <summary>
             Calculates a color between two colors at a specific increment
             </summary>
@@ -974,14 +974,14 @@
             <param name="color">the color to use</param>
             <returns>the new stroke color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Single)">
             <summary>
             Sets the color used to draw lines and borders around shapes
             </summary>
             <param name="gray">number specifying value between white and black</param>
             <returns>the new stroke color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Single,System.Single)">
             <summary>
             Sets the color used to draw lines and borders around shapes
             </summary>
@@ -989,7 +989,7 @@
             <param name="alpha">the alpha (transparent) component of the new stroke color</param>
             <returns>the new stroke color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Single,System.Single,System.Single)">
             <summary>
             Sets the color used to draw lines and borders around shapes
             </summary>
@@ -998,7 +998,7 @@
             <param name="v3">the red or brightness value of the new stroke color</param>
             <returns>the new stroke color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Stroke(System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Sets the color used to draw lines and borders around shapes
             </summary>
@@ -1020,14 +1020,14 @@
             <param name="color">the new stroke </param>
             <returns>the new fill color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Single)">
             <summary>
             Sets the color used to fill shapes
             </summary>
             <param name="gray">number specifying value between white and black</param>
             <returns>the new fill color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Single,System.Single)">
             <summary>
             Sets the color used to fill shapes
             </summary>
@@ -1035,7 +1035,7 @@
             <param name="alpha">the opacity of the color</param>
             <returns>the new fill color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Single,System.Single,System.Single)">
             <summary>
             Sets the color used to fill shapes
             </summary>
@@ -1044,7 +1044,7 @@
             <param name="v3">the red or brightness value of the fill color</param>
             <returns>the new fill color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Fill(System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Sets the color used to fill shapes
             </summary>
@@ -1066,14 +1066,14 @@
             <param name="color">the new tint color</param>
             <returns>the new tint color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Single)">
             <summary>
             Sets the fill value for displaying images
             </summary>
             <param name="gray">specifies a value between white and black</param>
             <returns>the new tint color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Single,System.Single)">
             <summary>
             Sets the fill value for displaying images
             </summary>
@@ -1081,7 +1081,7 @@
             <param name="alpha">the opacity of the images</param>
             <returns></returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Single,System.Single,System.Single)">
             <summary>
             Sets the fill value for displaying images
             </summary>
@@ -1090,7 +1090,7 @@
             <param name="v3">the red or brightness value of the tint color</param>
             <returns></returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Tint(System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Sets the fill value for displaying images
             </summary>
@@ -1106,13 +1106,13 @@
             </summary>
             <param name="color">the reflectance color</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Ambient(System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Ambient(System.Single)">
             <summary>
             Sets the ambient reflectance for shapes drawn to the screen
             </summary>
             <param name="gray">number specifying value between white and black</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Ambient(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Ambient(System.Single,System.Single,System.Single)">
             <summary>
             Sets the ambient reflectance for shapes drawn to the screen
             </summary>
@@ -1126,7 +1126,7 @@
             </summary>
             <param name="color">the color of the ambient light</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.AmbientLight(System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.AmbientLight(System.Single,System.Single,System.Single)">
             <summary>
             Adds an ambient light
             </summary>
@@ -1137,7 +1137,7 @@
             <param name="v2">the green of saturation value of the ambient color</param>
             <param name="v3">the red or brightness value of the ambient color</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.ApplyMatrix(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.ApplyMatrix(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Multiplies the current matrix by the one specified through the parameters
             </summary>
@@ -1148,7 +1148,7 @@
             <param name="n11">numbers which define the 4x4 matrix to be multiplied</param>
             <param name="n12">numbers which define the 4x4 matrix to be multiplied</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.ApplyMatrix(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.ApplyMatrix(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Multiplies the current matrix by the one specified through the parameters
             </summary>
@@ -1175,7 +1175,7 @@
             </summary>
             <param name="matrix">the matrix to multiply the current with</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Arc(System.Double,System.Double,System.Double,System.Double,System.Double,System.Double)">
+        <member name="M:CCreative.Rendering.PGraphics.Arc(System.Single,System.Single,System.Single,System.Single,System.Single,System.Single)">
             <summary>
             Draws an arc to the screen
             </summary>

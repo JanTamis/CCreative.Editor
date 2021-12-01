@@ -80,7 +80,7 @@ namespace CCreative
 			options.Size = new Vector2D<int>(width, height);
 			options.Title = "CCreative";
 			options.ShouldSwapAutomatically = false;
-			options.VSync = true;
+			options.VSync = false;
 			options.FramesPerSecond = 60;
 			options.Samples = 1;
 			options.PreferredStencilBufferBits = 8;

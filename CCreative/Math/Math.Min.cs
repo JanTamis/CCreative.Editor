@@ -42,12 +42,7 @@ namespace CCreative
 
 					for (var i = 0; i < count; i++)
 					{
-						var value = result[i];
-
-						if (value < min)
-						{
-							min = value;
-						}
+						min = T.Min(min, result[i]);
 
 						j += count;
 					}
@@ -55,8 +50,7 @@ namespace CCreative
 			}
 
 			for (; j < numbers.Length; j++)
-				if (min < numbers[j])
-					min = numbers[j];
+				min = T.Min(min, numbers[j]);
 
 			return min;
 		}

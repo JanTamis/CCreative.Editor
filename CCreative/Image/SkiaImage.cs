@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using CCreative.ObjectTK;
 using SkiaSharp;
@@ -7,136 +8,178 @@ namespace CCreative;
 
 public class SkiaImage : PImage
 {
-	private SKBitmap skBitmap;
+	private SKImage skImage;
+	
 	public byte[]? Pixels { get; set; }
-	public int Width => skBitmap.Width;
-	public int Height => Height;
+	public int Width => skImage.Width;
+	public int Height => skImage.Height;
 	public int PixelDensity => 1;
 
-	internal SkiaImage(SKBitmap skBitmap)
+	internal SkiaImage(SKImage skBitmap)
 	{
-		this.skBitmap = skBitmap ?? throw new ArgumentNullException(nameof(skBitmap));
+		this.skImage = skBitmap ?? throw new ArgumentNullException(nameof(skBitmap));
 	}
 
 	public void LoadPixels()
 	{
-		Pixels = skBitmap.Bytes;
+		Pixels = GC.AllocateUninitializedArray<byte>(skImage.Info.BytesSize);
+
+		using var pinner = new AutoPinner(Pixels);
+
+		skImage.ReadPixels(skImage.Info, pinner);
 	}
 
 	public void UpdatePixels(int x, int y, int w, int h)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void UpdatePixels()
 	{
-		var pinnedArray = new AutoPinner(Pixels);
-
-		skBitmap.InstallPixels(skBitmap.Info, pinnedArray);
-		skBitmap.NotifyPixelsChanged();
+		throw new NotImplementedException();
 	}
 
 	public void Resize(int width, int height)
 	{
-		var newImage = new SKBitmap(width, height, skBitmap.ColorType, skBitmap.AlphaType);
-		skBitmap.ScalePixels(newImage, SKFilterQuality.High);
-		
-		skBitmap.Dispose();
-		skBitmap = newImage;
+		throw new NotImplementedException();
 	}
 
 	public Color Get(int x, int y)
 	{
-		var span = MemoryMarshal.Cast<byte, MemoryColor>(Pixels);
-
-		return span[x * Width + y];
+		throw new NotImplementedException();
 	}
 
 	public PImage Get(int x, int y, int w, int h)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public PImage Get()
 	{
-		var newImage = new SKBitmap(Width, Height, skBitmap.ColorType, skBitmap.AlphaType);
-
-		skBitmap.CopyTo(newImage);
-
-		return new SkiaImage(newImage);
+		throw new NotImplementedException();
 	}
 
 	public PImage Copy()
 	{
-		var newImage = new SKBitmap(Width, Height, skBitmap.ColorType, skBitmap.AlphaType);
-
-		skBitmap.CopyTo(newImage);
-
-		return new SkiaImage(newImage);
+		throw new NotImplementedException();
 	}
 
 	public void Set(int x, int y, Color color)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Set(int x, int y, PImage img)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Mask(Color[] maskArray)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Mask(PImage img)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Filter(FilterTypes kind)
 	{
-		throw new System.NotImplementedException();
+		SKImageFilter filter = null;
+		
+		switch (kind)
+		{
+			case FilterTypes.Threshold:
+				break;
+			case FilterTypes.Gray:
+				filter = SKImageFilter.CreateColorFilter(SKColorFilter.CreateColorMatrix(new[]
+				{
+					0.21f, 0.72f, 0.07f, 0, 0,
+					0.21f, 0.72f, 0.07f, 0, 0,
+					0.21f, 0.72f, 0.07f, 0, 0,
+					0,     0,     0,     1, 0
+				}));
+				break;
+			case FilterTypes.Opaque:
+				break;
+			case FilterTypes.Invert:
+				break;
+			case FilterTypes.Posterize:
+				break;
+			case FilterTypes.Blur:
+				filter = SKImageFilter.CreateBlur(5, 5);
+				break;
+			case FilterTypes.Erode:
+				filter = SKImageFilter.CreateErode(5, 5);
+				break;
+			case FilterTypes.Dilate:
+				filter = SKImageFilter.CreateDilate(5, 5);
+				break;
+			case FilterTypes.Sepia:
+				break;
+			case FilterTypes.Jitter:
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+		}
+
+		var rect = new SKRectI(0, 0, Width, Height);
+		var tempImg = skImage.ApplyImageFilter(filter, rect, rect, out _, out SKPoint point);
+		
+		skImage.Dispose();
+		skImage = tempImg;
 	}
 
-	public void Filter(FilterTypes type, double param)
+	public void Filter(FilterTypes type, float param)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Copy(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Copy(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public Color BlendColor(Color c1, Color c2, BlendModes mode)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Blend(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public void Blend(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode)
 	{
-		throw new System.NotImplementedException();
+		throw new NotImplementedException();
 	}
 
 	public bool TrySave(string filename)
 	{
-		throw new System.NotImplementedException();
+		try
+		{
+			using var stream = File.OpenWrite(filename);
+		
+			var data = skImage.Encode(SKEncodedImageFormat.Gif, 100);
+			stream.Write(data.Span);
+		}
+		catch
+		{
+			return false;
+		}
+
+		return true;
 	}
 	
 	public void Dispose()
 	{
-		throw new System.NotImplementedException();
+		skImage.Dispose();
 	}
 }

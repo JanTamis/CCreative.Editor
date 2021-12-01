@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -61,7 +62,9 @@ public static class NoiseMaker
    * float-valued 4D noise 64 times. We want this to fit in the cache!
    */
 
-	private static byte[] _perm =
+	// C# no-alloc optimization that directly wraps the data section of the dll (similar to string constants)
+	// https://github.com/dotnet/roslyn/pull/24621
+	private static ReadOnlySpan<byte> _perm => new byte[]
 	{
 		151, 160, 137, 91, 90, 15,
 		131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23,

@@ -30,7 +30,7 @@ namespace CCreative
 		public int PmouseY { get; protected set; }
 
 		public const float TAU = TWO_PI;
-		public const float TWO_PI = MathF.PI * 2;
+		public const float TWO_PI = MathF.Tau;
 		public const float PI = MathF.PI;
 		public const float HALF_PI = PI / 2;
 		public const float QUARTER_PI = PI / 4;

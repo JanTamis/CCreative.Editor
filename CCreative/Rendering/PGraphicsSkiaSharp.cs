@@ -3,7 +3,10 @@ using System.IO;
 using System.Runtime.InteropServices;
 using CCreative.ObjectTK;
 using Silk.NET.Core.Contexts;
+using Silk.NET.OpenGL;
 using SkiaSharp;
+// ReSharper disable ConvertToUsingDeclaration
+#pragma warning disable CS1591
 
 namespace CCreative.Rendering;
 
@@ -13,28 +16,39 @@ public class PGraphicsSkiaSharp : PGraphics
 	private GRContext context;
 
 	private SKSurface surface;
+	private GL gl;
+
+	private SKImageInfo defaultImageInfo => new(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
 	private SKPaint stroke = new SKPaint()
 	{
 		Style = SKPaintStyle.Stroke,
 		Color = SKColors.Black,
 		StrokeWidth = 1,
+		TextSize = 100,
+		IsAntialias = true,
 	};
-	
+
 	private SKPaint fill = new SKPaint()
 	{
 		Style = SKPaintStyle.Fill,
 		Color = SKColors.White,
+		TextSize = 100,
+		IsAntialias = true,
 	};
 
 	public PGraphicsSkiaSharp(int width, int height, int pixelDensity, IGLContextSource window)
 	{
-		using var grGlInterface = GRGlInterface.Create(name => window.GLContext!.TryGetProcAddress(name, out var addr) ? addr : (IntPtr)0);
+		using var grGlInterface =
+			GRGlInterface.Create(name => window.GLContext!.TryGetProcAddress(name, out var addr) ? addr : (IntPtr)0);
 		grGlInterface.Validate();
+		
 		context = GRContext.CreateGl(grGlInterface);
 		var renderTarget =
 			new GRBackendRenderTarget(height, width, 0, 8, new GRGlFramebufferInfo(0, 0x8058)); // 0x8058 = GL_RGBA8`
 		surface = SKSurface.Create(context, renderTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
+
+		gl = window.CreateOpenGL();
 
 		Width = width;
 		Height = height;
@@ -59,44 +73,44 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void LoadPixels()
 	{
-		var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+		var info = defaultImageInfo;
 		var size = Width * Height * PixelDensity * info.BitsPerPixel;
 
 		if (Pixels is null || Pixels.Length != size)
 		{
-			Pixels = new byte[size];
+			Pixels = GC.AllocateUninitializedArray<byte>(size);
 		}
 
-		// using var pin = new AutoPinner(Pixels);
-		//
-		// surface.ReadPixels(info, pin, info.RowBytes, 0, 0);
+		using var pin = new AutoPinner(Pixels);
+		
+		surface.ReadPixels(info, pin, info.RowBytes, 0, 0);
 	}
 
 	public void UpdatePixels(int x, int y, int w, int h)
 	{
 		using var pinner = new AutoPinner(Pixels);
-		
-		var bitmap = new SKBitmap(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+
+		var bitmap = new SKBitmap(defaultImageInfo);
 		bitmap.SetPixels(pinner);
 	}
 
-	public unsafe void UpdatePixels()
+	public void UpdatePixels()
 	{
 		using var pinner = new AutoPinner(Pixels);
-
-		var img = SKImage.FromPixels(new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul), pinner);
+		using var img = SKImage.FromPixels(defaultImageInfo, pinner);
+		
 		surface.Canvas.DrawImage(img, 0, 0);
 	}
 
 	public void Resize(int width, int height)
 	{
-		
 	}
 
 	public Color Get(int x, int y)
 	{
-		var span = MemoryMarshal.Cast<byte, MemoryColor>(Pixels);
-
+		var pixelSpan = surface.PeekPixels().GetPixelSpan();
+		var span = MemoryMarshal.Cast<byte, MemoryColor>(pixelSpan);
+		
 		return span[x * Width + y];
 	}
 
@@ -107,7 +121,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public PImage Get()
 	{
-		throw new NotImplementedException();
+		return new SkiaImage(surface.Snapshot());
 	}
 
 	public PImage Copy()
@@ -140,7 +154,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Filter(FilterTypes type, double param)
+	public void Filter(FilterTypes type, float param)
 	{
 		throw new NotImplementedException();
 	}
@@ -192,9 +206,14 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Background(Color color)
 	{
-		if (color is SkiaColor skiaColor)
+		switch (color)
 		{
-			surface.Canvas.Clear(skiaColor.skColor);
+			case SkiaColor skiaColor:
+				surface.Canvas.Clear(skiaColor.skColor);
+				break;
+			case MemoryColor memoryColor:
+				surface.Canvas.Clear(new SKColor(memoryColor.R, memoryColor.G, memoryColor.B, memoryColor.A));
+				break;
 		}
 
 		return color;
@@ -205,75 +224,40 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void ColorMode(ColorModes mode, double max1, double max2, double max3)
+	public void ColorMode(ColorModes mode, float max1, float max2, float max3)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void ColorMode(ColorModes mode, double max1, double max2, double max3, double maxA)
+	public void ColorMode(ColorModes mode, float max1, float max2, float max3, float maxA)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Color Color(double gray)
+	public Color Color(float gray)
 	{
 		var correctGray = (byte)gray;
 
 		return new SkiaColor(new SKColor(correctGray, correctGray, correctGray, Byte.MaxValue));
 	}
 
-	public Color Color(Color color, double alpha)
+	public Color Color(Color color, float alpha)
 	{
 		var correctAlpha = (byte)alpha;
 		return new SkiaColor(correctAlpha, color.R, color.G, color.B);
 	}
 
-	public Color Color(double gray, double alpha)
+	public Color Color(float gray, float alpha)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Color Color(double v1, double v2, double v3)
+	public Color Color(float v1, float v2, float v3)
 	{
 		throw new NotImplementedException();
 	}
 
-	public Color Color(double v1, double v2, double v3, double a)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Alpha(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Red(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Green(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Blue(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Hue(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Saturation(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public double Brightness(Color color)
+	public Color Color(float v1, float v2, float v3, float a)
 	{
 		throw new NotImplementedException();
 	}
@@ -283,7 +267,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public Color LerpColor(Color c1, Color c2, double amt)
+	public Color LerpColor(Color c1, Color c2, float amt)
 	{
 		throw new NotImplementedException();
 	}
@@ -295,7 +279,12 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Stroke(Color color)
 	{
-		throw new NotImplementedException();
+		if (color is SkiaColor skiaColor)
+		{
+			stroke.Color = skiaColor.skColor;
+		}
+
+		return color;
 	}
 
 	public void NoFill()
@@ -328,14 +317,14 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void ApplyMatrix(double n00, double n01, double n02, double n10, double n11, double n12)
+	public void ApplyMatrix(float n00, float n01, float n02, float n10, float n11, float n12)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void ApplyMatrix(double n00, double n01, double n02, double n03, double n10, double n11, double n12,
-		double n13,
-		double n20, double n21, double n22, double n23, double n30, double n31, double n32, double n33)
+	public void ApplyMatrix(float n00, float n01, float n02, float n03, float n10, float n11, float n12,
+		float n13,
+		float n20, float n21, float n22, float n23, float n30, float n31, float n32, float n33)
 	{
 		throw new NotImplementedException();
 	}
@@ -355,7 +344,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Arc(double a, double b, double c, double d, double start, double stop)
+	public void Arc(float a, float b, float c, float d, float start, float stop)
 	{
 		throw new NotImplementedException();
 	}
@@ -372,7 +361,6 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void BeginDraw()
 	{
-		
 	}
 
 	public void BeginShape()
@@ -385,13 +373,13 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Bezier(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+	public void Bezier(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Bezier(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3,
-		double x4, double y4, double z4)
+	public void Bezier(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3,
+		float x4, float y4, float z4)
 	{
 		throw new NotImplementedException();
 	}
@@ -401,23 +389,23 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public double BezierPoint(double a, double b, double c, double d, double t)
+	public float BezierPoint(float a, float b, float c, float d, float t)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double BezierTangent(double a, double b, double c, double d, double t)
+	public float BezierTangent(float a, float b, float c, float d, float t)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void BezierVertex(double x2, double y2, double x3, double y3, double x4, double y4)
+	public void BezierVertex(float x2, float y2, float x3, float y3, float x4, float y4)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void BezierVertex(double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4,
-		double z4)
+	public void BezierVertex(float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4,
+		float z4)
 	{
 		throw new NotImplementedException();
 	}
@@ -427,7 +415,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Box(double w, double h, double d)
+	public void Box(float w, float h, float d)
 	{
 		throw new NotImplementedException();
 	}
@@ -437,13 +425,13 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Camera(double eyeX, double eyeY, double eyeZ, double centerX, double centerY, double centerZ, double upX,
-		double upY, double upZ)
+	public void Camera(float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX,
+		float upY, float upZ)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Circle(double x, double y, double extent)
+	public void Circle(float x, float y, float extent)
 	{
 		surface.Canvas.DrawCircle((float)x, (float)y, (float)extent, fill);
 		surface.Canvas.DrawCircle((float)x, (float)y, (float)extent, stroke);
@@ -461,22 +449,24 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public PImage CreateImage(int width, int height)
 	{
-		throw new NotImplementedException();
+		return new SkiaImage(SKImage.Create(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
 	}
 
 	public PImage LoadImage(string path)
 	{
-		throw new NotImplementedException();
+		using var stream = File.OpenRead(path);
+		
+		return new SkiaImage(SKImage.FromEncodedData(stream));
 	}
 
-	public void Curve(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+	public void Curve(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Curve(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3,
-		double x4,
-		double y4, double z4)
+	public void Curve(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3,
+		float x4,
+		float y4, float z4)
 	{
 		throw new NotImplementedException();
 	}
@@ -486,32 +476,32 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void CurvePoint(double a, double b, double c, double d, double t)
+	public void CurvePoint(float a, float b, float c, float d, float t)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void CurveTangent(double a, double b, double c, double d, double t)
+	public void CurveTangent(float a, float b, float c, float d, float t)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void CurveTightness(double tightness)
+	public void CurveTightness(float tightness)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void CurveVertex(double x, double y)
+	public void CurveVertex(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void CurveVertex(double x, double y, double z)
+	public void CurveVertex(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void DirectionalLight(double v1, double v2, double v3, double nx, double ny, double nz)
+	public void DirectionalLight(float v1, float v2, float v3, float nx, float ny, float nz)
 	{
 		throw new NotImplementedException();
 	}
@@ -526,9 +516,10 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Ellipse(double a, double b, double c, double d)
+	public void Ellipse(float a, float b, float c, float d)
 	{
-		throw new NotImplementedException();
+		surface.Canvas.DrawOval(a, b, c, d, fill);
+		surface.Canvas.DrawOval(a, b, c, d, stroke);
 	}
 
 	public void EllipseMode(int mode)
@@ -536,12 +527,12 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Emissive(double gray)
+	public void Emissive(float gray)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Emissive(double v1, double v2, double v3)
+	public void Emissive(float v1, float v2, float v3)
 	{
 		throw new NotImplementedException();
 	}
@@ -576,7 +567,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Frustum(double left, double right, double bottom, double top, double near, double far)
+	public void Frustum(float left, float right, float bottom, float top, float near, float far)
 	{
 		throw new NotImplementedException();
 	}
@@ -611,17 +602,17 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Image(PImage img, double a, double b)
+	public void Image(PImage img, float a, float b)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Image(PImage img, double a, double b, double c, double d)
+	public void Image(PImage img, float a, float b, float c, float d)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Image(PImage img, double a, double b, double c, double d, int u1, int v1, int u2, int v2)
+	public void Image(PImage img, float a, float b, float c, float d, int u1, int v1, int u2, int v2)
 	{
 		throw new NotImplementedException();
 	}
@@ -633,20 +624,20 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public bool Is2D()
 	{
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public bool Is3D()
 	{
-		throw new NotImplementedException();
+		return false;
 	}
 
 	public bool IsGL()
 	{
-		throw new NotImplementedException();
+		return true;
 	}
 
-	public void LightFalloff(double constant, double linear, double quadratic)
+	public void LightFalloff(float constant, float linear, float quadratic)
 	{
 		throw new NotImplementedException();
 	}
@@ -656,32 +647,32 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void LightSpecular(double v1, double v2, double v3)
+	public void LightSpecular(float v1, float v2, float v3)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Line(double x1, double y1, double x2, double y2)
+	public void Line(float x1, float y1, float x2, float y2)
 	{
 		surface.Canvas.DrawLine((float)x1, (float)y1, (float)x2, (float)y2, stroke);
 	}
 
-	public void Line(double x1, double y1, double z1, double x2, double y2, double z2)
+	public void Line(float x1, float y1, float z1, float x2, float y2, float z2)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ModelX(double x, double y, double z)
+	public float ModelX(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ModelY(double x, double y, double z)
+	public float ModelY(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ModelZ(double x, double y, double z)
+	public float ModelZ(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
@@ -696,7 +687,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Normal(double nx, double ny, double nz)
+	public void Normal(float nx, float ny, float nz)
 	{
 		throw new NotImplementedException();
 	}
@@ -716,12 +707,12 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Ortho(double left, double right, double bottom, double top)
+	public void Ortho(float left, float right, float bottom, float top)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Ortho(double left, double right, double bottom, double top, double near, double far)
+	public void Ortho(float left, float right, float bottom, float top, float near, float far)
 	{
 		throw new NotImplementedException();
 	}
@@ -731,22 +722,22 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Perspective(double fovY, double aspect, double zNear, double zFar)
+	public void Perspective(float fovY, float aspect, float zNear, float zFar)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Point(double x, double y)
+	public void Point(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Point(double x, double y, double z)
+	public void Point(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void PointLight(double v1, double v2, double v3, double x, double y, double z)
+	public void PointLight(float v1, float v2, float v3, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
@@ -796,32 +787,32 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Quad(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+	public void Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void QuadraticVertex(double cx, double cy, double x3, double y3)
+	public void QuadraticVertex(float cx, float cy, float x3, float y3)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void QuadraticVertex(double cx, double cy, double cz, double x3, double y3, double z3)
+	public void QuadraticVertex(float cx, float cy, float cz, float x3, float y3, float z3)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Rect(double a, double b, double c, double d)
+	public void Rect(float a, float b, float c, float d)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Rect(double a, double b, double c, double d, double r)
+	public void Rect(float a, float b, float c, float d, float r)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Rect(double a, double b, double c, double d, double tl, double tr, double br, double bl)
+	public void Rect(float a, float b, float c, float d, float tl, float tr, float br, float bl)
 	{
 		throw new NotImplementedException();
 	}
@@ -846,67 +837,67 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Rotate(double angle, double x, double y, double z)
+	public void Rotate(float angle, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void RotateX(double angle)
+	public void RotateX(float angle)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void RotateY(double angle)
+	public void RotateY(float angle)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void RotateZ(double angle)
+	public void RotateZ(float angle)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Scale(double s)
+	public void Scale(float s)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Scale(double x, double y)
+	public void Scale(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Scale(double x, double y, double z)
+	public void Scale(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ScreenX(double x, double y)
+	public float ScreenX(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ScreenX(double x, double y, double z)
+	public float ScreenX(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ScreenY(double x, double y)
+	public float ScreenY(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ScreenY(double x, double y, double z)
+	public float ScreenY(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ScreenZ(double x, double y)
+	public float ScreenZ(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double ScreenZ(double x, double y, double z)
+	public float ScreenZ(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
@@ -951,17 +942,17 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void ShearX(double angle)
+	public void ShearX(float angle)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void ShearY(double angle)
+	public void ShearY(float angle)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Shininess(double shine)
+	public void Shininess(float shine)
 	{
 		throw new NotImplementedException();
 	}
@@ -976,12 +967,12 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Specular(double gray)
+	public void Specular(float gray)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Specular(double v1, double v2, double v3)
+	public void Specular(float v1, float v2, float v3)
 	{
 		throw new NotImplementedException();
 	}
@@ -991,7 +982,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Sphere(double r)
+	public void Sphere(float r)
 	{
 		throw new NotImplementedException();
 	}
@@ -1006,13 +997,8 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void SpotLight(double v1, double v2, double v3, double x, double y, double z, double nx, double ny, double nz,
-		double angle, double concentration)
-	{
-		throw new NotImplementedException();
-	}
-
-	public void Square(double x, double y, double extent)
+	public void SpotLight(float v1, float v2, float v3, float x, float y, float z, float nx, float ny, float nz,
+		float angle, float concentration)
 	{
 		throw new NotImplementedException();
 	}
@@ -1027,67 +1013,71 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void StrokeWeight(double weight)
+	public void StrokeWeight(float weight)
 	{
-		throw new NotImplementedException();
+		stroke.StrokeWidth = weight;
 	}
 
 	public void Style(PStyle style)
 	{
 		throw new NotImplementedException();
 	}
-	
-	public void Text(string text, Index start, Index end, double x, double y)
+
+	public void Text(string text, Index start, Index end, float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(string text, Index start, Index end, double x, double y, double z)
+	public void Text(string text, Index start, Index end, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(string text, Range range, double x, double y)
+	public void Text(string text, Range range, float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(string text, Range range, double x, double y, double z)
+	public void Text(string text, Range range, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(char[] chars, Index start, Index end, double x, double y)
+	public void Text(char[] chars, Index start, Index end, float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(char[] chars, Index start, Index end, double x, double y, double z)
+	public void Text(char[] chars, Index start, Index end, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(char[] chars, Range range, double x, double y)
+	public void Text(char[] chars, Range range, float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text(char[] chars, Range range, double x, double y, double z)
+	public void Text(char[] chars, Range range, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text<T>(T num, double x, double y) where T : IConvertible, IFormattable
+	public void Text<T>(T num, float x, float y)
+	{
+		var text = num.ToString();
+		var size = stroke.TextSize;
+		
+		surface.Canvas.DrawText(text, x, y + size, fill);
+		surface.Canvas.DrawText(text, x, y + size, stroke);
+	}
+
+	public void Text<T>(T num, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Text<T>(T num, double x, double y, double z) where T : IConvertible, IFormattable
-	{
-		throw new NotImplementedException();
-	}
-
-	public void Text(string text, double x1, double y1, double x2, double y2)
+	public void Text(string text, float x1, float y1, float x2, float y2)
 	{
 		throw new NotImplementedException();
 	}
@@ -1122,7 +1112,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void TextLeading(double leading)
+	public void TextLeading(float leading)
 	{
 		throw new NotImplementedException();
 	}
@@ -1132,9 +1122,10 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void TextSize(double size)
+	public void TextSize(float size)
 	{
-		throw new NotImplementedException();
+		stroke.TextSize = size;
+		fill.TextSize = size;
 	}
 
 	public void Texture(PImage texture)
@@ -1152,52 +1143,52 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public double TextWidth(char c)
+	public float TextWidth(char c)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double TextWidth(char[] chars, int start, int length)
+	public float TextWidth(char[] chars, int start, int length)
 	{
 		throw new NotImplementedException();
 	}
 
-	public double TextWidth(string text)
+	public float TextWidth(string text)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Translate(double x, double y)
+	public void Translate(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Translate(double x, double y, double z)
+	public void Translate(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Triangle(double x1, double y1, double x2, double y2, double x3, double y3)
+	public void Triangle(float x1, float y1, float x2, float y2, float x3, float y3)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Vertex(double x, double y)
+	public void Vertex(float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Vertex(double x, double y, double z)
+	public void Vertex(float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Vertex(double x, double y, double z, double u, double v)
+	public void Vertex(float x, float y, float z, float u, float v)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void Vertex(double[] v)
+	public void Vertex(float[] v)
 	{
 		throw new NotImplementedException();
 	}

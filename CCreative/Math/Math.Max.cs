@@ -40,20 +40,14 @@ namespace CCreative
 
 				for (var i = 0; i < count; i++)
 				{
-					var value = result[i];
-
-					if (value > max)
-					{
-						max = value;
-					}
+					max = T.Max(max, result[i]);
 
 					j += count;
 				}
 			}
 
 			for (; j < numbers.Length; j++)
-				if (max > numbers[j])
-					max = numbers[j];
+				max = T.Max(max, numbers[j]);
 
 			return max;
 		}

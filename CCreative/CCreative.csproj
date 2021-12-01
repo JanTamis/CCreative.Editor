@@ -49,6 +49,7 @@
     <PackageReference Include="MathSharp" Version="2.0.0-pre" />
     <PackageReference Include="Silk.NET.GLFW" Version="2.10.1" />
     <PackageReference Include="Silk.NET.Input" Version="2.10.1" />
+    <PackageReference Include="Silk.NET.OpenCL" Version="2.10.1" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.10.1" />
     <PackageReference Include="Silk.NET.Windowing" Version="2.10.1" />
     <PackageReference Include="SixLabors.Fonts" Version="1.0.0-beta15" />

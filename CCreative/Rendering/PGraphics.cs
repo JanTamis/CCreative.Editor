@@ -32,7 +32,7 @@ namespace CCreative.Rendering
 		/// </summary>
 		/// <param name="gray">specifies a value between white and black</param>
 		/// <returns>the window background color</returns>
-		public Color Background(double gray)
+		public Color Background(float gray)
 		{
 			return Background(Color(gray));
 		}
@@ -43,7 +43,7 @@ namespace CCreative.Rendering
 		/// <param name="gray">specifies a value between white and black</param>
 		/// <param name="alpha">the opacity of the background</param>
 		/// <returns>the window background color</returns>
-		public Color Background(double gray, double alpha)
+		public Color Background(float gray, float alpha)
 		{
 			return Background(Color(gray, alpha));
 		}
@@ -55,7 +55,7 @@ namespace CCreative.Rendering
 		/// <param name="v2">the green of saturation value of the background</param>
 		/// <param name="v3">the red or brightness value of the background</param>
 		/// <returns>the window background color</returns>
-		public Color Background(double v1, double v2, double v3)
+		public Color Background(float v1, float v2, float v3)
 		{
 			return Background(Color(v1, v2, v3));
 		}
@@ -68,7 +68,7 @@ namespace CCreative.Rendering
 		/// <param name="v3">the red or brightness value of the background</param>
 		/// <param name="alpha">the opacity of the background</param>
 		/// <returns>the window background color</returns>
-		public Color Background(double v1, double v2, double v3, double alpha)
+		public Color Background(float v1, float v2, float v3, float alpha)
 		{
 			return Background(Color(v1, v2, v3, alpha));
 		}
@@ -82,7 +82,7 @@ namespace CCreative.Rendering
 		/// </summary>
 		/// <param name="mode">Either <see cref="PConstants.RGB"/> or <see cref="PConstants.RGB"/>, corresponding to Red/Green/Blue and Hue/Saturation/Brightness</param>
 		/// <param name="max">range for all color elements</param>
-		public void ColorMode(ColorModes mode, double max)
+		public void ColorMode(ColorModes mode, float max)
 		{
 			ColorMode(mode, max, max, max, max);
 		}
@@ -94,7 +94,7 @@ namespace CCreative.Rendering
 		/// <param name="max1">range for the red or hue depending on the current color mode</param>
 		/// <param name="max2">range for the green or saturation depending on the current color mode</param>
 		/// <param name="max3">range for the blue or brightness depending on the current color mode</param>
-		void ColorMode(ColorModes mode, double max1, double max2, double max3);
+		void ColorMode(ColorModes mode, float max1, float max2, float max3);
 
 		/// <summary>
 		/// Changes the way CCreative interprets color data
@@ -104,14 +104,14 @@ namespace CCreative.Rendering
 		/// <param name="max2">range for the green or saturation depending on the current color mode</param>
 		/// <param name="max3">range for the blue or brightness depending on the current color mode</param>
 		/// <param name="maxA">range for the alpha</param>
-		void ColorMode(ColorModes mode, double max1, double max2, double max3, double maxA);
+		void ColorMode(ColorModes mode, float max1, float max2, float max3, float maxA);
 
 		/// <summary>
 		/// Creates a grayscale color
 		/// </summary>
 		/// <param name="gray">number specifying value between white and black</param>
 		/// <returns>the created color</returns>
-		Color Color(double gray);
+		Color Color(float gray);
 
 		/// <summary>
 		/// Creates a new color based on <paramref name="color"/> with a given transparency
@@ -119,7 +119,7 @@ namespace CCreative.Rendering
 		/// <param name="color">the base color to change the alpha value of</param>
 		/// <param name="alpha">the opacity of the color</param>
 		/// <returns>a new color based from <paramref name="color"/> with the given alpha</returns>
-		Color Color(Color color, double alpha);
+		Color Color(Color color, float alpha);
 
 		/// <summary>
 		/// Creates a grayscale color with a given transparency
@@ -127,75 +127,180 @@ namespace CCreative.Rendering
 		/// <param name="gray">number specifying value between white and black</param>
 		/// <param name="alpha">the opacity of the color</param>
 		/// <returns>a new grayscale color with the given alpha</returns>
-		Color Color(double gray, double alpha);
+		Color Color(float gray, float alpha);
 
 		/// <summary>
-		/// Creates a color from RGB values or HSB value based on the given colormode, use <see cref="ColorMode(ColorModes, double)"/> to change the colormode
+		/// Creates a color from RGB values or HSB value based on the given colormode, use <see cref="ColorMode(ColorModes, float)"/> to change the colormode
 		/// </summary>
 		/// <param name="v1">the red or hue value of the color</param>
 		/// <param name="v2">the green of saturation value of the color</param>
 		/// <param name="v3">the red or brightness value of the color</param>
 		/// <returns>the created color</returns>
-		Color Color(double v1, double v2, double v3);
+		Color Color(float v1, float v2, float v3);
 
 		/// <summary>
-		/// Creates a color from RGB values or HSB value based on the given colormode, use <see cref="ColorMode(ColorModes, double)"/> to change the colormode
+		/// Creates a color from RGB values or HSB value based on the given colormode, use <see cref="ColorMode(ColorModes, float)"/> to change the colormode
 		/// </summary>
 		/// <param name="v1">the red or hue value of the color</param>
 		/// <param name="v2">the green of saturation value of the color</param>
 		/// <param name="v3">the red or brightness value of the color</param>
 		/// <param name="a">the opacity of the color</param>
 		/// <returns>the created color</returns>
-		Color Color(double v1, double v2, double v3, double a);
+		Color Color(float v1, float v2, float v3, float a);
 
 		/// <summary>
 		/// Returns the alpha (transparency) value of the color
 		/// </summary>
 		/// <param name="color">the color to get the alpha (transparency) value of</param>
 		/// <returns>the opacity value of the color</returns>
-		double Alpha(Color color);
+		float Alpha(Color color) => color.G;
 
 		/// <summary>
 		/// Returns the red component of the color
 		/// </summary>
 		/// <param name="color">the color to get the red component of</param>
 		/// <returns>the red component of the color</returns>
-		double Red(Color color);
+		float Red(Color color) => color.R;
 
 		/// <summary>
 		/// Returns the green component of the color
 		/// </summary>
 		/// <param name="color">the color to get the green component of</param>
 		/// <returns>the green component of the color</returns>
-		double Green(Color color);
+		float Green(Color color) => color.G;
 
 		/// <summary>
 		/// Returns the blue value of the color
 		/// </summary>
 		/// <param name="color">the color to get the blue value of</param>
 		/// <returns>the blue value of the color</returns>
-		double Blue(Color color);
+		float Blue(Color color) => color.B;
 
 		/// <summary>
 		/// Returns the hue component of the color
 		/// </summary>
 		/// <param name="color">the color to get the hue component of</param>
 		/// <returns>the hue component of the color</returns>
-		double Hue(Color color);
+		float Hue(Color color)
+		{
+			var (r, g, b) = color;
+			byte min;
+			byte max;
+			
+			if (r == g && g == b)
+				return 0f;
+ 
+			if (r > g)
+			{
+				max = r;
+				min = g;
+			}
+			else
+			{
+				max = g;
+				min = r;
+			}
+			
+			if (b > max)
+			{
+				max = b;
+			}
+			else if (b < min)
+			{
+				min = b;
+			}
+ 
+			float delta = max - min;
+			float hue;
+ 
+			if (r == max)
+				hue = (g - b) / delta;
+			else if (g == max)
+				hue = (b - r) / delta + 2f;
+			else
+				hue = (r - g) / delta + 4f;
+ 
+			hue *= 60f;
+			if (hue < 0f)
+				hue += 360f;
+ 
+			return hue;
+		}
 
 		/// <summary>
 		/// Returns the saturation component of the color
 		/// </summary>
 		/// <param name="color">the color to get the saturation component of</param>
 		/// <returns>the saturation component of the color</returns>
-		double Saturation(Color color);
+		float Saturation(Color color)
+		{
+			var (r, g, b) = color;
+			byte min;
+			byte max;
+			
+			if (r == g && g == b)
+				return 0f;
+ 
+			if (r > g)
+			{
+				max = r;
+				min = g;
+			}
+			else
+			{
+				max = g;
+				min = r;
+			}
+			
+			if (b > max)
+			{
+				max = b;
+			}
+			else if (b < min)
+			{
+				min = b;
+			}
+ 
+			var div = max + min;
+			if (div > byte.MaxValue)
+				div = byte.MaxValue * 2 - max - min;
+ 
+			return (max - min) / (float)div;
+		}
 
 		/// <summary>
 		/// Returns the brightness component of the color
 		/// </summary>
 		/// <param name="color">the color to get the brightness component of</param>
 		/// <returns>the brightness component of the color</returns>
-		double Brightness(Color color);
+		float Brightness(Color color)
+		{
+			var (r, g, b) = color;
+			byte min;
+			byte max;
+ 
+			if (r > g)
+			{
+				max = r;
+				min = g;
+			}
+			else
+			{
+				max = g;
+				min = r;
+			}
+			
+			if (b > max)
+			{
+				max = b;
+			}
+			else if (b < min)
+			{
+				min = b;
+			}
+ 
+			return (max + min) / (byte.MaxValue * 2f);
+		}
 
 		/// <summary>
 		/// Gets the contrast color (black or white) of the given color
@@ -211,7 +316,7 @@ namespace CCreative.Rendering
 		/// <param name="c2">the second color</param>
 		/// <param name="amt">the specified increment between 0 and 1</param>
 		/// <returns>the interpolated color</returns>
-		Color LerpColor(Color c1, Color c2, double amt);
+		Color LerpColor(Color c1, Color c2, float amt);
 
 		#endregion
 
@@ -234,7 +339,7 @@ namespace CCreative.Rendering
 		/// </summary>
 		/// <param name="gray">number specifying value between white and black</param>
 		/// <returns>the new stroke color</returns>
-		public Color Stroke(double gray)
+		public Color Stroke(float gray)
 		{
 			return Stroke(Color(gray));
 		}
@@ -245,7 +350,7 @@ namespace CCreative.Rendering
 		/// <param name="gray">number specifying value between white and black</param>
 		/// <param name="alpha">the alpha (transparent) component of the new stroke color</param>
 		/// <returns>the new stroke color</returns>
-		public Color Stroke(double gray, double alpha)
+		public Color Stroke(float gray, float alpha)
 		{
 			return Stroke(Color(gray, alpha));
 		}
@@ -257,7 +362,7 @@ namespace CCreative.Rendering
 		/// <param name="v2">the green of saturation value of the new stroke color</param>
 		/// <param name="v3">the red or brightness value of the new stroke color</param>
 		/// <returns>the new stroke color</returns>
-		public Color Stroke(double v1, double v2, double v3)
+		public Color Stroke(float v1, float v2, float v3)
 		{
 			return Stroke(Color(v1, v2, v3));
 		}
@@ -270,7 +375,7 @@ namespace CCreative.Rendering
 		/// <param name="v3">the red or brightness value of the new color</param>
 		/// <param name="alpha">the alpha (transparency) of the new stroke color</param>
 		/// <returns></returns>
-		public Color Stroke(double v1, double v2, double v3, double alpha)
+		public Color Stroke(float v1, float v2, float v3, float alpha)
 		{
 			return Stroke(Color(v1, v2, v3, alpha));
 		}
@@ -296,7 +401,7 @@ namespace CCreative.Rendering
 		/// </summary>
 		/// <param name="gray">number specifying value between white and black</param>
 		/// <returns>the new fill color</returns>
-		public Color Fill(double gray)
+		public Color Fill(float gray)
 		{
 			return Fill(Color(gray));
 		}
@@ -307,7 +412,7 @@ namespace CCreative.Rendering
 		/// <param name="gray">number specifying value between white and black</param>
 		/// <param name="alpha">the opacity of the color</param>
 		/// <returns>the new fill color</returns>
-		public Color Fill(double gray, double alpha)
+		public Color Fill(float gray, float alpha)
 		{
 			return Fill(Color(gray, alpha));
 		}
@@ -319,7 +424,7 @@ namespace CCreative.Rendering
 		/// <param name="v2">the green of saturation value of the fill color</param>
 		/// <param name="v3">the red or brightness value of the fill color</param>
 		/// <returns>the new fill color</returns>
-		public Color Fill(double v1, double v2, double v3)
+		public Color Fill(float v1, float v2, float v3)
 		{
 			return Fill(Color(v1, v2, v3));
 		}
@@ -332,7 +437,7 @@ namespace CCreative.Rendering
 		/// <param name="v3">the red or brightness value of the fill color</param>
 		/// <param name="alpha">the opacity of the fill color</param>
 		/// <returns></returns>
-		public Color Fill(double v1, double v2, double v3, double alpha)
+		public Color Fill(float v1, float v2, float v3, float alpha)
 		{
 			return Fill(Color(v1, v2, v3, alpha));
 		}
@@ -358,7 +463,7 @@ namespace CCreative.Rendering
 		/// </summary>
 		/// <param name="gray">specifies a value between white and black</param>
 		/// <returns>the new tint color</returns>
-		public Color Tint(double gray)
+		public Color Tint(float gray)
 		{
 			return Tint(Color(gray));
 		}
@@ -369,7 +474,7 @@ namespace CCreative.Rendering
 		/// <param name="gray">specifies a value between white and black</param>
 		/// <param name="alpha">the opacity of the images</param>
 		/// <returns></returns>
-		public Color Tint(double gray, double alpha)
+		public Color Tint(float gray, float alpha)
 		{
 			return Tint(Color(gray, alpha));
 		}
@@ -381,7 +486,7 @@ namespace CCreative.Rendering
 		/// <param name="v2">the green of saturation value of the tint color</param>
 		/// <param name="v3">the red or brightness value of the tint color</param>
 		/// <returns></returns>
-		public Color Tint(double v1, double v2, double v3)
+		public Color Tint(float v1, float v2, float v3)
 		{
 			return Tint(Color(v1, v2, v3));
 		}
@@ -394,7 +499,7 @@ namespace CCreative.Rendering
 		/// <param name="v3">the red or brightness value of the tint color</param>
 		/// <param name="alpha">the opacity of the images</param>
 		/// <returns></returns>
-		public Color Tint(double v1, double v2, double v3, double alpha)
+		public Color Tint(float v1, float v2, float v3, float alpha)
 		{
 			return Tint(Color(v1, v2, v3, alpha));
 		}
@@ -411,7 +516,7 @@ namespace CCreative.Rendering
 		/// Sets the ambient reflectance for shapes drawn to the screen
 		/// </summary>
 		/// <param name="gray">number specifying value between white and black</param>
-		public void Ambient(double gray)
+		public void Ambient(float gray)
 		{
 			Ambient(Color(gray));
 		}
@@ -422,7 +527,7 @@ namespace CCreative.Rendering
 		/// <param name="v1">the red or hue value of the ambient reflectance color</param>
 		/// <param name="v2">the green of saturation value of the ambient reflectance color</param>
 		/// <param name="v3">the red or brightness value of the ambient reflectance color</param>
-		public void Ambient(double v1, double v2, double v3)
+		public void Ambient(float v1, float v2, float v3)
 		{
 			Ambient(Color(v1, v2, v3));
 		}
@@ -442,7 +547,7 @@ namespace CCreative.Rendering
 		/// <param name="v1">the red or hue value of the ambient color</param>
 		/// <param name="v2">the green of saturation value of the ambient color</param>
 		/// <param name="v3">the red or brightness value of the ambient color</param>
-		public void AmbientLight(double v1, double v2, double v3)
+		public void AmbientLight(float v1, float v2, float v3)
 		{
 			AmbientLight(Color(v1, v2, v3));
 		}
@@ -456,7 +561,7 @@ namespace CCreative.Rendering
 		/// <param name="n10">numbers which define the 4x4 matrix to be multiplied</param>
 		/// <param name="n11">numbers which define the 4x4 matrix to be multiplied</param>
 		/// <param name="n12">numbers which define the 4x4 matrix to be multiplied</param>
-		void ApplyMatrix(double n00, double n01, double n02, double n10, double n11, double n12);
+		void ApplyMatrix(float n00, float n01, float n02, float n10, float n11, float n12);
 
 		/// <summary>
 		/// Multiplies the current matrix by the one specified through the parameters
@@ -477,7 +582,7 @@ namespace CCreative.Rendering
 		/// <param name="n31">numbers which define the 4x4 matrix to be multiplied</param>
 		/// <param name="n32">numbers which define the 4x4 matrix to be multiplied</param>
 		/// <param name="n33">numbers which define the 4x4 matrix to be multiplied</param>
-		void ApplyMatrix(double n00, double n01, double n02, double n03, double n10, double n11, double n12, double n13, double n20, double n21, double n22, double n23, double n30, double n31, double n32, double n33);
+		void ApplyMatrix(float n00, float n01, float n02, float n03, float n10, float n11, float n12, float n13, float n20, float n21, float n22, float n23, float n30, float n31, float n32, float n33);
 
 		/// <summary>
 		/// Multiplies the current matrix by the one specified through the parameter
@@ -494,7 +599,7 @@ namespace CCreative.Rendering
 		/// <param name="d">height of the arc's ellipse by default</param>
 		/// <param name="start">angle to start the arc, specified in radians</param>
 		/// <param name="stop">angle to stop the arc, specified in radians</param>
-		void Arc(double a, double b, double c, double d, double start, double stop);
+		void Arc(float a, float b, float c, float d, float start, float stop);
 
 		/// <summary>
 		/// The beginCamera() and endCamera() functions enable advanced customization of the camera space
@@ -508,31 +613,31 @@ namespace CCreative.Rendering
 		void BeginShape();
 		void BeginShape(ShapeTypes type);
 
-		void Bezier(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
-		void Bezier(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4);
+		void Bezier(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+		void Bezier(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4);
 
 		void BezierDetail(int detail);
 
-		double BezierPoint(double a, double b, double c, double d, double t);
+		float BezierPoint(float a, float b, float c, float d, float t);
 
-		double BezierTangent(double a, double b, double c, double d, double t);
+		float BezierTangent(float a, float b, float c, float d, float t);
 
-		void BezierVertex(double x2, double y2, double x3, double y3, double x4, double y4);
-		void BezierVertex(double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4);
+		void BezierVertex(float x2, float y2, float x3, float y3, float x4, float y4);
+		void BezierVertex(float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4);
 
 		void BlendMode(int mode);
 
-		public void Box(double size)
+		public void Box(float size)
 		{
 			Box(size, size, size);
 		}
 
-		void Box(double w, double h, double d);
+		void Box(float w, float h, float d);
 
 		void Camera();
-		void Camera(double eyeX, double eyeY, double eyeZ, double centerX, double centerY, double centerZ, double upX, double upY, double upZ);
+		void Camera(float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ, float upX, float upY, float upZ);
 
-		void Circle(double x, double y, double extent);
+		void Circle(float x, float y, float extent) => Ellipse(x, y, extent, extent);
 
 		void Clear();
 
@@ -541,32 +646,32 @@ namespace CCreative.Rendering
 		PImage CreateImage(int width, int height);
 		PImage? LoadImage(string path);
 
-		void Curve(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
-		void Curve(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4);
+		void Curve(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+		void Curve(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4);
 
 		void CurveDetail(int detail);
 
-		void CurvePoint(double a, double b, double c, double d, double t);
+		void CurvePoint(float a, float b, float c, float d, float t);
 
-		void CurveTangent(double a, double b, double c, double d, double t);
+		void CurveTangent(float a, float b, float c, float d, float t);
 
-		void CurveTightness(double tightness);
+		void CurveTightness(float tightness);
 
-		void CurveVertex(double x, double y);
-		void CurveVertex(double x, double y, double z);
+		void CurveVertex(float x, float y);
+		void CurveVertex(float x, float y, float z);
 
-		void DirectionalLight(double v1, double v2, double v3, double nx, double ny, double nz);
+		void DirectionalLight(float v1, float v2, float v3, float nx, float ny, float nz);
 
 		bool Displayable();
 
 		void Edge(bool edge);
 
-		void Ellipse(double a, double b, double c, double d);
+		void Ellipse(float a, float b, float c, float d);
 
 		void EllipseMode(int mode);
 
-		void Emissive(double gray);
-		void Emissive(double v1, double v2, double v3);
+		void Emissive(float gray);
+		void Emissive(float v1, float v2, float v3);
 		void Emissive(Color color);
 
 		void EndCamera();
@@ -579,7 +684,7 @@ namespace CCreative.Rendering
 
 		void Flush();
 
-		void Frustum(double left, double right, double bottom, double top, double near, double far);
+		void Frustum(float left, float right, float bottom, float top, float near, float far);
 
 		PMatrix GetMatrix();
 		PMatrix2D GetMatrix(PMatrix2D target);
@@ -590,9 +695,9 @@ namespace CCreative.Rendering
 
 		void Hint(int which);
 
-		void Image(PImage img, double a, double b);
-		void Image(PImage img, double a, double b, double c, double d);
-		void Image(PImage img, double a, double b, double c, double d, int u1, int v1, int u2, int v2);
+		void Image(PImage img, float a, float b);
+		void Image(PImage img, float a, float b, float c, float d);
+		void Image(PImage img, float a, float b, float c, float d, int u1, int v1, int u2, int v2);
 
 		void ImageMode(int mode);
 
@@ -600,40 +705,40 @@ namespace CCreative.Rendering
 		bool Is3D();
 		bool IsGL();
 
-		void LightFalloff(double constant, double linear, double quadratic);
+		void LightFalloff(float constant, float linear, float quadratic);
 
 		void Lights();
 
-		void LightSpecular(double v1, double v2, double v3);
+		void LightSpecular(float v1, float v2, float v3);
 
-		void Line(double x1, double y1, double x2, double y2);
-		void Line(double x1, double y1, double z1, double x2, double y2, double z2);
+		void Line(float x1, float y1, float x2, float y2);
+		void Line(float x1, float y1, float z1, float x2, float y2, float z2);
 
-		double ModelX(double x, double y, double z);
-		double ModelY(double x, double y, double z);
-		double ModelZ(double x, double y, double z);
+		float ModelX(float x, float y, float z);
+		float ModelY(float x, float y, float z);
+		float ModelZ(float x, float y, float z);
 
 		void NoClip();
 
 		void NoLights();
 
-		void Normal(double nx, double ny, double nz);
+		void Normal(float nx, float ny, float nz);
 
 		void NoSmooth();
 
 		void NoTexture();
 
 		void Ortho();
-		void Ortho(double left, double right, double bottom, double top);
-		void Ortho(double left, double right, double bottom, double top, double near, double far);
+		void Ortho(float left, float right, float bottom, float top);
+		void Ortho(float left, float right, float bottom, float top, float near, float far);
 
 		void Perspective();
-		void Perspective(double fovY, double aspect, double zNear, double zFar);
+		void Perspective(float fovY, float aspect, float zNear, float zFar);
 
-		void Point(double x, double y);
-		void Point(double x, double y, double z);
+		void Point(float x, float y);
+		void Point(float x, float y, float z);
 
-		void PointLight(double v1, double v2, double v3, double x, double y, double z);
+		void PointLight(float v1, float v2, float v3, float x, float y, float z);
 
 		void Pop();
 		void PopMatrix();
@@ -647,14 +752,14 @@ namespace CCreative.Rendering
 		void PushMatrix();
 		void PushStyle();
 
-		void Quad(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+		void Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 
-		void QuadraticVertex(double cx, double cy, double x3, double y3);
-		void QuadraticVertex(double cx, double cy, double cz, double x3, double y3, double z3);
+		void QuadraticVertex(float cx, float cy, float x3, float y3);
+		void QuadraticVertex(float cx, float cy, float cz, float x3, float y3, float z3);
 
-		void Rect(double a, double b, double c, double d);
-		void Rect(double a, double b, double c, double d, double r);
-		void Rect(double a, double b, double c, double d, double tl, double tr, double br, double bl);
+		void Rect(float a, float b, float c, float d);
+		void Rect(float a, float b, float c, float d, float r);
+		void Rect(float a, float b, float c, float d, float tl, float tr, float br, float bl);
 
 		void RectMode(int mode);
 
@@ -662,24 +767,24 @@ namespace CCreative.Rendering
 		void ResetShader();
 		void ResetShader(int kind);
 
-		void Rotate(double angle, double x, double y, double z);
+		void Rotate(float angle, float x, float y, float z);
 
-		void RotateX(double angle);
-		void RotateY(double angle);
-		void RotateZ(double angle);
+		void RotateX(float angle);
+		void RotateY(float angle);
+		void RotateZ(float angle);
 
-		void Scale(double s);
-		void Scale(double x, double y);
-		void Scale(double x, double y, double z);
+		void Scale(float s);
+		void Scale(float x, float y);
+		void Scale(float x, float y, float z);
 
-		double ScreenX(double x, double y);
-		double ScreenX(double x, double y, double z);
+		float ScreenX(float x, float y);
+		float ScreenX(float x, float y, float z);
 
-		double ScreenY(double x, double y);
-		double ScreenY(double x, double y, double z);
+		float ScreenY(float x, float y);
+		float ScreenY(float x, float y, float z);
 
-		double ScreenZ(double x, double y);
-		double ScreenZ(double x, double y, double z);
+		float ScreenZ(float x, float y);
+		float ScreenZ(float x, float y, float z);
 
 		void SetMatrix(PMatrix source);
 		void SetMatrix(PMatrix2D source);
@@ -692,49 +797,49 @@ namespace CCreative.Rendering
 
 		void ShapeMode(int kind);
 
-		void ShearX(double angle);
-		void ShearY(double angle);
+		void ShearX(float angle);
+		void ShearY(float angle);
 
-		void Shininess(double shine);
+		void Shininess(float shine);
 
 		void Smooth();
 		void Smooth(int quality);
 
-		void Specular(double gray);
-		void Specular(double v1, double v2, double v3);
+		void Specular(float gray);
+		void Specular(float v1, float v2, float v3);
 		void Specular(Color color);
 
-		void Sphere(double r);
+		void Sphere(float r);
 
 		void SphereDetail(int res);
 		void SphereDetail(int ures, int vres);
 
-		void SpotLight(double v1, double v2, double v3, double x, double y, double z, double nx, double ny, double nz, double angle, double concentration);
+		void SpotLight(float v1, float v2, float v3, float x, float y, float z, float nx, float ny, float nz, float angle, float concentration);
 
-		void Square(double x, double y, double extent);
+		void Square(float x, float y, float extent) => Rect(x, y, extent, extent);
 
 		void StrokeCap(int cap);
 
 		void StrokeJoin(int join);
 
-		void StrokeWeight(double weight);
+		void StrokeWeight(float weight);
 
 		void Style(PStyle style);
 
-		void Text(string text, Index start, Index end, double x, double y);
-		void Text(string text, Index start, Index end, double x, double y, double z);
-		void Text(string text, Range range, double x, double y);
-		void Text(string text, Range range, double x, double y, double z);
+		void Text(string text, Index start, Index end, float x, float y);
+		void Text(string text, Index start, Index end, float x, float y, float z);
+		void Text(string text, Range range, float x, float y);
+		void Text(string text, Range range, float x, float y, float z);
 
-		void Text(char[] chars, Index start, Index end, double x, double y);
-		void Text(char[] chars, Index start, Index end, double x, double y, double z);
-		void Text(char[] chars, Range range, double x, double y);
-		void Text(char[] chars, Range range, double x, double y, double z);
+		void Text(char[] chars, Index start, Index end, float x, float y);
+		void Text(char[] chars, Index start, Index end, float x, float y, float z);
+		void Text(char[] chars, Range range, float x, float y);
+		void Text(char[] chars, Range range, float x, float y, float z);
 
-		void Text<T>(T num, double x, double y) where T : IConvertible, IFormattable;
-		void Text<T>(T num, double x, double y, double z) where T : IConvertible, IFormattable;
+		void Text<T>(T num, float x, float y);
+		void Text<T>(T num, float x, float y, float z);
 
-		void Text(string text, double x1, double y1, double x2, double y2);
+		void Text(string text, float x1, float y1, float x2, float y2);
 
 		void TextAlign(int alignX);
 		void TextAlign(int alignX, int alignY);
@@ -745,26 +850,26 @@ namespace CCreative.Rendering
 		void TextFont(PFont which);
 		void TextFont(PFont which, int size);
 
-		void TextLeading(double leading);
+		void TextLeading(float leading);
 		void TextMode(int mode);
-		void TextSize(double size);
+		void TextSize(float size);
 
 		void Texture(PImage texture);
 		void TextureMode(int mode);
 		void TextureWrap(int wrap);
 
-		double TextWidth(char c);
-		double TextWidth(char[] chars, int start, int length);
-		double TextWidth(string text);
+		float TextWidth(char c);
+		float TextWidth(char[] chars, int start, int length);
+		float TextWidth(string text);
 
-		void Translate(double x, double y);
-		void Translate(double x, double y, double z);
+		void Translate(float x, float y);
+		void Translate(float x, float y, float z);
 
-		void Triangle(double x1, double y1, double x2, double y2, double x3, double y3);
+		void Triangle(float x1, float y1, float x2, float y2, float x3, float y3);
 
-		void Vertex(double x, double y);
-		void Vertex(double x, double y, double z);
-		void Vertex(double x, double y, double z, double u, double v);
-		void Vertex(double[] v);
+		void Vertex(float x, float y);
+		void Vertex(float x, float y, float z);
+		void Vertex(float x, float y, float z, float u, float v);
+		void Vertex(float[] v);
 	}
 }

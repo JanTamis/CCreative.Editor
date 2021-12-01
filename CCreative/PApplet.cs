@@ -186,11 +186,6 @@ namespace CCreative
 				surface.window.MakeCurrent();
 			}
 
-			Console.WriteLine(1 / (surface.window.Time - lastTime));
-
-			_frameRate = 1 / (surface.window.Time - lastTime);
-			lastTime = surface.window.Time;
-
 			graphics.BeginDraw();
 
 			Draw();
@@ -198,10 +193,10 @@ namespace CCreative
 			graphics.EndDraw();
 
 			surface.SwapBuffers();
+			
+			_frameRate = 1 / (surface.window.Time - lastTime);
+			lastTime = surface.window.Time;
 
-			Title(_frameRate);
-
-			//frameRateLastNanos = now;
 			FrameCount++;
 
 			PmouseX = MouseX;

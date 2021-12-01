@@ -35,5 +35,12 @@ namespace CCreative
 		{
 			return A is Byte.MaxValue ? $"#{R:X2}{G:X2}{B:X2}" : $"#{A:X2}{R:X2}{G:X2}{B:X2}";
 		}
+
+		public void Deconstruct(out byte r, out byte g, out byte b)
+		{
+			r = R;
+			g = G;
+			b = B;
+		}
 	}
 }

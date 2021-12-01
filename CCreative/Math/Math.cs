@@ -787,7 +787,7 @@ namespace CCreative
 
 		/// <summary> Converts a String representation of a hexadecimal number to its equivalent integer value </summary>
 		/// <param name="value"> String to convert to an integer </param>
-		/// <returns> Returns a interger from a hexadecimal number </returns>
+		/// <returns> Returns a integer from a hexadecimal number </returns>
 		public static int Unhex(string value)
 		{
 			return System.Convert.ToInt32(value, 16);

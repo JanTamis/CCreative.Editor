@@ -82,7 +82,7 @@ namespace CCreative
 			graphics.Filter(kind);
 		}
 
-		public void Filter(FilterTypes type, double param)
+		public void Filter(FilterTypes type, float param)
 		{
 			graphics.Filter(type, param);
 		}
@@ -127,72 +127,72 @@ namespace CCreative
 			graphics.Background(image);
 		}
 
-		public void ColorMode(ColorModes mode, double max1, double max2, double max3)
+		public void ColorMode(ColorModes mode, float max1, float max2, float max3)
 		{
 			graphics.ColorMode(mode, max1, max2, max3);
 		}
 
-		public void ColorMode(ColorModes mode, double max1, double max2, double max3, double maxA)
+		public void ColorMode(ColorModes mode, float max1, float max2, float max3, float maxA)
 		{
 			graphics.ColorMode(mode, max1, max2, max3, maxA);
 		}
 
-		public Color Color(double gray)
+		public Color Color(float gray)
 		{
 			return graphics.Color(gray);
 		}
 
-		public Color Color(Color color, double alpha)
+		public Color Color(Color color, float alpha)
 		{
 			return graphics.Color(color, alpha);
 		}
 
-		public Color Color(double gray, double alpha)
+		public Color Color(float gray, float alpha)
 		{
 			return graphics.Color(gray, alpha);
 		}
 
-		public Color Color(double v1, double v2, double v3)
+		public Color Color(float v1, float v2, float v3)
 		{
 			return graphics.Color(v1, v2, v3);
 		}
 
-		public Color Color(double v1, double v2, double v3, double a)
+		public Color Color(float v1, float v2, float v3, float a)
 		{
 			return graphics.Color(v1, v2, v3, a);
 		}
 
-		public double Alpha(Color color)
+		public float Alpha(Color color)
 		{
 			return graphics.Alpha(color);
 		}
 
-		public double Red(Color color)
+		public float Red(Color color)
 		{
 			return graphics.Red(color);
 		}
 
-		public double Green(Color color)
+		public float Green(Color color)
 		{
 			return graphics.Green(color);
 		}
 
-		public double Blue(Color color)
+		public float Blue(Color color)
 		{
 			return graphics.Blue(color);
 		}
 
-		public double Hue(Color color)
+		public float Hue(Color color)
 		{
 			return graphics.Hue(color);
 		}
 
-		public double Saturation(Color color)
+		public float Saturation(Color color)
 		{
 			return graphics.Saturation(color);
 		}
 
-		public double Brightness(Color color)
+		public float Brightness(Color color)
 		{
 			return graphics.Brightness(color);
 		}
@@ -202,7 +202,7 @@ namespace CCreative
 			return graphics.ContrastColor(color);
 		}
 
-		public Color LerpColor(Color c1, Color c2, double amt)
+		public Color LerpColor(Color c1, Color c2, float amt)
 		{
 			return graphics.LerpColor(c1, c2, amt);
 		}
@@ -247,14 +247,14 @@ namespace CCreative
 			graphics.AmbientLight(color);
 		}
 
-		public void ApplyMatrix(double n00, double n01, double n02, double n10, double n11, double n12)
+		public void ApplyMatrix(float n00, float n01, float n02, float n10, float n11, float n12)
 		{
 			graphics.ApplyMatrix(n00, n01, n02, n10, n11, n12);
 		}
 
-		public void ApplyMatrix(double n00, double n01, double n02, double n03, double n10, double n11, double n12,
-			double n13,
-			double n20, double n21, double n22, double n23, double n30, double n31, double n32, double n33)
+		public void ApplyMatrix(float n00, float n01, float n02, float n03, float n10, float n11, float n12,
+			float n13,
+			float n20, float n21, float n22, float n23, float n30, float n31, float n32, float n33)
 		{
 			graphics.ApplyMatrix(n00, n01, n02, n03, n10, n11, n12, n13, n20, n21, n22, n23, n30, n31, n32, n33);
 		}
@@ -264,7 +264,7 @@ namespace CCreative
 			graphics.ApplyMatrix(matrix);
 		}
 
-		public void Arc(double a, double b, double c, double d, double start, double stop)
+		public void Arc(float a, float b, float c, float d, float start, float stop)
 		{
 			graphics.Arc(a, b, c, d, start, stop);
 		}
@@ -294,14 +294,14 @@ namespace CCreative
 			graphics.BeginShape(type);
 		}
 
-		public void Bezier(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+		public void Bezier(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 		{
 			graphics.Bezier(x1, y1, x2, y2, x3, y3, x4, y4);
 		}
 
-		public void Bezier(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3,
-			double z3,
-			double x4, double y4, double z4)
+		public void Bezier(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3,
+			float z3,
+			float x4, float y4, float z4)
 		{
 			graphics.Bezier(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
 		}
@@ -311,23 +311,23 @@ namespace CCreative
 			graphics.BezierDetail(detail);
 		}
 
-		public double BezierPoint(double a, double b, double c, double d, double t)
+		public float BezierPoint(float a, float b, float c, float d, float t)
 		{
 			return graphics.BezierPoint(a, b, c, d, t);
 		}
 
-		public double BezierTangent(double a, double b, double c, double d, double t)
+		public float BezierTangent(float a, float b, float c, float d, float t)
 		{
 			return graphics.BezierTangent(a, b, c, d, t);
 		}
 
-		public void BezierVertex(double x2, double y2, double x3, double y3, double x4, double y4)
+		public void BezierVertex(float x2, float y2, float x3, float y3, float x4, float y4)
 		{
 			graphics.BezierVertex(x2, y2, x3, y3, x4, y4);
 		}
 
-		public void BezierVertex(double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4,
-			double z4)
+		public void BezierVertex(float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4,
+			float z4)
 		{
 			graphics.BezierVertex(x2, y2, z2, x3, y3, z3, x4, y4, z4);
 		}
@@ -337,7 +337,7 @@ namespace CCreative
 			graphics.BlendMode(mode);
 		}
 
-		public void Box(double w, double h, double d)
+		public void Box(float w, float h, float d)
 		{
 			graphics.Box(w, h, d);
 		}
@@ -347,14 +347,14 @@ namespace CCreative
 			graphics.Camera();
 		}
 
-		public void Camera(double eyeX, double eyeY, double eyeZ, double centerX, double centerY, double centerZ,
-			double upX,
-			double upY, double upZ)
+		public void Camera(float eyeX, float eyeY, float eyeZ, float centerX, float centerY, float centerZ,
+			float upX,
+			float upY, float upZ)
 		{
 			graphics.Camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
 		}
 
-		public void Circle(double x, double y, double extent)
+		public void Circle(float x, float y, float extent)
 		{
 			graphics.Circle(x, y, extent);
 		}
@@ -369,14 +369,14 @@ namespace CCreative
 			graphics.Clip(a, b, c, d);
 		}
 
-		public void Curve(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+		public void Curve(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 		{
 			graphics.Curve(x1, y1, x2, y2, x3, y3, x4, y4);
 		}
 
-		public void Curve(double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3,
-			double x4,
-			double y4, double z4)
+		public void Curve(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3,
+			float x4,
+			float y4, float z4)
 		{
 			graphics.Curve(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z3);
 		}
@@ -386,32 +386,32 @@ namespace CCreative
 			graphics.CurveDetail(detail);
 		}
 
-		public void CurvePoint(double a, double b, double c, double d, double t)
+		public void CurvePoint(float a, float b, float c, float d, float t)
 		{
 			graphics.CurvePoint(a, b, c, d, t);
 		}
 
-		public void CurveTangent(double a, double b, double c, double d, double t)
+		public void CurveTangent(float a, float b, float c, float d, float t)
 		{
 			graphics.CurveTangent(a, b, c, d, t);
 		}
 
-		public void CurveTightness(double tightness)
+		public void CurveTightness(float tightness)
 		{
 			graphics.CurveTightness(tightness);
 		}
 
-		public void CurveVertex(double x, double y)
+		public void CurveVertex(float x, float y)
 		{
 			graphics.CurveVertex(x, y);
 		}
 
-		public void CurveVertex(double x, double y, double z)
+		public void CurveVertex(float x, float y, float z)
 		{
 			graphics.CurveVertex(x, y, z);
 		}
 
-		public void DirectionalLight(double v1, double v2, double v3, double nx, double ny, double nz)
+		public void DirectionalLight(float v1, float v2, float v3, float nx, float ny, float nz)
 		{
 			graphics.DirectionalLight(v1, v2, v3, nx, ny, nz);
 		}
@@ -426,7 +426,7 @@ namespace CCreative
 			graphics.Edge(edge);
 		}
 
-		public void Ellipse(double a, double b, double c, double d)
+		public void Ellipse(float a, float b, float c, float d)
 		{
 			graphics.Ellipse(a, b, c, d);
 		}
@@ -436,12 +436,12 @@ namespace CCreative
 			graphics.EllipseMode(mode);
 		}
 
-		public void Emissive(double gray)
+		public void Emissive(float gray)
 		{
 			graphics.Emissive(gray);
 		}
 
-		public void Emissive(double v1, double v2, double v3)
+		public void Emissive(float v1, float v2, float v3)
 		{
 			graphics.Emissive(v1, v2, v3);
 		}
@@ -476,7 +476,7 @@ namespace CCreative
 			throw new NotImplementedException();
 		}
 
-		public void Frustum(double left, double right, double bottom, double top, double near, double far)
+		public void Frustum(float left, float right, float bottom, float top, float near, float far)
 		{
 			graphics.Frustum(left, right, bottom, top, near, far);
 		}
@@ -511,17 +511,17 @@ namespace CCreative
 			graphics.Hint(which);
 		}
 
-		public void Image(PImage img, double a, double b)
+		public void Image(PImage img, float a, float b)
 		{
 			graphics.Image(img, a, b);
 		}
 
-		public void Image(PImage img, double a, double b, double c, double d)
+		public void Image(PImage img, float a, float b, float c, float d)
 		{
 			graphics.Image(img, a, b, c, d);
 		}
 
-		public void Image(PImage img, double a, double b, double c, double d, int u1, int v1, int u2, int v2)
+		public void Image(PImage img, float a, float b, float c, float d, int u1, int v1, int u2, int v2)
 		{
 			graphics.Image(img, a, b, c, d, u1, v1, v2, u2);
 		}
@@ -546,7 +546,7 @@ namespace CCreative
 			return graphics.IsGL();
 		}
 
-		public void LightFalloff(double constant, double linear, double quadratic)
+		public void LightFalloff(float constant, float linear, float quadratic)
 		{
 			graphics.LightFalloff(constant, linear, quadratic);
 		}
@@ -556,32 +556,32 @@ namespace CCreative
 			graphics.Lights();
 		}
 
-		public void LightSpecular(double v1, double v2, double v3)
+		public void LightSpecular(float v1, float v2, float v3)
 		{
 			graphics.LightSpecular(v1, v2, v3);
 		}
 
-		public void Line(double x1, double y1, double x2, double y2)
+		public void Line(float x1, float y1, float x2, float y2)
 		{
 			graphics.Line(x1, y1, x2, y2);
 		}
 
-		public void Line(double x1, double y1, double z1, double x2, double y2, double z2)
+		public void Line(float x1, float y1, float z1, float x2, float y2, float z2)
 		{
 			graphics.Line(x1, y1, z1, x2, y2, z2);
 		}
 
-		public double ModelX(double x, double y, double z)
+		public float ModelX(float x, float y, float z)
 		{
 			return graphics.ModelX(x, y, z);
 		}
 
-		public double ModelY(double x, double y, double z)
+		public float ModelY(float x, float y, float z)
 		{
 			return graphics.ModelY(x, y, z);
 		}
 
-		public double ModelZ(double x, double y, double z)
+		public float ModelZ(float x, float y, float z)
 		{
 			return graphics.ModelZ(x, y, z);
 		}
@@ -596,7 +596,7 @@ namespace CCreative
 			graphics.NoLights();
 		}
 
-		public void Normal(double nx, double ny, double nz)
+		public void Normal(float nx, float ny, float nz)
 		{
 			graphics.Normal(nx, ny, nz);
 		}
@@ -616,12 +616,12 @@ namespace CCreative
 			graphics.Ortho();
 		}
 
-		public void Ortho(double left, double right, double bottom, double top)
+		public void Ortho(float left, float right, float bottom, float top)
 		{
 			graphics.Ortho(left, right, bottom, top);
 		}
 
-		public void Ortho(double left, double right, double bottom, double top, double near, double far)
+		public void Ortho(float left, float right, float bottom, float top, float near, float far)
 		{
 			graphics.Ortho(left, right, bottom, top, near, far);
 		}
@@ -631,22 +631,22 @@ namespace CCreative
 			graphics.Perspective();
 		}
 
-		public void Perspective(double fovY, double aspect, double zNear, double zFar)
+		public void Perspective(float fovY, float aspect, float zNear, float zFar)
 		{
 			graphics.Perspective(fovY, aspect, zNear, zFar);
 		}
 
-		public void Point(double x, double y)
+		public void Point(float x, float y)
 		{
 			graphics.Point(x, y);
 		}
 
-		public void Point(double x, double y, double z)
+		public void Point(float x, float y, float z)
 		{
 			graphics.Point(x, y, z);
 		}
 
-		public void PointLight(double v1, double v2, double v3, double x, double y, double z)
+		public void PointLight(float v1, float v2, float v3, float x, float y, float z)
 		{
 			graphics.PointLight(v1, v2, v3, x, y, z);
 		}
@@ -696,32 +696,32 @@ namespace CCreative
 			graphics.PushStyle();
 		}
 
-		public void Quad(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
+		public void Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 		{
 			graphics.Quad(x1, y1, x2, y2, x3, y3, x4, y4);
 		}
 
-		public void QuadraticVertex(double cx, double cy, double x3, double y3)
+		public void QuadraticVertex(float cx, float cy, float x3, float y3)
 		{
 			graphics.QuadraticVertex(cx, cy, x3, y3);
 		}
 
-		public void QuadraticVertex(double cx, double cy, double cz, double x3, double y3, double z3)
+		public void QuadraticVertex(float cx, float cy, float cz, float x3, float y3, float z3)
 		{
 			graphics.QuadraticVertex(cx, cy, cz, x3, y3, z3);
 		}
 
-		public void Rect(double a, double b, double c, double d)
+		public void Rect(float a, float b, float c, float d)
 		{
 			graphics.Rect(a, b, c, d);
 		}
 
-		public void Rect(double a, double b, double c, double d, double r)
+		public void Rect(float a, float b, float c, float d, float r)
 		{
 			graphics.Rect(a, b, c, d);
 		}
 
-		public void Rect(double a, double b, double c, double d, double tl, double tr, double br, double bl)
+		public void Rect(float a, float b, float c, float d, float tl, float tr, float br, float bl)
 		{
 			graphics.Rect(a, b, c, d, tl, tr, br, bl);
 		}
@@ -746,67 +746,67 @@ namespace CCreative
 			graphics.ResetShader(kind);
 		}
 
-		public void Rotate(double angle, double x, double y, double z)
+		public void Rotate(float angle, float x, float y, float z)
 		{
 			graphics.Rotate(angle, x, y, z);
 		}
 
-		public void RotateX(double angle)
+		public void RotateX(float angle)
 		{
 			graphics.RotateX(angle);
 		}
 
-		public void RotateY(double angle)
+		public void RotateY(float angle)
 		{
 			graphics.RotateY(angle);
 		}
 
-		public void RotateZ(double angle)
+		public void RotateZ(float angle)
 		{
 			graphics.RotateZ(angle);
 		}
 
-		public void Scale(double s)
+		public void Scale(float s)
 		{
 			graphics.Scale(s);
 		}
 
-		public void Scale(double x, double y)
+		public void Scale(float x, float y)
 		{
 			graphics.Scale(x, y);
 		}
 
-		public void Scale(double x, double y, double z)
+		public void Scale(float x, float y, float z)
 		{
 			graphics.Scale(x, y, z);
 		}
 
-		public double ScreenX(double x, double y)
+		public float ScreenX(float x, float y)
 		{
 			return graphics.ScreenX(x, y);
 		}
 
-		public double ScreenX(double x, double y, double z)
+		public float ScreenX(float x, float y, float z)
 		{
 			return graphics.ScreenX(x, y, z);
 		}
 
-		public double ScreenY(double x, double y)
+		public float ScreenY(float x, float y)
 		{
 			return graphics.ScreenY(x, y);
 		}
 
-		public double ScreenY(double x, double y, double z)
+		public float ScreenY(float x, float y, float z)
 		{
 			return ScreenY(x, y, z);
 		}
 
-		public double ScreenZ(double x, double y)
+		public float ScreenZ(float x, float y)
 		{
 			return graphics.ScreenZ(x, y);
 		}
 
-		public double ScreenZ(double x, double y, double z)
+		public float ScreenZ(float x, float y, float z)
 		{
 			return graphics.ScreenZ(x, y, z);
 		}
@@ -851,17 +851,17 @@ namespace CCreative
 			graphics.ShapeMode(kind);
 		}
 
-		public void ShearX(double angle)
+		public void ShearX(float angle)
 		{
 			graphics.ShearX(angle);
 		}
 
-		public void ShearY(double angle)
+		public void ShearY(float angle)
 		{
 			graphics.ShearY(angle);
 		}
 
-		public void Shininess(double shine)
+		public void Shininess(float shine)
 		{
 			Shininess(shine);
 		}
@@ -876,12 +876,12 @@ namespace CCreative
 			graphics.Smooth(quality);
 		}
 
-		public void Specular(double gray)
+		public void Specular(float gray)
 		{
 			graphics.Specular(gray);
 		}
 
-		public void Specular(double v1, double v2, double v3)
+		public void Specular(float v1, float v2, float v3)
 		{
 			graphics.Specular(v1, v2, v3);
 		}
@@ -891,7 +891,7 @@ namespace CCreative
 			graphics.Specular(color);
 		}
 
-		public void Sphere(double r)
+		public void Sphere(float r)
 		{
 			graphics.Sphere(r);
 		}
@@ -906,14 +906,14 @@ namespace CCreative
 			graphics.SphereDetail(ures, vres);
 		}
 
-		public void SpotLight(double v1, double v2, double v3, double x, double y, double z, double nx, double ny,
-			double nz,
-			double angle, double concentration)
+		public void SpotLight(float v1, float v2, float v3, float x, float y, float z, float nx, float ny,
+			float nz,
+			float angle, float concentration)
 		{
 			graphics.SpotLight(v1, v2, v3, x, y, z, nx, ny, nz, angle, concentration);
 		}
 
-		public void Square(double x, double y, double extent)
+		public void Square(float x, float y, float extent)
 		{
 			graphics.Square(x, y, extent);
 		}
@@ -928,7 +928,7 @@ namespace CCreative
 			graphics.StrokeJoin(join);
 		}
 
-		public void StrokeWeight(double weight)
+		public void StrokeWeight(float weight)
 		{
 			graphics.StrokeWeight(weight);
 		}
@@ -938,57 +938,57 @@ namespace CCreative
 			graphics.Style(style);
 		}
 
-		public void Text(string text, Index start, Index end, double x, double y)
+		public void Text(string text, Index start, Index end, float x, float y)
 		{
 			graphics.Text(text, start, end, x, y);
 		}
 
-		public void Text(string text, Index start, Index end, double x, double y, double z)
+		public void Text(string text, Index start, Index end, float x, float y, float z)
 		{
 			graphics.Text(text, start, end, x, y, z);
 		}
 
-		public void Text(string text, Range range, double x, double y)
+		public void Text(string text, Range range, float x, float y)
 		{
 			graphics.Text(text, range, x, y);
 		}
 
-		public void Text(string text, Range range, double x, double y, double z)
+		public void Text(string text, Range range, float x, float y, float z)
 		{
 			graphics.Text(text, range, x, y, z);
 		}
 
-		public void Text(char[] chars, Index start, Index end, double x, double y)
+		public void Text(char[] chars, Index start, Index end, float x, float y)
 		{
 			graphics.Text(chars, start, end, x, y);
 		}
 
-		public void Text(char[] chars, Index start, Index end, double x, double y, double z)
+		public void Text(char[] chars, Index start, Index end, float x, float y, float z)
 		{
 			graphics.Text(chars, start, end, x, y, z);
 		}
 
-		public void Text(char[] chars, Range range, double x, double y)
+		public void Text(char[] chars, Range range, float x, float y)
 		{
 			graphics.Text(chars, range, x, y);
 		}
 
-		public void Text(char[] chars, Range range, double x, double y, double z)
+		public void Text(char[] chars, Range range, float x, float y, float z)
 		{
 			graphics.Text(chars, range, x, y, z);
 		}
 
-		public void Text<T>(T num, double x, double y) where T : IConvertible, IFormattable
+		public void Text<T>(T num, float x, float y)
 		{
 			graphics.Text(num, x, y);
 		}
 
-		public void Text<T>(T num, double x, double y, double z) where T : IConvertible, IFormattable
+		public void Text<T>(T num, float x, float y, float z)
 		{
 			graphics.Text(num, x, y, z);
 		}
 
-		public void Text(string text, double x1, double y1, double x2, double y2)
+		public void Text(string text, float x1, float y1, float x2, float y2)
 		{
 			graphics.Text(text, x1, y1, x2, y2);
 		}
@@ -1023,7 +1023,7 @@ namespace CCreative
 			graphics.TextFont(which, size);
 		}
 
-		public void TextLeading(double leading)
+		public void TextLeading(float leading)
 		{
 			graphics.TextLeading(leading);
 		}
@@ -1033,7 +1033,7 @@ namespace CCreative
 			graphics.TextMode(mode);
 		}
 
-		public void TextSize(double size)
+		public void TextSize(float size)
 		{
 			graphics.TextSize(size);
 		}
@@ -1053,52 +1053,52 @@ namespace CCreative
 			graphics.TextureWrap(wrap);
 		}
 
-		public double TextWidth(char c)
+		public float TextWidth(char c)
 		{
 			return graphics.TextWidth(c);
 		}
 
-		public double TextWidth(char[] chars, int start, int length)
+		public float TextWidth(char[] chars, int start, int length)
 		{
 			return graphics.TextWidth(chars, start, length);
 		}
 
-		public double TextWidth(string text)
+		public float TextWidth(string text)
 		{
 			return TextWidth(text);
 		}
 
-		public void Translate(double x, double y)
+		public void Translate(float x, float y)
 		{
 			graphics.Translate(x, y);
 		}
 
-		public void Translate(double x, double y, double z)
+		public void Translate(float x, float y, float z)
 		{
 			graphics.Translate(x, y, z);
 		}
 
-		public void Triangle(double x1, double y1, double x2, double y2, double x3, double y3)
+		public void Triangle(float x1, float y1, float x2, float y2, float x3, float y3)
 		{
 			graphics.Triangle(x1, y1, x2, y2, x3, y3);
 		}
 
-		public void Vertex(double x, double y)
+		public void Vertex(float x, float y)
 		{
 			graphics.Vertex(x, y);
 		}
 
-		public void Vertex(double x, double y, double z)
+		public void Vertex(float x, float y, float z)
 		{
 			graphics.Vertex(x, y, z);
 		}
 
-		public void Vertex(double x, double y, double z, double u, double v)
+		public void Vertex(float x, float y, float z, float u, float v)
 		{
 			graphics.Vertex(x, y, z, u, v);
 		}
 
-		public void Vertex(double[] v)
+		public void Vertex(float[] v)
 		{
 			graphics.Vertex(v);
 		}
