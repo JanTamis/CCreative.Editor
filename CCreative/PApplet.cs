@@ -8,11 +8,14 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using Timer = System.Timers.Timer;
+
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace CCreative
 {
@@ -20,7 +23,7 @@ namespace CCreative
 	{
 		private PSurface surface;
 		private PGraphics graphics;
-		private readonly Timer currentTimer = new();
+		private PeriodicTimer currentTimer;
 
 		public virtual void Setup()
 		{
@@ -75,8 +78,8 @@ namespace CCreative
 
 		public TimeSpan Elapsed => TimeSpan.FromSeconds(surface.window.Time);
 
-		public int Width => surface.Size.X;
-		public int Height => surface.Size.Y;
+		public int Width => surface.Size.X * DisplayDensity;
+		public int Height => surface.Size.Y * DisplayDensity;
 
 		public int ScreenWidth => surface.window.Monitor.Bounds.Size.X;
 		public int ScreenHeight => surface.window.Monitor.Bounds.Size.Y;
@@ -90,32 +93,35 @@ namespace CCreative
 		{
 			colorModeX = colorModeY = colorModeZ = colorModeA = 255;
 
-			currentTimer = new Timer(1000)
-			{
-				AutoReset = true,
-			};
-
 			Setup();
+
+			if (surface is not null)
+			{
+				surface.window.Center();
+				surface.Run();
+			}
 		}
 
-		public void TimerInterval(int milliseconds)
+		public async void TimerInterval(int milliseconds)
 		{
-			if (currentTimer is null)
-			{
-				throw new InvalidOperationException("the Timer() function must exists to use this function");
-			}
+			currentTimer?.Dispose();
 
-			currentTimer.Interval = milliseconds;
+			currentTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(milliseconds));
+
+			while (await currentTimer.WaitForNextTickAsync())
+			{
+				Timer();
+			}
 		}
 
 		/// <summary>
 		/// Defines the dimension of the display window width and height in units of pixels
 		/// </summary>
-		/// <param name="Width">the width of the renderer</param>
-		/// <param name="Height">the height of the renderer</param>
-		public void Size(int Width, int Height)
+		/// <param name="width">the width of the renderer</param>
+		/// <param name="height">the height of the renderer</param>
+		public void Size(int width, int height)
 		{
-			Size(Width, Height, RenderTypes.P2D);
+			Size(width, height, RenderTypes.P2D);
 		}
 
 		/// <summary>
@@ -124,7 +130,7 @@ namespace CCreative
 		/// <param name="width">the width of the renderer</param>
 		/// <param name="height">the height of the renderer</param>
 		/// <param name="render">the renderer to use for this sketch</param>
-		public void Size(int width, int height, RenderTypes render)
+		public async void Size(int width, int height, RenderTypes render)
 		{
 			surface = new PSurface(width, height);
 
@@ -134,10 +140,6 @@ namespace CCreative
 				Resize();
 			};
 			surface.RenderFrame = Wnd_RenderFrame;
-
-			currentTimer.Elapsed += delegate { Timer(); };
-			currentTimer.Start();
-
 			surface.Initialize();
 
 			surface.MouseMove = (position) =>
@@ -147,6 +149,8 @@ namespace CCreative
 
 				MouseMove();
 			};
+			
+			surface.window.MakeCurrent();
 
 			DisplayDensity = (surface.window.FramebufferSize.X / width + surface.window.FramebufferSize.Y / height) / 2;
 			surface.DisplayDensity = DisplayDensity;
@@ -159,11 +163,14 @@ namespace CCreative
 				_ => throw new ArgumentException("Please select a vaid render type", nameof(render)),
 			};
 
+			currentTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+			
 			currentRenderer = render;
 
-			surface.Run();
-			surface.window.Center();
-			surface.window.MakeCurrent();
+			while (await currentTimer.WaitForNextTickAsync())
+			{
+				Timer();
+			}
 		}
 
 		/// <summary>
@@ -193,7 +200,7 @@ namespace CCreative
 			graphics.EndDraw();
 
 			surface.SwapBuffers();
-			
+
 			_frameRate = 1 / (surface.window.Time - lastTime);
 			lastTime = surface.window.Time;
 
@@ -469,9 +476,9 @@ namespace CCreative
 		public T[] Concat<T>(params T[][] arrays)
 		{
 			var outgoing = new T[arrays.Sum(a => a.Length)];
-			int offset = 0;
+			var offset = 0;
 
-			for (int x = 0; x < arrays.Length; x++)
+			for (var x = 0; x < arrays.Length; x++)
 			{
 				arrays[x].CopyTo(outgoing, offset);
 				offset += arrays[x].Length;
@@ -504,15 +511,14 @@ namespace CCreative
 
 		public T[] Subset<T>(T[] array, int start, int count)
 		{
-			T[] result = new T[count];
+			var result = new T[count];
 			ArrayCopy(array, start, result, 0, count);
 			return result;
 		}
 
 		public T[] Subset<T>(T[] array, Range range)
 		{
-			var (Offset, Length) = range.GetOffsetAndLength(array.Length);
-			return Subset(array, Offset, Length);
+			return array[range];
 		}
 
 		public T[] Subset<T>(T[] array, int start)
@@ -546,16 +552,18 @@ namespace CCreative
 
 		public T[] Splice<T>(T[] array, T[] value, int index)
 		{
-			T[] outgoing = new T[array.Length + value.Length];
+			var outgoing = GC.AllocateUninitializedArray<T>(array.Length + value.Length);
+
 			ArrayCopy(array, 0, outgoing, 0, index);
 			ArrayCopy(value, 0, outgoing, index, value.Length);
 			ArrayCopy(array, index, outgoing, index + value.Length, array.Length - index);
+
 			return outgoing;
 		}
 
 		public T[] Splice<T>(T[] array, T value, int index)
 		{
-			T[] outgoing = new T[array.Length + 1];
+			var outgoing = GC.AllocateUninitializedArray<T>(array.Length + 1);
 			ArrayCopy(array, 0, outgoing, 0, index);
 
 			outgoing[index] = value;
@@ -583,7 +591,7 @@ namespace CCreative
 			var matches = Regex.Matches(str, regexp);
 			var outgoing = new string[matches.Count];
 
-			for (int i = 0; i < outgoing.Length; i++)
+			for (var i = 0; i < outgoing.Length; i++)
 			{
 				outgoing[i] = matches[i].Value;
 			}
@@ -597,12 +605,12 @@ namespace CCreative
 
 			var outgoing = new string[matches.Count][];
 
-			for (int i = 0; i < outgoing.Length; i++)
+			for (var i = 0; i < outgoing.Length; i++)
 			{
 				var match = matches[i].Groups;
-				string[] results = new string[match.Count];
+				var results = new string[match.Count];
 
-				for (int j = 0; j < results.Length; j++)
+				for (var j = 0; j < results.Length; j++)
 				{
 					results[j] = match[j].Value;
 				}
@@ -622,7 +630,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nf(num[i]);
 			}
@@ -630,16 +638,16 @@ namespace CCreative
 			return result;
 		}
 
-		public static string Nf<T>(T num, int digits) where T : IConvertible, IFormattable
+		public static string Nf<T>(T num, int digits) where T : IFormattable
 		{
-			return String.Format("{0:" + new String('0', digits) + "}", num);
+			return num.ToString("N" + digits, null);
 		}
 
-		public static string[] Nf<T>(T[] num, int digits) where T : IConvertible, IFormattable
+		public static string[] Nf<T>(T[] num, int digits) where T : IFormattable
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nf(num[i], digits);
 			}
@@ -647,17 +655,17 @@ namespace CCreative
 			return result;
 		}
 
-		public static string Nf<T>(T num, int left, int right) where T : IConvertible, IFormattable
+		public static string Nf<T>(T num, int left, int right) where T : IFormattable
 		{
-			string decSeparator = System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
-			string result = num?.ToString() ?? String.Empty;
+			var decSeparator = System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
+			var result = num?.ToString() ?? String.Empty;
 
 			if (result.Contains(decSeparator))
 			{
-				int digits = result.IndexOf(decSeparator);
+				var digits = result.IndexOf(decSeparator, StringComparison.Ordinal);
 
-				string decimals = result[(digits + 1)..];
-				string wholeNumber = result[0..digits].PadLeft(left, '0');
+				var decimals = result[(digits + 1)..];
+				var wholeNumber = result[0..digits].PadLeft(left, '0');
 
 				if (right == 0)
 				{
@@ -670,14 +678,14 @@ namespace CCreative
 				}
 				else if (right < decimals.Length)
 				{
-					decimals = decimals.Substring(0, right);
+					decimals = decimals[..right];
 				}
 
-				return wholeNumber + decSeparator + decimals;
+				return String.Concat(wholeNumber, decSeparator, decimals);
 			}
 			else
 			{
-				return Nf(num, left) + decSeparator + new String('0', right);
+				return String.Concat(Nf(num, left), decSeparator, new String('0', right));
 			}
 		}
 
@@ -685,7 +693,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nf(num[i], left, right);
 			}
@@ -702,7 +710,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfc(num[i]);
 			}
@@ -719,7 +727,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfc(num[i], right);
 			}
@@ -736,7 +744,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfp(num[i]);
 			}
@@ -753,7 +761,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfp(num[i], digits);
 			}
@@ -770,7 +778,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfp(num[i], left, right);
 			}
@@ -787,7 +795,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfs(num[i]);
 			}
@@ -804,7 +812,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfs(num[i], digits);
 			}
@@ -821,7 +829,7 @@ namespace CCreative
 		{
 			var result = new string[num.Length];
 
-			for (int i = 0; i < result.Length; i++)
+			for (var i = 0; i < result.Length; i++)
 			{
 				result[i] = Nfp(num[i], left, right);
 			}
@@ -848,7 +856,7 @@ namespace CCreative
 		{
 			var outgoing = new string[array.Length];
 
-			for (int i = 0; i < outgoing.Length; i++)
+			for (var i = 0; i < outgoing.Length; i++)
 			{
 				outgoing[i] = Trim(array[i]);
 			}

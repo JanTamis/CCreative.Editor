@@ -3,20 +3,21 @@ using System.Runtime.Intrinsics;
 using static System.MathF;
 using Vector = MathSharp.Vector;
 
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable IdentifierTypo
+
 namespace CCreative
 {
-	[Serializable]
 	public readonly struct PVector : IEquatable<PVector>
 	{
 		private readonly Vector128<float> vector;
-		
+
 		public float X => vector.GetElement(0);
 		public float Y => vector.GetElement(1);
 		public float Z => vector.GetElement(2);
 
 		public PVector(float x, float y) : this(x, y, 0)
 		{
-			
 		}
 
 		public PVector(float x, float y, float z)
@@ -99,15 +100,18 @@ namespace CCreative
 			{
 				return new[] { X, Y, Z };
 			}
+
 			if (target.Length >= 2)
 			{
 				target[0] = X;
 				target[1] = Y;
 			}
+
 			if (target.Length >= 3)
 			{
 				target[2] = Z;
 			}
+
 			return target;
 		}
 
@@ -158,11 +162,11 @@ namespace CCreative
 		public PVector Rotate(float theta)
 		{
 			var temp = X;
-			
+
 			// Might need to check for rounding errors like with angleBetween function?
 			var x = X * Cos(theta) - Y * Sin(theta);
 			var y = temp * Sin(theta) + Y * Cos(theta);
-			
+
 			return new PVector(x, y);
 		}
 
@@ -219,15 +223,15 @@ namespace CCreative
 		{
 			// We get NaN if we pass in a zero vector which can cause problems
 			// Zero seems like a reasonable angle between a (0,0,0) vector and something else
-			if (v1.vector.Equals(Vector128<float>.Zero) || v2.vector.Equals(Vector128<float>.Zero)) 
+			if (v1.vector.Equals(Vector128<float>.Zero) || v2.vector.Equals(Vector128<float>.Zero))
 				return 0;
 
 			var dot = v1.Dot(v2);
-			var v1mag = v1.Mag();
-			var v2mag = v2.Mag();
+			var v1Mag = v1.Mag();
+			var v2Mag = v2.Mag();
 
 			// This should be a number between -1 and 1, since it's "normalized"
-			var amt = dot / (v1mag * v2mag);
+			var amt = dot / (v1Mag * v2Mag);
 			// But if it's not due to rounding error, then we need to fix it
 			// http://code.google.com/p/processing/issues/detail?id=340
 			// Otherwise if outside the range, acos() will return NaN
@@ -249,7 +253,7 @@ namespace CCreative
 		public static float Dist(PVector v1, PVector v2)
 		{
 			return Vector
-				.Distance4D(v1.vector, v2.vector)
+				.Distance3D(v1.vector, v2.vector)
 				.ToScalar();
 		}
 
@@ -260,7 +264,8 @@ namespace CCreative
 
 		public static PVector FromAngle(float angle)
 		{
-			return new PVector(Cos(angle), Sin(angle));
+			var (sin, cos) = SinCos(angle);
+			return new PVector(cos, sin);
 		}
 
 		public static PVector Lerp(PVector v1, PVector v2, float amt)
@@ -278,12 +283,7 @@ namespace CCreative
 			return FromAngle(Math.Random(PConstants.TWO_PI));
 		}
 
-		static public PVector Random3D()
-		{
-			return Random3D(default);
-		}
-
-		public static PVector Random3D(PVector target)
+		public static PVector Random3D()
 		{
 			var angle = Math.Random(PConstants.TWO_PI);
 			var vz = Math.Random(-1, 1);
@@ -315,6 +315,16 @@ namespace CCreative
 
 		public static PVector operator +(PVector a, PVector b) => Add(a, b);
 		public static PVector operator -(PVector a, PVector b) => Sub(a, b);
+
+		public static bool operator ==(PVector left, PVector right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(PVector left, PVector right)
+		{
+			return !(left == right);
+		}
 
 		#endregion
 	}

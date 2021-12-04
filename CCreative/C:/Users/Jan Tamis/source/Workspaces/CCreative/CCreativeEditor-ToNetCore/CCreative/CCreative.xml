@@ -51,8 +51,8 @@
             <summary>
             Defines the dimension of the display window width and height in units of pixels
             </summary>
-            <param name="Width">the width of the renderer</param>
-            <param name="Height">the height of the renderer</param>
+            <param name="width">the width of the renderer</param>
+            <param name="height">the height of the renderer</param>
         </member>
         <member name="M:CCreative.PApplet.Size(System.Int32,System.Int32,CCreative.RenderTypes)">
             <summary>
@@ -704,26 +704,33 @@
             
             <returns> Returns the converted value </returns>
         </member>
-        <member name="M:CCreative.Math.Max``1(``0[])">
-            <summary>
-            Determines the biggest value in a sequence of numbers
-            </summary>
-            <param name="numbers">array of numbers to compare</param>
-            <returns>returns the maximum value</returns>
-        </member>
-        <member name="M:CCreative.Math.Min``1(``0[])">
+        <member name="M:CCreative.Math.Min``1(System.Span{``0})">
             <summary>
             Determines the smallest value in a sequence of numbers
             </summary>
             <param name="numbers">array of numbers to compare</param>
             <returns>returns the minimum value</returns>
         </member>
-        <member name="M:CCreative.Math.Sum``1(``0[])">
+        <member name="M:CCreative.Math.Max``1(System.Span{``0})">
+            <summary>
+            Determines the biggest value in a sequence of numbers
+            </summary>
+            <param name="numbers">array of numbers to compare</param>
+            <returns>returns the maximum value</returns>
+        </member>
+        <member name="M:CCreative.Math.Sum``1(System.Span{``0})">
             <summary>
             Determines the sum of a sequence of numbers
             </summary>
             <param name="numbers">array of get the sum of</param>
             <returns>returns the sum</returns>
+        </member>
+        <member name="M:CCreative.Math.Average``1(System.Span{``0})">
+            <summary>
+            Determines the average value in a sequence of numbers
+            </summary>
+            <param name="numbers">array of numbers to compare</param>
+            <returns>returns the average value</returns>
         </member>
         <member name="M:CCreative.NoiseMaker.Noise1(System.Single)">
             1D float Perlin noise, SL "noise()"

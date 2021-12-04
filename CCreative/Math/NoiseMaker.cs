@@ -5,12 +5,12 @@ using System.Runtime.CompilerServices;
 namespace CCreative;
 
 // https://gist.github.com/jackmott/38a26cd2934c23a161490044e64170c6
-public static class NoiseMaker
+internal static class NoiseMaker
 {
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static float Fade(float t)
 	{
-		return t * t * t * (t * (t * 6f - 15f) + 10f);
+		return t * t * t * MathF.FusedMultiplyAdd(t, t * 6f - 15f, 10f);
 	}
 
 	private static readonly Vector<float> S6F = new(6.0f);
@@ -21,12 +21,6 @@ public static class NoiseMaker
 	private static Vector<float> Fadesimd(Vector<float> t)
 	{
 		return t * t * t * (t * (t * S6F - S15F) + S10F);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static float Lerp(float t, float a, float b)
-	{
-		return a + t * (b - a);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,20 +112,25 @@ public static class NoiseMaker
 	{
 		h &= 15;
 		var grad = 1.0f + (h & 7); // Gradient value 1.0, 2.0, ..., 8.0
+		
 		if ((h & 8) == 1)
 			grad = -grad; // and a random sign for the gradient
+		
 		return grad * x; // Multiply the gradient with the distance
 	}
 
 	private static float Grad2(int h, float x, float y)
 	{
 		h &= 7; // Convert low 3 bits of hash code
+		
 		var u = h < 4 ? x : y; // into 8 simple gradient directions,
 		var v = h < 4 ? y : x; // and compute the dot product with (x,y).
 
 		if ((h & 1) == 1)
 			u = -u;
+		
 		var n = 2.0f * v;
+		
 		if ((h & 2) == 1)
 			n = -2.0f * v;
 
@@ -142,8 +141,10 @@ public static class NoiseMaker
 	private static float Grad3(int h, float x, float y, float z)
 	{
 		h &= 15; // Convert low 4 bits of hash code into 12 simple
+		
 		var u = h < 8 ? x : y; // gradient directions, and compute dot product.
 		var v = h < 4 ? y : h is 12 or 14 ? x : z; // Fix repeats at h = 12 to 15
+		
 		if ((h & 1) != 0)
 			u = -u;
 
@@ -182,6 +183,7 @@ public static class NoiseMaker
 	private static float Grad4(int h, float x, float y, float z, float t)
 	{
 		h &= 31; // Convert low 5 bits of hash code into 32 simple
+		
 		var u = h < 24 ? x : y; // gradient directions, and compute dot product.
 		var v = h < 16 ? y : z;
 		var w = h < 8 ? z : t;
@@ -218,7 +220,7 @@ public static class NoiseMaker
 
 		n0 = Grad1(_perm[ix0], fx0);
 		n1 = Grad1(_perm[ix1], fx1);
-		return 0.188f * Lerp(s, n0, n1);
+		return 0.188f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
@@ -241,7 +243,7 @@ public static class NoiseMaker
 
 		n0 = Grad1(_perm[ix0], fx0);
 		n1 = Grad1(_perm[ix1], fx1);
-		return 0.188f * Lerp(s, n0, n1);
+		return 0.188f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
@@ -270,13 +272,13 @@ public static class NoiseMaker
 
 		nx0 = Grad2(_perm[ix0 + _perm[iy0]], fx0, fy0);
 		nx1 = Grad2(_perm[ix0 + _perm[iy1]], fx0, fy1);
-		n0 = Lerp(t, nx0, nx1);
+		n0 = Math.Lerp(nx0, nx1, t);
 
 		nx0 = Grad2(_perm[ix1 + _perm[iy0]], fx1, fy0);
 		nx1 = Grad2(_perm[ix1 + _perm[iy1]], fx1, fy1);
-		n1 = Lerp(t, nx0, nx1);
+		n1 = Math.Lerp(nx0, nx1, t);
 
-		return 0.507f * Lerp(s, n0, n1);
+		return 0.507f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
@@ -305,13 +307,13 @@ public static class NoiseMaker
 
 		nx0 = Grad2(_perm[ix0 + _perm[iy0]], fx0, fy0);
 		nx1 = Grad2(_perm[ix0 + _perm[iy1]], fx0, fy1);
-		n0 = Lerp(t, nx0, nx1);
+		n0 = Math.Lerp(nx0, nx1, t);
 
 		nx0 = Grad2(_perm[ix1 + _perm[iy0]], fx1, fy0);
 		nx1 = Grad2(_perm[ix1 + _perm[iy1]], fx1, fy1);
-		n1 = Lerp(t, nx0, nx1);
+		n1 = Math.Lerp(nx0, nx1, t);
 
-		return 0.446f * Lerp(s, n0, n1) + .5f;
+		return 0.446f * Math.Lerp(n0, n1, s) + .5f;
 	}
 
 	private static int[] _a = new int[Vector<float>.Count];
@@ -453,25 +455,25 @@ public static class NoiseMaker
 
 		nxy0 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz0]]], fx0, fy0, fz0);
 		nxy1 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz1]]], fx0, fy0, fz1);
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxy0 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz0]]], fx0, fy1, fz0);
 		nxy1 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz1]]], fx0, fy1, fz1);
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Lerp(t, nx0, nx1);
+		n0 = Math.Lerp(nx0, nx1, t);
 
 		nxy0 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz0]]], fx1, fy0, fz0);
 		nxy1 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz1]]], fx1, fy0, fz1);
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxy0 = Grad3(_perm[ix1 + _perm[iy1 + _perm[iz0]]], fx1, fy1, fz0);
 		nxy1 = Grad3(_perm[ix1 + _perm[iy1 + _perm[iz1]]], fx1, fy1, fz1);
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Lerp(t, nx0, nx1);
+		n1 = Math.Lerp(nx0, nx1, t);
 
-		return Lerp(s, n0, n1) * .936f;
+		return Math.Lerp(n0, n1, s) * .936f;
 	}
 
 	//---------------------------------------------------------------------
@@ -506,25 +508,25 @@ public static class NoiseMaker
 
 		nxy0 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz0]]], fx0, fy0, fz0);
 		nxy1 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz1]]], fx0, fy0, fz1);
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxy0 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz0]]], fx0, fy1, fz0);
 		nxy1 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz1]]], fx0, fy1, fz1);
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Lerp(t, nx0, nx1);
+		n0 = Math.Lerp(nx0, nx1, t);
 
 		nxy0 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz0]]], fx1, fy0, fz0);
 		nxy1 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz1]]], fx1, fy0, fz1);
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxy0 = Grad3(_perm[ix1 + _perm[iy1 + _perm[iz0]]], fx1, fy1, fz0);
 		nxy1 = Grad3(_perm[ix1 + _perm[iy1 + _perm[iz1]]], fx1, fy1, fz1);
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Lerp(t, nx0, nx1);
+		n1 = Math.Lerp(nx0, nx1, r);
 
-		return 0.936f * Lerp(s, n0, n1);
+		return 0.936f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
@@ -565,49 +567,49 @@ public static class NoiseMaker
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx0, fy0, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx0, fy0, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw0]]]], fx0, fy0, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw1]]]], fx0, fy0, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw0]]]], fx0, fy1, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw1]]]], fx0, fy1, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz1 + _perm[iw0]]]], fx0, fy1, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz1 + _perm[iw1]]]], fx0, fy1, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Lerp(t, nx0, nx1);
+		n0 = Math.Lerp(nx0, nx1, t);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx1, fy0, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx1, fy0, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz1 + _perm[iw0]]]], fx1, fy0, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz1 + _perm[iw1]]]], fx1, fy0, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz0 + _perm[iw0]]]], fx1, fy1, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz0 + _perm[iw1]]]], fx1, fy1, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz1 + _perm[iw0]]]], fx1, fy1, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz1 + _perm[iw1]]]], fx1, fy1, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Lerp(t, nx0, nx1);
+		n1 = Math.Lerp(nx0, nx1, t);
 
-		return 0.87f * Lerp(s, n0, n1);
+		return 0.87f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
@@ -649,49 +651,49 @@ public static class NoiseMaker
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx0, fy0, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx0, fy0, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw0]]]], fx0, fy0, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw1]]]], fx0, fy0, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw0]]]], fx0, fy1, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw1]]]], fx0, fy1, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz1 + _perm[iw0]]]], fx0, fy1, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz1 + _perm[iw1]]]], fx0, fy1, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Lerp(t, nx0, nx1);
+		n0 = Math.Lerp(nx0, nx1, t);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx1, fy0, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx1, fy0, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz1 + _perm[iw0]]]], fx1, fy0, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz1 + _perm[iw1]]]], fx1, fy0, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx0 = Lerp(r, nxy0, nxy1);
+		nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz0 + _perm[iw0]]]], fx1, fy1, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz0 + _perm[iw1]]]], fx1, fy1, fz0, fw1);
-		nxy0 = Lerp(q, nxyz0, nxyz1);
+		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz1 + _perm[iw0]]]], fx1, fy1, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy1 + _perm[iz1 + _perm[iw1]]]], fx1, fy1, fz1, fw1);
-		nxy1 = Lerp(q, nxyz0, nxyz1);
+		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx1 = Lerp(r, nxy0, nxy1);
+		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Lerp(t, nx0, nx1);
+		n1 = Math.Lerp(nx0, nx1, t);
 
-		return 0.87f * Lerp(s, n0, n1);
+		return 0.87f * Math.Lerp(n0, n1, s);
 	}
 
 	private static float Pfbm2(float x, float y, int px, int py, int octaves, float alpha, float omega)
@@ -728,8 +730,8 @@ public static class NoiseMaker
 
 	//private static float[] fmb3Offset = new float[] {0f,     0f, .0737f, .1189f, .1440f, .1530f};
 	//private static float[] fmb3Scale = new float[]  {0f, 1.066f, .8584f, .8120f, .8083f, .8049f };    
-	private static float[] _fmb3Offset = new float[] { 0f, 0f, .0737f, .1189f, .1440f, .1530f };
-	private static float[] _fmb3Scale = new float[] { 0f, 1.066f, .8584f, .8120f, .8083f, .8049f };
+	private static float[] _fmb3Offset = { 0f, 0f, .0737f, .1189f, .1440f, .1530f };
+	private static float[] _fmb3Scale = { 0f, 1.066f, .8584f, .8120f, .8083f, .8049f };
 
 	private static float Fbm3(float x, float y, float z, int octaves, float lacunarity, float gain)
 	{

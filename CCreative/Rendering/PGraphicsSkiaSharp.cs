@@ -433,8 +433,8 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Circle(float x, float y, float extent)
 	{
-		surface.Canvas.DrawCircle((float)x, (float)y, (float)extent, fill);
-		surface.Canvas.DrawCircle((float)x, (float)y, (float)extent, stroke);
+		surface.Canvas.DrawCircle(x, y, extent, fill);
+		surface.Canvas.DrawCircle(x, y, extent, stroke);
 	}
 
 	public void Clear()
@@ -654,7 +654,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Line(float x1, float y1, float x2, float y2)
 	{
-		surface.Canvas.DrawLine((float)x1, (float)y1, (float)x2, (float)y2, stroke);
+		surface.Canvas.DrawLine(x1, y1, x2, y2, stroke);
 	}
 
 	public void Line(float x1, float y1, float z1, float x2, float y2, float z2)

@@ -43,7 +43,7 @@ namespace CCreative
 		/// <returns>the distance between the points</returns>
 		public static float Dist(PVector beginPoint, PVector endPoint)
 		{
-			return Dist(beginPoint.X, beginPoint.Y, endPoint.Z, endPoint.X, endPoint.Y, endPoint.Z);
+			return PVector.Dist(beginPoint, endPoint);
 		}
 
 		/// <summary>
@@ -76,7 +76,8 @@ namespace CCreative
 		/// <returns>the distance between the points</returns>
 		public static T Dist<T>(T beginX, T beginY, T endX, T endY) where T : IFloatingPoint<T>
 		{
-			return Sqrt(Sq(beginX - endX) + Sq(beginY - endY));
+			// return Sqrt(Sq(beginX - endX) + Sq(beginY - endY));
+			return Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX, Sq(beginY - endY)));
 		}
 
 		/// <summary>
@@ -91,7 +92,9 @@ namespace CCreative
 		/// <returns>the distance between the points</returns>
 		public static T Dist<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPoint<T>
 		{
-			return Sqrt(Sq(beginX - endX) + Sq(beginY - endY) + Sq(beginZ - endZ));
+			// return Sqrt(Sq(beginX - endX) + Sq(beginY - endY) + Sq(beginZ - endZ));
+			return Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX,
+				T.FusedMultiplyAdd(beginY - endY, beginY - endY, Sq(beginZ - endZ))));
 		}
 
 		/// <summary>
@@ -111,9 +114,10 @@ namespace CCreative
 		/// <param name="stop">second value</param>
 		/// <param name="atm">number between 0.0 and 1.0</param>
 		/// <returns>the result of the calculation</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Lerp<T>(T start, T stop, T atm) where T : IFloatingPoint<T>
 		{
-			return start + (stop - start) * atm;
+			return T.FusedMultiplyAdd(atm, stop - start, start);
 		}
 
 		/// <summary>
@@ -161,9 +165,10 @@ namespace CCreative
 		/// <param name="start2">lower bound of the value's target range</param>
 		/// <param name="stop2">upper bound of the value's target range</param>
 		/// <returns>the remapped number</returns>
-		public static T Map<T>(T value, T start1, T stop1, T start2, T stop2) where T : INumber<T>
+		public static T Map<T>(T value, T start1, T stop1, T start2, T stop2) where T : IFloatingPoint<T>
 		{
-			return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
+			// return start2 + (stop2 - start2) * Norm(value, start1, stop1);
+			return T.FusedMultiplyAdd(stop2 - start2,  Norm(value, start1, stop1), start2);
 		}
 
 		/// <summary>
@@ -173,6 +178,7 @@ namespace CCreative
 		/// <param name="start">lower bound of the value's current range</param>
 		/// <param name="stop">upper bound of the value's current range</param>
 		/// <returns>the normalized value</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Norm<T>(T value, T start, T stop) where T : IFloatingPoint<T>
 		{
 			return (value - start) / (stop - start);
@@ -193,6 +199,7 @@ namespace CCreative
 		/// </summary>
 		/// <param name="number">number to square</param>
 		/// <returns>returns the squared number</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Sq<T>(T number) where T : INumber<T>
 		{
 			return number * number;
@@ -206,6 +213,16 @@ namespace CCreative
 		public static T InverseSqrt<T>(T x) where T : IFloatingPoint<T>
 		{
 			return T.One / T.Sqrt(x);
+		}
+
+		/// <summary>
+		/// Calculates the log2 of <see cref="x"/>
+		/// </summary>
+		/// <param name="x">number to find the log2 of</param>
+		/// <returns>returns the log2 of <see cref="x"/></returns>
+		public static T Log2<T>(T x) where T : IFloatingPoint<T>
+		{
+			return T.Log2(x);
 		}
 
 		#endregion
@@ -384,9 +401,9 @@ namespace CCreative
 		/// <returns>a random number</returns>
 		public static float Random(float low, float high)
 		{
-			if (low >= high) 
+			if (low >= high)
 				return low;
-			
+
 			var diff = high - low;
 			float value;
 
@@ -514,7 +531,7 @@ namespace CCreative
 		{
 			Span<byte> bytes = stackalloc byte[1];
 			rng.NextBytes(bytes);
-
+			
 			return bytes[0];
 		}
 
@@ -615,7 +632,6 @@ namespace CCreative
 			{
 				var nextDecimalSample = RandomDecimal();
 				value = maxValue * nextDecimalSample + minValue * (1 - nextDecimalSample);
-
 			} while (value == maxValue);
 
 			return value;
@@ -706,12 +722,12 @@ namespace CCreative
 		/// <returns>the index of <paramref name="value"/></returns>
 		public static int BinarySearch<T>(IList<T> values, T value) where T : INumber<T>
 		{
-			int lo = 0;
-			int hi = values.Count - 1;
+			var lo = 0;
+			var hi = values.Count - 1;
 
 			while (lo <= hi)
 			{
-				int i = lo + ((hi - lo) >> 1);
+				var i = lo + ((hi - lo) >> 1);
 
 				if (values[i] == value)
 					return i;
@@ -853,7 +869,8 @@ namespace CCreative
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static TResult ConvertNumber<TResult, TOrigin>(TOrigin origin) where TResult : INumber<TResult> where TOrigin : INumber<TOrigin>
+		private static TResult ConvertNumber<TResult, TOrigin>(TOrigin origin) where TResult : INumber<TResult>
+			where TOrigin : INumber<TOrigin>
 		{
 			return TResult.Create(origin);
 		}
