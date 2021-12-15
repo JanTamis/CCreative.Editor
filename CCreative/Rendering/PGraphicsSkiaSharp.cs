@@ -1,10 +1,11 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using CCreative.ObjectTK;
+using CCreative.Helpers;
 using Silk.NET.Core.Contexts;
 using Silk.NET.OpenGL;
 using SkiaSharp;
+
 // ReSharper disable ConvertToUsingDeclaration
 #pragma warning disable CS1591
 
@@ -20,7 +21,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	private SKImageInfo defaultImageInfo => new(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
-	private SKPaint stroke = new SKPaint()
+	private readonly SKPaint stroke = new()
 	{
 		Style = SKPaintStyle.Stroke,
 		Color = SKColors.Black,
@@ -29,7 +30,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		IsAntialias = true,
 	};
 
-	private SKPaint fill = new SKPaint()
+	private readonly SKPaint fill = new()
 	{
 		Style = SKPaintStyle.Fill,
 		Color = SKColors.White,
@@ -42,7 +43,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		using var grGlInterface =
 			GRGlInterface.Create(name => window.GLContext!.TryGetProcAddress(name, out var addr) ? addr : (IntPtr)0);
 		grGlInterface.Validate();
-		
+
 		context = GRContext.CreateGl(grGlInterface);
 		var renderTarget =
 			new GRBackendRenderTarget(height, width, 0, 8, new GRGlFramebufferInfo(0, 0x8058)); // 0x8058 = GL_RGBA8`
@@ -53,6 +54,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		Width = width;
 		Height = height;
 		PixelDensity = pixelDensity;
+		Pixels = new byte[width * height * 4 * pixelDensity];
 	}
 
 	public void Dispose()
@@ -82,7 +84,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		}
 
 		using var pin = new AutoPinner(Pixels);
-		
+
 		surface.ReadPixels(info, pin, info.RowBytes, 0, 0);
 	}
 
@@ -98,7 +100,7 @@ public class PGraphicsSkiaSharp : PGraphics
 	{
 		using var pinner = new AutoPinner(Pixels);
 		using var img = SKImage.FromPixels(defaultImageInfo, pinner);
-		
+
 		surface.Canvas.DrawImage(img, 0, 0);
 	}
 
@@ -110,7 +112,7 @@ public class PGraphicsSkiaSharp : PGraphics
 	{
 		var pixelSpan = surface.PeekPixels().GetPixelSpan();
 		var span = MemoryMarshal.Cast<byte, MemoryColor>(pixelSpan);
-		
+
 		return span[x * Width + y];
 	}
 
@@ -131,7 +133,15 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Set(int x, int y, Color color)
 	{
-		throw new NotImplementedException();
+		if (Pixels is not null)
+		{
+			var index = (x * Width + y) * 4;
+
+			Pixels[index] = color.B;
+			Pixels[index + 1] = color.G;
+			Pixels[index + 2] = color.R;
+			Pixels[index + 3] = color.A;
+		}
 	}
 
 	public void Set(int x, int y, PImage img)
@@ -151,12 +161,80 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Filter(FilterTypes kind)
 	{
-		throw new NotImplementedException();
+		using var paint = new SKPaint();
+
+		switch (kind)
+		{
+			case FilterTypes.Blur:
+				paint.ImageFilter = SKImageFilter.CreateBlur(1, 1, SKShaderTileMode.Clamp);
+				break;
+			case FilterTypes.Invert:
+				paint.ColorFilter = SKColorFilter.CreateColorMatrix(new[]
+				{
+					-1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+					0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+					0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+					1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+				});
+				break;
+			case FilterTypes.Gray:
+				paint.ColorFilter = SKColorFilter.CreateColorMatrix(new[]
+				{
+					0.21f, 0.72f, 0.07f, 0, 0,
+					0.21f, 0.72f, 0.07f, 0, 0,
+					0.21f, 0.72f, 0.07f, 0, 0,
+					0, 0, 0, 1, 0,
+				});
+				break;
+			case FilterTypes.Threshold:
+				break;
+			case FilterTypes.Opaque:
+				break;
+			case FilterTypes.Posterize:
+				break;
+			case FilterTypes.Erode:
+				break;
+			case FilterTypes.Dilate:
+				break;
+			case FilterTypes.Sepia:
+				break;
+			case FilterTypes.Jitter:
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+		}
+
+		surface.Canvas.DrawSurface(surface, 0, 0, paint);
 	}
 
-	public void Filter(FilterTypes type, float param)
+	public void Filter(FilterTypes kind, float param)
 	{
-		throw new NotImplementedException();
+		using var paint = new SKPaint();
+
+		switch (kind)
+		{
+			case FilterTypes.Blur:
+				paint.ImageFilter = SKImageFilter.CreateBlur(param, param, SKShaderTileMode.Clamp);
+				break;
+			case FilterTypes.Threshold:
+				break;
+			case FilterTypes.Opaque:
+				break;
+			case FilterTypes.Posterize:
+				break;
+			case FilterTypes.Erode:
+				break;
+			case FilterTypes.Dilate:
+				break;
+			case FilterTypes.Sepia:
+				break;
+			case FilterTypes.Jitter:
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+		}
+
+		surface.Canvas.DrawSurface(surface, 0, 0, paint);
 	}
 
 	public void Copy(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
@@ -192,7 +270,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 			surface.Canvas.Flush();
 
-			var snapshot = surface.Snapshot();
+			using var snapshot = surface.Snapshot();
 			var data = snapshot.Encode(SKEncodedImageFormat.Png, 100);
 			data.SaveTo(stream);
 
@@ -217,11 +295,6 @@ public class PGraphicsSkiaSharp : PGraphics
 		}
 
 		return color;
-	}
-
-	public void Background(PImage image)
-	{
-		throw new NotImplementedException();
 	}
 
 	public void ColorMode(ColorModes mode, float max1, float max2, float max3)
@@ -262,16 +335,6 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public Color ContrastColor(Color color)
-	{
-		throw new NotImplementedException();
-	}
-
-	public Color LerpColor(Color c1, Color c2, float amt)
-	{
-		throw new NotImplementedException();
-	}
-
 	public void NoStroke()
 	{
 		stroke.Color = SKColor.Empty;
@@ -294,7 +357,12 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Fill(Color color)
 	{
-		throw new NotImplementedException();
+		if (color is SkiaColor skiaColor)
+		{
+			fill.Color = skiaColor.skColor;
+		}
+
+		return color;
 	}
 
 	public void NoTint()
@@ -449,13 +517,14 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public PImage CreateImage(int width, int height)
 	{
-		return new SkiaImage(SKImage.Create(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul)));
+		return new SkiaImage(SKImage.Create(new SKImageInfo(width * PixelDensity, height * PixelDensity,
+			SKColorType.Bgra8888, SKAlphaType.Premul)));
 	}
 
 	public PImage LoadImage(string path)
 	{
 		using var stream = File.OpenRead(path);
-		
+
 		return new SkiaImage(SKImage.FromEncodedData(stream));
 	}
 
@@ -604,7 +673,10 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Image(PImage img, float a, float b)
 	{
-		throw new NotImplementedException();
+		if (img is SkiaImage skImage)
+		{
+			surface.Canvas.DrawImage(skImage.skImage, a, b);
+		}
 	}
 
 	public void Image(PImage img, float a, float b, float c, float d)
@@ -783,11 +855,6 @@ public class PGraphicsSkiaSharp : PGraphics
 	}
 
 	public void PushStyle()
-	{
-		throw new NotImplementedException();
-	}
-
-	public void Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 	{
 		throw new NotImplementedException();
 	}
@@ -1067,7 +1134,7 @@ public class PGraphicsSkiaSharp : PGraphics
 	{
 		var text = num.ToString();
 		var size = stroke.TextSize;
-		
+
 		surface.Canvas.DrawText(text, x, y + size, fill);
 		surface.Canvas.DrawText(text, x, y + size, stroke);
 	}
@@ -1168,11 +1235,6 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Triangle(float x1, float y1, float x2, float y2, float x3, float y3)
-	{
-		throw new NotImplementedException();
-	}
-
 	public void Vertex(float x, float y)
 	{
 		throw new NotImplementedException();
@@ -1191,5 +1253,14 @@ public class PGraphicsSkiaSharp : PGraphics
 	public void Vertex(float[] v)
 	{
 		throw new NotImplementedException();
+	}
+
+	public void DrawShape(Span<float> vertecies)
+	{
+		using var path = new SKPath();
+		path.AddPoly(MemoryMarshal.Cast<float, SKPoint>(vertecies).ToArray());
+
+		surface.Canvas.DrawPath(path, fill);
+		surface.Canvas.DrawPath(path, stroke);
 	}
 }

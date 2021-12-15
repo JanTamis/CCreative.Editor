@@ -1,24 +1,24 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace CCreative.ObjectTK;
+namespace CCreative.Helpers;
 
 public struct AutoPinner : IDisposable
 {
-	GCHandle _pinnedArray;
+	private GCHandle pinnedObject;
 
 	public AutoPinner(object? obj)
 	{
-		_pinnedArray = GCHandle.Alloc(obj, GCHandleType.Pinned);
+		pinnedObject = GCHandle.Alloc(obj, GCHandleType.Pinned);
 	}
 
 	public static implicit operator IntPtr(AutoPinner ap)
 	{
-		return ap._pinnedArray.AddrOfPinnedObject();
+		return ap.pinnedObject.AddrOfPinnedObject();
 	}
 
 	public void Dispose()
 	{
-		_pinnedArray.Free();
+		pinnedObject.Free();
 	}
 }

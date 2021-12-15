@@ -1,14 +1,13 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using CCreative.ObjectTK;
+using CCreative.Helpers;
 using SkiaSharp;
 
 namespace CCreative;
 
 public class SkiaImage : PImage
 {
-	private SKImage skImage;
+	internal SKImage skImage;
 	
 	public byte[]? Pixels { get; set; }
 	public int Width => skImage.Width;
@@ -36,7 +35,14 @@ public class SkiaImage : PImage
 
 	public void UpdatePixels()
 	{
-		throw new NotImplementedException();
+		if (Pixels is not null)
+		{
+			using var pixmap = skImage.PeekPixels();
+
+			var span = pixmap.GetPixelSpan<byte>();
+
+			Pixels.CopyTo(span);
+		}
 	}
 
 	public void Resize(int width, int height)
@@ -46,7 +52,10 @@ public class SkiaImage : PImage
 
 	public Color Get(int x, int y)
 	{
-		throw new NotImplementedException();
+		using var pixMap = skImage.PeekPixels();
+		var color = pixMap.GetPixelColor(x, y);
+
+		return new SkiaColor(color);
 	}
 
 	public PImage Get(int x, int y, int w, int h)
@@ -56,17 +65,29 @@ public class SkiaImage : PImage
 
 	public PImage Get()
 	{
-		throw new NotImplementedException();
+		using var pixMap = skImage.PeekPixels();
+
+		return new SkiaImage(SKImage.FromPixels(pixMap));
 	}
 
 	public PImage Copy()
 	{
-		throw new NotImplementedException();
+		using var pixMap = skImage.PeekPixels();
+		return new SkiaImage(SKImage.FromPixels(pixMap));
 	}
 
 	public void Set(int x, int y, Color color)
 	{
-		throw new NotImplementedException();
+		if (color is SkiaColor skColor)
+		{
+			using var pixMap = skImage.PeekPixels();
+
+			var span = pixMap.GetPixelSpan<SKColor>();
+
+			span[y * Width + x] = skColor.skColor;
+		}
+
+		throw new ArgumentException("Create a color using the Color method", nameof(color));
 	}
 
 	public void Set(int x, int y, PImage img)

@@ -25,7 +25,11 @@ namespace CCreative.Rendering
 		/// Sets the background of the window to a image and erases all drawings on the screen
 		/// </summary>
 		/// <param name="image">PImage to set as background</param>
-		void Background(PImage image);
+		void Background(PImage image)
+		{
+			Clear();
+			Image(image, 0, 0);
+		}
 
 		/// <summary>
 		/// Sets the background of the window and erases all drawings on the screen
@@ -262,6 +266,7 @@ namespace CCreative.Rendering
 			}
  
 			var div = max + min;
+			
 			if (div > byte.MaxValue)
 				div = byte.MaxValue * 2 - max - min;
  
@@ -298,8 +303,8 @@ namespace CCreative.Rendering
 			{
 				min = b;
 			}
- 
-			return (max + min) / (byte.MaxValue * 2f);
+
+			return (max + min) / (Byte.MaxValue * 2f);
 		}
 
 		/// <summary>
@@ -307,7 +312,14 @@ namespace CCreative.Rendering
 		/// </summary>
 		/// <param name="color">the color to calculate the contrast color of</param>
 		/// <returns>the contrast color</returns>
-		Color ContrastColor(Color color);
+		Color ContrastColor(Color color)
+		{
+			var (r, g, b) = color;
+
+			var l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+			return l < 0.5 ? Color(Byte.MaxValue) : Color(Byte.MinValue);
+		}
 
 		/// <summary>
 		/// Calculates a color between two colors at a specific increment
@@ -316,7 +328,17 @@ namespace CCreative.Rendering
 		/// <param name="c2">the second color</param>
 		/// <param name="amt">the specified increment between 0 and 1</param>
 		/// <returns>the interpolated color</returns>
-		Color LerpColor(Color c1, Color c2, float amt);
+		Color LerpColor(Color c1, Color c2, float amt)
+		{
+			var (r1, g1, b1) = c1;
+			var (r2, g2, b2) = c2;
+
+			var r = Math.Lerp(r1, r2, amt);
+			var g = Math.Lerp(g1, g2, amt);
+			var b = Math.Lerp(b1, b2, amt);
+
+			return Color(r, g, b);
+		}
 
 		#endregion
 
@@ -752,7 +774,12 @@ namespace CCreative.Rendering
 		void PushMatrix();
 		void PushStyle();
 
-		void Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
+		void Quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+		{
+			Span<float> span = stackalloc float[] { x1, y1, x2, y2, x3, y3, x4, y4 };
+
+			DrawShape(span);
+		}
 
 		void QuadraticVertex(float cx, float cy, float x3, float y3);
 		void QuadraticVertex(float cx, float cy, float cz, float x3, float y3, float z3);
@@ -865,11 +892,18 @@ namespace CCreative.Rendering
 		void Translate(float x, float y);
 		void Translate(float x, float y, float z);
 
-		void Triangle(float x1, float y1, float x2, float y2, float x3, float y3);
+		void Triangle(float x1, float y1, float x2, float y2, float x3, float y3)
+		{
+			Span<float> span = stackalloc float[] { x1, y1, x2, y2, x3, y3 };
+
+			DrawShape(span);
+		}
 
 		void Vertex(float x, float y);
 		void Vertex(float x, float y, float z);
 		void Vertex(float x, float y, float z, float u, float v);
 		void Vertex(float[] v);
+
+		void DrawShape(Span<float> vertecies);
 	}
 }

@@ -33,9 +33,9 @@ namespace CCreative
 			set => window.Size = value;
 		}
 
-		public double FrameRate
+		public float FrameRate
 		{
-			get => window.FramesPerSecond;
+			get => (float)window.FramesPerSecond;
 			set => window.FramesPerSecond = value;
 		}
 

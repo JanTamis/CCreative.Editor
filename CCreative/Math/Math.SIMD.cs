@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks.Dataflow;
+
 // ReSharper disable CheckNamespace
 
 namespace CCreative
@@ -22,7 +23,7 @@ namespace CCreative
 			return T.Min(T.Min(num1, num2), num3);
 		}
 
-		public static T Min<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+		public static T Min<T>(params T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 		{
 			if (numbers.Length * Unsafe.SizeOf<T>() >= 65536)
 			{
@@ -32,7 +33,7 @@ namespace CCreative
 				{
 					var (tempArray, index, length) = tuple;
 					temp[index] = Min(tempArray.AsSpan(index * _degreeOfParallelism, length));
-				}, new ExecutionDataflowBlockOptions()
+				}, new ExecutionDataflowBlockOptions
 				{
 					EnsureOrdered = false,
 					MaxDegreeOfParallelism = _degreeOfParallelism,
@@ -62,7 +63,7 @@ namespace CCreative
 			return T.Max(T.Max(num1, num2), num3);
 		}
 
-		public static T Max<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+		public static T Max<T>(params T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 		{
 			if (numbers.Length * Unsafe.SizeOf<T>() >= 65536)
 			{
@@ -97,7 +98,7 @@ namespace CCreative
 			return Max(CollectionsMarshal.AsSpan(numbers));
 		}
 
-		public static T Sum<T>(T[] numbers) where T : unmanaged, INumber<T>
+		public static T Sum<T>(params T[] numbers) where T : unmanaged, INumber<T>
 		{
 			if (numbers.Length * Unsafe.SizeOf<T>() >= 65536)
 			{
@@ -153,9 +154,9 @@ namespace CCreative
 				for (var i = 0; i < count; i++)
 				{
 					min = T.Min(min, result[i]);
-
-					j += count;
 				}
+
+				j = count * setVectors.Length;
 			}
 
 			for (; j < numbers.Length; j++)
@@ -170,7 +171,7 @@ namespace CCreative
 		/// <param name="numbers">array of numbers to compare</param>
 		/// <returns>returns the maximum value</returns>
 		[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-		public static T Max<T>(Span<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+		internal static T Max<T>(Span<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 		{
 			var max = T.MinValue;
 			var j = 0;
@@ -189,9 +190,9 @@ namespace CCreative
 				for (var i = 0; i < count; i++)
 				{
 					max = T.Max(max, result[i]);
-
-					j += count;
 				}
+
+				j = count * setVectors.Length;
 			}
 
 			for (; j < numbers.Length; j++)
@@ -216,18 +217,18 @@ namespace CCreative
 
 			if (Vector.IsHardwareAccelerated && numbers.Length >= count)
 			{
-				var vsArray = MemoryMarshal.Cast<T, Vector<T>>(numbers);
+				var setVectors = MemoryMarshal.Cast<T, Vector<T>>(numbers);
 
-				for (i = 0; i < vsArray.Length; i++)
+				for (i = 0; i < setVectors.Length; i++)
 				{
-					vSum = Vector.Add(vSum, vsArray[i]);
+					vSum = Vector.Add(vSum, setVectors[i]);
 				}
 
 				sum = Vector.Sum(vSum);
 
-				i *= count;
+				i = count * setVectors.Length;
 			}
-
+			
 			for (; i < numbers.Length; i++)
 			{
 				sum += numbers[i];
@@ -253,7 +254,7 @@ namespace CCreative
 		/// <param name="concurrencyLevel">the maximum concurrency level</param>
 		public static void SetMaxConcurrencyLevel(int concurrencyLevel)
 		{
-			_degreeOfParallelism = concurrencyLevel;
+			_degreeOfParallelism = Min(concurrencyLevel, Environment.ProcessorCount);
 		}
 	}
 }

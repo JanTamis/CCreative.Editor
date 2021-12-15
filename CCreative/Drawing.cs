@@ -1102,5 +1102,10 @@ namespace CCreative
 		{
 			graphics.Vertex(v);
 		}
+
+		public void DrawShape(Span<float> vertecies)
+		{
+			graphics.DrawShape(vertecies);
+		}
 	}
 }

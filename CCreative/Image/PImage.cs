@@ -123,7 +123,7 @@ namespace CCreative
 
 		void Filter(FilterTypes kind);
 
-		void Filter(FilterTypes type, float param);
+		void Filter(FilterTypes kind, float param);
 
 		void Copy(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh);
 

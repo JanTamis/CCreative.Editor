@@ -7,27 +7,27 @@ namespace CCreative
 		/// <summary>
 		/// The horizontal location of the mouse on the window
 		/// </summary>
-		public int MouseX { get; protected set; }
+		public float MouseX { get; protected set; }
 
 		/// <summary>
 		/// The vertical location of the mouse on the window
 		/// </summary>
-		public int MouseY { get; protected set; }
+		public float MouseY { get; protected set; }
 
 		/// <summary>
 		/// The current location of the mouse on the window
 		/// </summary>
-		public PVector MousePos { get; protected set; }
+		public PVector MousePos => new(MouseX, MouseY);
 
 		/// <summary>
 		/// The vertical location of the mouse on the window on the previous frame
 		/// </summary>
-		public int PmouseX { get; protected set; }
+		public float PmouseX { get; protected set; }
 
 		/// <summary>
 		/// The horizontal location of the mouse on the window on the previous frame
 		/// </summary>
-		public int PmouseY { get; protected set; }
+		public float PmouseY { get; protected set; }
 
 		public const float TAU = TWO_PI;
 		public const float TWO_PI = MathF.Tau;

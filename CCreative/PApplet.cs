@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using Timer = System.Timers.Timer;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -64,13 +63,14 @@ namespace CCreative
 
 		public readonly Version CSharpVersion = new(10, 0);
 
-		public readonly string OPERATING_SYSTEM = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" :
-			RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "Linux" :
-			RuntimeInformation.IsOSPlatform(OSPlatform.OSX) ? "MacOS" : String.Empty;
+		public readonly string OPERATING_SYSTEM =
+			OperatingSystem.IsWindows() ? "Windows" :
+			OperatingSystem.IsLinux() ? "Linux" :
+			OperatingSystem.IsMacOS() ? "MacOS" : String.Empty;
 
 		public int DisplayDensity { get; private set; }
 
-		public double FrameRate
+		public float FrameRate
 		{
 			get => _frameRate;
 			set => surface.FrameRate = value;
@@ -86,7 +86,7 @@ namespace CCreative
 
 		private RenderTypes currentRenderer;
 
-		private double _frameRate;
+		private float _frameRate;
 		private double lastTime;
 
 		public PApplet()
@@ -144,8 +144,8 @@ namespace CCreative
 
 			surface.MouseMove = (position) =>
 			{
-				MouseX = (int)position.X;
-				MouseY = (int)position.Y;
+				MouseX = position.X;
+				MouseY = position.Y;
 
 				MouseMove();
 			};
@@ -160,7 +160,7 @@ namespace CCreative
 				RenderTypes.P2D => new PGraphicsSkiaSharp(surface.window.FramebufferSize.X, surface.window.FramebufferSize.Y,
 					DisplayDensity, surface.window),
 				// RenderTypes.P3D => new PGraphicsOpenGL(),
-				_ => throw new ArgumentException("Please select a vaid render type", nameof(render)),
+				_ => throw new ArgumentException("Please select a valid render type", nameof(render)),
 			};
 
 			currentTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
@@ -201,7 +201,7 @@ namespace CCreative
 
 			surface.SwapBuffers();
 
-			_frameRate = 1 / (surface.window.Time - lastTime);
+			_frameRate = (float)(1 / (surface.window.Time - lastTime));
 			lastTime = surface.window.Time;
 
 			FrameCount++;
@@ -250,7 +250,6 @@ namespace CCreative
 		{
 			surface.Title = newTitle?.ToString() ?? String.Empty;
 		}
-
 
 		/// <summary>
 		/// Sets the location of the window
@@ -623,7 +622,7 @@ namespace CCreative
 
 		public static string Nf<T>(T num) where T : IConvertible, IFormattable
 		{
-			return num?.ToString() ?? String.Empty;
+			return num?.ToString("N", null) ?? String.Empty;
 		}
 
 		public static string[] Nf<T>(T[] num) where T : IConvertible, IFormattable

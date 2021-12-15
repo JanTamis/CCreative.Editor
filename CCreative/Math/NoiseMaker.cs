@@ -18,19 +18,19 @@ internal static class NoiseMaker
 	private static readonly Vector<float> S10F = new(10.0f);
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static Vector<float> Fadesimd(Vector<float> t)
+	private static Vector<float> FadeSimd(Vector<float> t)
 	{
 		return t * t * t * (t * (t * S6F - S15F) + S10F);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static Vector<float> Lerpsimd(Vector<float> t, Vector<float> a, Vector<float> b)
+	private static Vector<float> LerpSimd(Vector<float> t, Vector<float> a, Vector<float> b)
 	{
 		return a + t * (b - a);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static Vector<float> Floorsimd(Vector<float> f)
+	private static Vector<float> FloorSimd(Vector<float> f)
 	{
 		var ft = (Vector<float>)(Vector<int>)f;
 		return ft - Vector.BitwiseAnd(Vector.LessThan<float>(f, ft), Vector<float>.One);
@@ -112,25 +112,25 @@ internal static class NoiseMaker
 	{
 		h &= 15;
 		var grad = 1.0f + (h & 7); // Gradient value 1.0, 2.0, ..., 8.0
-		
+
 		if ((h & 8) == 1)
 			grad = -grad; // and a random sign for the gradient
-		
+
 		return grad * x; // Multiply the gradient with the distance
 	}
 
 	private static float Grad2(int h, float x, float y)
 	{
 		h &= 7; // Convert low 3 bits of hash code
-		
+
 		var u = h < 4 ? x : y; // into 8 simple gradient directions,
 		var v = h < 4 ? y : x; // and compute the dot product with (x,y).
 
 		if ((h & 1) == 1)
 			u = -u;
-		
+
 		var n = 2.0f * v;
-		
+
 		if ((h & 2) == 1)
 			n = -2.0f * v;
 
@@ -141,10 +141,10 @@ internal static class NoiseMaker
 	private static float Grad3(int h, float x, float y, float z)
 	{
 		h &= 15; // Convert low 4 bits of hash code into 12 simple
-		
+
 		var u = h < 8 ? x : y; // gradient directions, and compute dot product.
 		var v = h < 4 ? y : h is 12 or 14 ? x : z; // Fix repeats at h = 12 to 15
-		
+
 		if ((h & 1) != 0)
 			u = -u;
 
@@ -183,7 +183,7 @@ internal static class NoiseMaker
 	private static float Grad4(int h, float x, float y, float z, float t)
 	{
 		h &= 31; // Convert low 5 bits of hash code into 32 simple
-		
+
 		var u = h < 24 ? x : y; // gradient directions, and compute dot product.
 		var v = h < 16 ? y : z;
 		var w = h < 8 ? z : t;
@@ -201,8 +201,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 1D float Perlin noise, SL "noise()"
-    */
+	/** 1D float Perlin noise, SL "noise()" */
 	public static float Noise1(float x)
 	{
 		int ix0, ix1;
@@ -224,8 +223,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 1D float Perlin periodic noise, SL "pnoise()"
-         */
+	/** 1D float Perlin periodic noise, SL "pnoise()" */
 	public static float Pnoise1(float x, int px)
 	{
 		int ix0, ix1;
@@ -247,8 +245,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 2D float Perlin noise.
-    */
+	/** 2D float Perlin noise. */
 	public static float Noise2(float x, float y)
 	{
 		int ix0, iy0, ix1, iy1;
@@ -282,8 +279,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 2D float Perlin periodic noise.
-         */
+	/** 2D float Perlin periodic noise. */
 	public static float Pnoise2(float x, float y, int px, int py)
 	{
 		int ix0, iy0, ix1, iy1;
@@ -330,9 +326,9 @@ internal static class NoiseMaker
 
 	public static Vector<float> Noise3Simd(Vector<float> x, Vector<float> y, Vector<float> z)
 	{
-		var ix0 = (Vector<int>)Floorsimd(x);
-		var iy0 = (Vector<int>)Floorsimd(y);
-		var iz0 = (Vector<int>)Floorsimd(z);
+		var ix0 = (Vector<int>)FloorSimd(x);
+		var iy0 = (Vector<int>)FloorSimd(y);
+		var iz0 = (Vector<int>)FloorSimd(z);
 
 		var fx0 = x - (Vector<float>)ix0;
 		var fy0 = y - (Vector<float>)iy0;
@@ -350,82 +346,73 @@ internal static class NoiseMaker
 		iy0 = Vector.BitwiseAnd(iy0, S255);
 		iz0 = Vector.BitwiseAnd(iz0, S255);
 
-		var r = Fadesimd(fz0);
-		var t = Fadesimd(fy0);
-		var s = Fadesimd(fx0);
+		var r = FadeSimd(fz0);
+		var t = FadeSimd(fy0);
+		var s = FadeSimd(fx0);
 
-		unsafe
+		var permp = _perm;
+
+		for (var i = 0; i < Vector<float>.Count; i++)
 		{
-			fixed (int* ap = _a, bp = _b, cp = _c, dp = _d, ep = _e, fp = _f, gp = _g, hp = _h)
-			{
-				fixed (byte* permp = _perm)
-				{
-					for (var i = 0; i < Vector<float>.Count; i++)
-					{
-						var x0 = ix0[i];
-						var y0 = iy0[i];
-						var z0 = iz0[i];
-						var x1 = ix1[i];
-						var y1 = iy1[i];
-						var z1 = iz1[i];
+			var x0 = ix0[i];
+			var y0 = iy0[i];
+			var z0 = iz0[i];
+			var x1 = ix1[i];
+			var y1 = iy1[i];
+			var z1 = iz1[i];
 
-						var pz1 = permp[z1];
-						var pz0 = permp[z0];
+			var pz1 = permp[z1];
+			var pz0 = permp[z0];
 
-						var y00 = permp[y0 + pz0];
-						var y01 = permp[y0 + pz1];
-						var y10 = permp[y1 + pz0];
-						var y11 = permp[y1 + pz1];
+			var y00 = permp[y0 + pz0];
+			var y01 = permp[y0 + pz1];
+			var y10 = permp[y1 + pz0];
+			var y11 = permp[y1 + pz1];
 
-
-						ap[i] = permp[x0 + y00];
-						bp[i] = permp[x0 + y01];
-						cp[i] = permp[x0 + y10];
-						dp[i] = permp[x0 + y11];
-						ep[i] = permp[x1 + y00];
-						fp[i] = permp[x1 + y01];
-						gp[i] = permp[x1 + y10];
-						hp[i] = permp[x1 + y11];
-					}
-				}
-			}
+			_a[i] = permp[x0 + y00];
+			_b[i] = permp[x0 + y01];
+			_c[i] = permp[x0 + y10];
+			_d[i] = permp[x0 + y11];
+			_e[i] = permp[x1 + y00];
+			_f[i] = permp[x1 + y01];
+			_g[i] = permp[x1 + y10];
+			_h[i] = permp[x1 + y11];
 		}
 
 		var nxy0I = new Vector<int>(_a, 0);
 		var nxy1I = new Vector<int>(_b, 0);
 		var nxy0 = Grad3Simd(nxy0I, fx0, fy0, fz0);
 		var nxy1 = Grad3Simd(nxy1I, fx0, fy0, fz1);
-		var nx0 = Lerpsimd(r, nxy0, nxy1);
+		var nx0 = LerpSimd(r, nxy0, nxy1);
 
 		nxy0I = new Vector<int>(_c, 0);
 		nxy1I = new Vector<int>(_d, 0);
 
 		nxy0 = Grad3Simd(nxy0I, fx0, fy1, fz0);
 		nxy1 = Grad3Simd(nxy1I, fx0, fy1, fz1);
-		var nx1 = Lerpsimd(r, nxy0, nxy1);
-		var n0 = Lerpsimd(t, nx0, nx1);
+		var nx1 = LerpSimd(r, nxy0, nxy1);
+		var n0 = LerpSimd(t, nx0, nx1);
 
 		nxy0I = new Vector<int>(_e, 0);
 		nxy1I = new Vector<int>(_f, 0);
 
 		nxy0 = Grad3Simd(nxy0I, fx1, fy0, fz0);
 		nxy1 = Grad3Simd(nxy1I, fx1, fy0, fz1);
-		nx0 = Lerpsimd(r, nxy0, nxy1);
+		nx0 = LerpSimd(r, nxy0, nxy1);
 
 		nxy0I = new Vector<int>(_g, 0);
 		nxy1I = new Vector<int>(_h, 0);
 
 		nxy0 = Grad3Simd(nxy0I, fx1, fy1, fz0);
 		nxy1 = Grad3Simd(nxy1I, fx1, fy1, fz1);
-		nx1 = Lerpsimd(r, nxy0, nxy1);
+		nx1 = LerpSimd(r, nxy0, nxy1);
 
-		var n1 = Lerpsimd(t, nx0, nx1);
-		return Lerpsimd(s, n0, n1) * Scale;
+		var n1 = LerpSimd(t, nx0, nx1);
+		return LerpSimd(s, n0, n1) * Scale;
 	}
 
 	//---------------------------------------------------------------------
-	/** 3D float Perlin noise.
-		*/
+	/** 3D float Perlin noise. */
 	public static float Noise3(float x, float y, float z)
 	{
 		int ix0, iy0, iz0, ix1, iy1, iz1;
@@ -477,8 +464,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 3D float Perlin periodic noise.
-    */
+	/** 3D float Perlin periodic noise. */
 	public static float Pnoise3(float x, float y, float z, int px, int py, int pz)
 	{
 		int ix0, iy0, iz0, ix1, iy1, iz1;
@@ -530,8 +516,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 4D float Perlin noise.
-		*/
+	/** 4D float Perlin noise. */
 	public static float Noise4(float x, float y, float z, float w)
 	{
 		int ix0, iy0, iz0, iw0, ix1, iy1, iz1, iw1;
@@ -613,8 +598,7 @@ internal static class NoiseMaker
 	}
 
 	//---------------------------------------------------------------------
-	/** 4D float Perlin periodic noise.
-    */
+	/** 4D float Perlin periodic noise. */
 	public static float Pnoise4(float x, float y, float z, float w,
 		int px, int py, int pz, int pw)
 	{

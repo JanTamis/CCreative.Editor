@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using static System.MathF;
-using Vector = MathSharp.Vector;
+using VectorMath = MathSharp.Vector;
 
+// ReSharper disable ConvertIfStatementToReturnStatement
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable IdentifierTypo
 
@@ -39,7 +41,7 @@ namespace CCreative
 
 		public PVector Add(float x, float y, float z)
 		{
-			return new PVector(Vector.Add(vector, Vector128.Create(x, y, z, 0)));
+			return new PVector(VectorMath.Add(vector, Vector128.Create(x, y, z, 0)));
 		}
 
 		public float[] Array()
@@ -54,24 +56,22 @@ namespace CCreative
 
 		public PVector Cross(PVector v)
 		{
-			return new PVector(Vector.CrossProduct3D(vector, v.vector));
+			return Cross(v, this);
 		}
 
 		public float Dist(PVector v)
 		{
-			return Vector
-				.Distance3D(vector, v.vector)
-				.ToScalar();
+			return Dist(v, this);
 		}
 
 		public PVector Div(float n)
 		{
-			return new PVector(Vector.Divide(vector, n));
+			return new PVector(VectorMath.Divide(vector, n));
 		}
 
 		public float Dot(PVector v)
 		{
-			return Vector
+			return VectorMath
 				.DotProduct3D(vector, v.vector)
 				.ToScalar();
 			//return FusedMultiplyAdd(X, v.X, FusedMultiplyAdd(Y, v.Y, Z * v.Z));
@@ -79,7 +79,7 @@ namespace CCreative
 
 		public float Dot(float x, float y, float z)
 		{
-			return Vector
+			return VectorMath
 				.DotProduct3D(vector, Vector128.Create(x, y, z, 0))
 				.ToScalar();
 		}
@@ -98,7 +98,8 @@ namespace CCreative
 		{
 			if (target is null)
 			{
-				return new[] { X, Y, Z };
+				throw new ArgumentNullException(nameof(target),
+					"please use the Get() method to get a new array of the component");
 			}
 
 			if (target.Length >= 2)
@@ -122,72 +123,84 @@ namespace CCreative
 
 		public PVector Lerp(float x, float y, float z, float amt)
 		{
-			return new PVector(Vector.Lerp(vector, Vector128.Create(x, y, z, 0), amt));
+			var v2 = Vector128.Create(x, y, z, 0f);
+
+			if (Fma.IsSupported)
+			{
+				return new PVector(Fma.MultiplyAdd(Vector128.Create(amt), Sse.Subtract(v2, vector), vector));
+			}
+
+			return new PVector(VectorMath.Lerp(vector, v2, amt));
 		}
 
 		public PVector Lerp(PVector v, float amt)
 		{
-			return new PVector(Vector.Lerp(vector, v.vector, amt));
+			if (Fma.IsSupported)
+			{
+				return new PVector(Fma.MultiplyAdd(Vector128.Create(amt), Sse.Subtract(v.vector, vector), vector));
+			}
+
+			return new PVector(VectorMath.Lerp(vector, v.vector, amt));
 		}
 
 		public PVector Limit(float max)
 		{
-			return MagSq() > max * max ? new PVector(Vector.Multiply(Vector.Normalize3D(vector), max)) : this;
+			return MagSq() > Math.Sq(max) ? new PVector(VectorMath.Multiply(VectorMath.Normalize3D(vector), max)) : this;
 		}
 
 		public float Mag()
 		{
-			return Vector
+			return VectorMath
 				.Length3D(vector)
 				.ToScalar();
 		}
 
 		public float MagSq()
 		{
-			return Vector
+			return VectorMath
 				.LengthSquared3D(vector)
 				.ToScalar();
 		}
 
 		public PVector Mult(float n)
 		{
-			return new PVector(Vector.Multiply(vector, n));
+			return new PVector(VectorMath.Multiply(vector, n));
 		}
 
 		public PVector Normalize()
 		{
-			return new PVector(Vector.Normalize3D(vector));
+			return new PVector(VectorMath.Normalize3D(vector));
 		}
 
 		public PVector Rotate(float theta)
 		{
-			var temp = X;
+			var (sin, cos) = SinCos(theta);
 
 			// Might need to check for rounding errors like with angleBetween function?
-			var x = X * Cos(theta) - Y * Sin(theta);
-			var y = temp * Sin(theta) + Y * Cos(theta);
+			var x = X * cos - Y * sin;
+			var y = FusedMultiplyAdd(X, sin, Y * cos);
 
 			return new PVector(x, y);
 		}
 
 		public PVector SetMag(float len)
 		{
-			return new PVector(Vector.Multiply(Vector.Normalize3D(vector), len));
+			return new PVector(VectorMath.Multiply(VectorMath.Normalize3D(vector), len));
 		}
 
 		public PVector Sub(PVector v)
 		{
-			return new PVector(Vector.Subtract(vector, v.vector));
+			return new PVector(VectorMath.Subtract(vector, v.vector));
 		}
 
 		public PVector Sub(float x, float y)
 		{
-			return new PVector(Vector.Subtract(vector, Vector128.Create(x, y, 0, 0)));
+			return new PVector(VectorMath.Subtract(vector, Vector128.Create(x, y, 0, 0)));
 		}
 
 		public PVector Sub(float x, float y, float z)
 		{
-			return new PVector(Vector.Subtract(vector, Vector128.Create(x, y, z, 0)));
+			return new PVector(VectorMath.Subtract(vector, Vector128.Create(x, y, z, 0)));
 		}
 
 		public override int GetHashCode()
@@ -216,7 +229,7 @@ namespace CCreative
 
 		public static PVector Add(PVector v1, PVector v2)
 		{
-			return new PVector(Vector.Add(v1.vector, v2.vector));
+			return new PVector(VectorMath.Add(v1.vector, v2.vector));
 		}
 
 		public static float AngleBetween(PVector v1, PVector v2)
@@ -247,19 +260,24 @@ namespace CCreative
 
 		public static PVector Cross(PVector v1, PVector v2)
 		{
-			return new PVector(Vector.CrossProduct3D(v1.vector, v2.vector));
+			return new PVector(VectorMath.CrossProduct3D(v1.vector, v2.vector));
 		}
 
 		public static float Dist(PVector v1, PVector v2)
 		{
-			return Vector
+			return VectorMath
 				.Distance3D(v1.vector, v2.vector)
 				.ToScalar();
 		}
 
 		public static PVector Div(PVector v, float n)
 		{
-			return new PVector(Vector.Divide(v.vector, n));
+			return new PVector(VectorMath.Divide(v.vector, n));
+		}
+		
+		public static PVector Div(PVector v1, PVector v2)
+		{
+			return new PVector(VectorMath.Divide(v1.vector, v2.vector));
 		}
 
 		public static PVector FromAngle(float angle)
@@ -270,12 +288,22 @@ namespace CCreative
 
 		public static PVector Lerp(PVector v1, PVector v2, float amt)
 		{
-			return new PVector(Vector.Lerp(v1.vector, v2.vector, amt));
+			if (Fma.IsSupported)
+			{
+				return new PVector(Fma.MultiplyAdd(Vector128.Create(amt), Sse.Subtract(v1.vector, v2.vector), v1.vector));
+			}
+
+			return new PVector(VectorMath.Lerp(v1.vector, v2.vector, amt));
 		}
 
 		public static PVector Mult(PVector v, float n)
 		{
-			return new PVector(Vector.Multiply(v.vector, n));
+			return new PVector(VectorMath.Multiply(v.vector, n));
+		}
+		
+		public static PVector Mult(PVector v1, PVector v2)
+		{
+			return new PVector(VectorMath.Multiply(v1.vector, v2.vector));
 		}
 
 		public static PVector Random2D()
@@ -296,7 +324,7 @@ namespace CCreative
 
 		public static PVector Sub(PVector v1, PVector v2)
 		{
-			return new PVector(Vector.Subtract(v1.vector, v2.vector));
+			return new PVector(VectorMath.Subtract(v1.vector, v2.vector));
 		}
 
 		public void Deconstruct(out float x, out float y, out float z)
@@ -311,7 +339,10 @@ namespace CCreative
 		#region Operators
 
 		public static PVector operator *(PVector a, float scalar) => Mult(a, scalar);
+		public static PVector operator *(PVector a, PVector b) => Mult(a, b);
+		
 		public static PVector operator /(PVector a, float scalar) => Div(a, scalar);
+		public static PVector operator /(PVector a, PVector b) => Div(a, b);
 
 		public static PVector operator +(PVector a, PVector b) => Add(a, b);
 		public static PVector operator -(PVector a, PVector b) => Sub(a, b);

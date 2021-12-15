@@ -9,7 +9,7 @@ namespace CCreative
 {
 	public static partial class Math
 	{
-		private static Random rng = System.Random.Shared;
+		private static Random rng => System.Random.Shared;
 
 		#region Calculations
 
@@ -126,6 +126,7 @@ namespace CCreative
 		/// <typeparam name="T">the type of the floating point number</typeparam>
 		/// <param name="number">the specified number</param>
 		/// <returns>the square root of <paramref name="number"/></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Sqrt<T>(T number) where T : IFloatingPoint<T>
 		{
 			return T.Sqrt(number);
@@ -151,9 +152,7 @@ namespace CCreative
 		/// <returns>the magnitude (or length) of the vector</returns>
 		public static T Mag<T>(T numberX, T numberY) where T : IFloatingPoint<T>
 		{
-			var exponent = T.Create(2);
-
-			return Sqrt(Pow(numberX, exponent) + Pow(numberY, exponent));
+			return Sqrt(T.FusedMultiplyAdd(numberX, numberX, Sq(numberY)));
 		}
 
 		/// <summary>
@@ -239,7 +238,7 @@ namespace CCreative
 		/// <returns>the Perlin noise value at the specified coordinates</returns>
 		public static float Noise(float x)
 		{
-			return NoiseMaker.Noise1(x);
+			return (NoiseMaker.Noise1(x) + 1) / 2;
 		}
 
 		/// <summary>
@@ -253,7 +252,7 @@ namespace CCreative
 		/// <returns>the Perlin noise value at the specified coordinates</returns>
 		public static float Noise(float x, float y)
 		{
-			return NoiseMaker.Noise2(x, y);
+			return (NoiseMaker.Noise2(x, y) + 1) / 2;
 			//if (noiseChanged)
 			//{
 			//	float total = 0;
@@ -289,7 +288,7 @@ namespace CCreative
 		/// <returns>the Perlin noise value at the specified coordinates</returns>
 		public static float Noise(float x, float y, float z)
 		{
-			return NoiseMaker.Noise3(x, y, z);
+			return (NoiseMaker.Noise3(x, y, z) + 1) / 2;
 
 			//if (noiseChanged)
 			//{
@@ -362,7 +361,7 @@ namespace CCreative
 		/// <returns>degrees</returns>
 		public static T Degrees<T>(T radians) where T : IFloatingPoint<T>
 		{
-			return radians * (T.Create(180) * T.Pi);
+			return radians * (T.Create(180) / T.Pi);
 		}
 
 		/// <summary>
@@ -372,7 +371,7 @@ namespace CCreative
 		/// <returns>radians</returns>
 		public static T Radians<T>(T degrees) where T : IFloatingPoint<T>
 		{
-			return degrees * (T.Pi * T.Create(180));
+			return degrees * (T.Pi / T.Create(180));
 		}
 
 		#region Algorithms
@@ -383,14 +382,13 @@ namespace CCreative
 		/// <returns>a random string</returns>
 		public static string RandomString(int length)
 		{
-			var result = length <= 2048 ? stackalloc char[length] : new char[length];
-
-			for (var i = 0; i < result.Length; i++)
+			return String.Create(length, System.Random.Shared, (span, random) =>
 			{
-				result[i] = (char)RandomInt(65, 91);
-			}
-
-			return new String(result);
+				for (var i = 0; i < span.Length; i++)
+				{
+					span[i] = (char)random.Next('A', 'Z');
+				}
+			});
 		}
 
 		/// <summary>
@@ -463,7 +461,7 @@ namespace CCreative
 		/// <param name="seed"></param>
 		public static void RandomSeed(int seed)
 		{
-			rng = new Random(seed);
+			// rng = new Random(seed);
 		}
 
 		/// <summary>
@@ -475,7 +473,7 @@ namespace CCreative
 		{
 			// https://stackoverflow.com/a/648240/6448711
 
-			var current = default(T?);
+			var current = default(T);
 			var count = 0;
 
 			foreach (var element in list)
@@ -493,7 +491,7 @@ namespace CCreative
 		}
 
 		/// <summary> Returns a random item form the array. </summary>
-		/// <param name="array"> The array to fick a random item from.</param>
+		/// <param name="array"> The array to pick a random item from.</param>
 		/// <returns></returns>
 		public static T Random<T>(IList<T> array)
 		{
@@ -529,10 +527,7 @@ namespace CCreative
 		/// <returns> System.Single. </returns>
 		public static byte RandomByte()
 		{
-			Span<byte> bytes = stackalloc byte[1];
-			rng.NextBytes(bytes);
-			
-			return bytes[0];
+			return (byte)rng.Next(Byte.MaxValue);
 		}
 
 		/// <summary>

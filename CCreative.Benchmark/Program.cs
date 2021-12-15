@@ -11,21 +11,19 @@ var result = BenchmarkRunner.Run<SIMDTest>();
 [MemoryDiagnoser]
 public class SIMDTest
 {
-	[Params(1000000)] public int N;
-
-	private static int degreeOfParallelism = Environment.ProcessorCount;
+	private static readonly int degreeOfParallelism = Environment.ProcessorCount;
 
 	private double[] array;
+
+	[Params(1000000)] 
+	public int N;
 
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
 		array = new double[N]; // executed once per each N value
 
-		for (var i = 0; i < array.Length; i++)
-		{
-			array[i] = Random.Shared.Next();
-		}
+		for (var i = 0; i < array.Length; i++) array[i] = Random.Shared.Next();
 	}
 
 	[Benchmark(Baseline = true)]
@@ -33,10 +31,7 @@ public class SIMDTest
 	{
 		var min = 0d;
 
-		for (var i = 0; i < array.Length; i++)
-		{
-			min += array[i];
-		}
+		for (var i = 0; i < array.Length; i++) min += array[i];
 
 		return min;
 	}
@@ -52,26 +47,23 @@ public class SIMDTest
 			{
 				var (tempArray, index, length) = tuple;
 				temp[index] = Sum(tempArray.AsSpan(index * degreeOfParallelism, length));
-			}, new ExecutionDataflowBlockOptions()
+			}, new ExecutionDataflowBlockOptions
 			{
 				EnsureOrdered = false,
-				MaxDegreeOfParallelism = degreeOfParallelism,
+				MaxDegreeOfParallelism = degreeOfParallelism
 			});
 
-			for (var i = 0; i < degreeOfParallelism; i++)
-			{
-				block.Post((array, i, array.Length / degreeOfParallelism));
-			}
-			
+			for (var i = 0; i < degreeOfParallelism; i++) block.Post((array, i, array.Length / degreeOfParallelism));
+
 			block.Complete();
 			block.Completion.Wait();
 
 			return Sum(temp.AsSpan());
 		}
-		
+
 		return Sum(array.AsSpan());
 	}
-	
+
 	[Benchmark]
 	public double SimdBase()
 	{
@@ -91,10 +83,7 @@ public class SIMDTest
 		{
 			var vsArray = MemoryMarshal.Cast<double, Vector<double>>(numbers);
 
-			for (i = 0; i < vsArray.Length; i++)
-			{
-				vSum = Vector.Add(vSum, vsArray[i]);
-			}
+			for (i = 0; i < vsArray.Length; i++) vSum = Vector.Add(vSum, vsArray[i]);
 
 			sum = Vector.Sum(vSum);
 
