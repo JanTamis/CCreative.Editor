@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Versioning;
 
 namespace CCreative
 {
@@ -17,7 +18,7 @@ namespace CCreative
 		/// <summary>
 		/// The current location of the mouse on the window
 		/// </summary>
-		public PVector MousePos => new(MouseX, MouseY);
+		public Vector MousePos => new(MouseX, MouseY);
 
 		/// <summary>
 		/// The vertical location of the mouse on the window on the previous frame

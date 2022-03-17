@@ -1,14 +1,16 @@
-﻿namespace CCreative
+﻿using System.Runtime.Versioning;
+
+namespace CCreative
 {
-	public interface PMatrix
+	public interface Matrix
 	{
 		public void Reset();
 
-		public PMatrix Get();
+		public Matrix Get();
 
 		public float[] Get(float[] target);
 
-		public void Set(PMatrix src);
+		public void Set(Matrix src);
 
 		public void Set(float[] source);
 
@@ -45,11 +47,11 @@
 
 		public void ShearY(float angle);
 
-		public void Apply(PMatrix source);
+		public void Apply(Matrix source);
 
-		public void Apply(PMatrix2D source);
+		public void Apply(Matrix2D source);
 
-		public void Apply(PMatrix3D source);
+		public void Apply(Matrix3D source);
 
 		public void Apply(float n00, float n01, float n02,
 											float n10, float n11, float n12);
@@ -59,11 +61,11 @@
 											float n20, float n21, float n22, float n23,
 											float n30, float n31, float n32, float n33);
 
-		public void PreApply(PMatrix left);
+		public void PreApply(Matrix left);
 
-		public void PreApply(PMatrix2D left);
+		public void PreApply(Matrix2D left);
 
-		public void PreApply(PMatrix3D left);
+		public void PreApply(Matrix3D left);
 
 		public void PreApply(float n00, float n01, float n02,
 												 float n10, float n11, float n12);

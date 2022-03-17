@@ -1,51 +1,67 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using static System.MathF;
 
 namespace CCreative
 {
-	public class PMatrix2D : PMatrix
+	public struct Matrix2D : Matrix
 	{
 		public float m00, m01, m02;
 		public float m10, m11, m12;
 
-		public PMatrix2D()
+		public Matrix2D()
+			: this(stackalloc float[]
+			{
+				1, 0, 0,
+				0, 1, 0,
+			})
 		{
-			Reset();
+			
 		}
 
-		public PMatrix2D(float m00, float m01, float m02,
+		public Matrix2D(float m00, float m01, float m02,
 										 float m10, float m11, float m12)
+			: this(stackalloc float[]
+			{
+				m00, m01, m02,
+				m10, m11, m12,
+			})
 		{
-			Set(m00, m01, m02,
-					m10, m11, m12);
-
+			
 		}
 
-		public PMatrix2D(PMatrix matrix)
+		public Matrix2D(ReadOnlySpan<float> data)
 		{
-			Set(matrix);
+			if (data.Length < 6)
+			{
+				throw new ArgumentException("Values must contain 6 elements", nameof(data));
+			}
+
+			this = Unsafe.ReadUnaligned<Matrix2D>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(data)));
 		}
 
-		public void Apply(PMatrix source)
+		public void Apply(Matrix source)
 		{
 			switch (source)
 			{
-				case PMatrix2D matrix2D:
+				case Matrix2D matrix2D:
 					Apply(matrix2D);
 					break;
-				case PMatrix3D matrix3D:
+				case Matrix3D matrix3D:
 					Apply(matrix3D);
 					break;
 			}
 		}
 
-		public void Apply(PMatrix2D source)
+		public void Apply(Matrix2D source)
 		{
 			Apply(source.m00, source.m01, source.m02,
 						source.m10, source.m11, source.m12);
 		}
 
-		public void Apply(PMatrix3D source)
+		public void Apply(Matrix3D source)
 		{
 			throw new NotSupportedException("Cannot use apply(PMatrix3D) on a PMatrix2D.");
 		}
@@ -75,16 +91,16 @@ namespace CCreative
 			return m00 * m11 - m01 * m10;
 		}
 
-		public PMatrix Get()
+		public Matrix Get()
 		{
-			var outgoing = new PMatrix2D();
+			var outgoing = new Matrix2D();
 			outgoing.Set(this);
 			return outgoing;
 		}
 
-		public float[] Get(float[] target)
+		public float[] Get(float[]? target)
 		{
-			if ((target is null) || (target.Length != 6))
+			if (target is null or { Length: >= 6 })
 			{
 				target = new float[6];
 			}
@@ -126,24 +142,24 @@ namespace CCreative
 			return true;
 		}
 
-		protected bool IsIdentity()
+		private bool IsIdentity()
 		{
-			return ((m00 == 1) && (m01 == 0) && (m02 == 0) &&
-							(m10 == 0) && (m11 == 1) && (m12 == 0));
+			return m00 == 1f && m01 == 0 && m02 == 0 &&
+			       m10 == 0 && m11 == 1 && m12 == 0;
 		}
 
-		protected bool IsWarped()
+		private bool IsWarped()
 		{
 			return ((m00 != 1) || (m01 != 0) &&
 							(m10 != 0) || (m11 != 1));
 		}
 
-		public PVector Mult(PVector source)
+		public Vector Mult(Vector source)
 		{
 			var x = m00 * source.X + m01 * source.Y + m02;
 			var y = m10 * source.X + m11 * source.Y + m12;
 
-			return new PVector(x, y);
+			return new Vector(x, y);
 		}
 
 		public float[] Mult(float[] source, float[] target)
@@ -182,26 +198,26 @@ namespace CCreative
 		}
 
 
-		public void PreApply(PMatrix left)
+		public void PreApply(Matrix left)
 		{
 			switch (left)
 			{
-				case PMatrix2D matrix2D:
+				case Matrix2D matrix2D:
 					PreApply(matrix2D);
 					break;
-				case PMatrix3D matrix3D:
+				case Matrix3D matrix3D:
 					PreApply(matrix3D);
 					break;
 			}
 		}
 
-		public void PreApply(PMatrix2D left)
+		public void PreApply(Matrix2D left)
 		{
 			PreApply(left.m00, left.m01, left.m02,
 							 left.m10, left.m11, left.m12);
 		}
 
-		public void PreApply(PMatrix3D left)
+		public void PreApply(Matrix3D left)
 		{
 			throw new NotSupportedException("Cannot use preApply(PMatrix3D) on a PMatrix2D.");
 		}
@@ -270,8 +286,8 @@ namespace CCreative
 
 		public void Rotate(float angle)
 		{
-			float s = Sin(angle);
-			float c = Cos(angle);
+			var s = Sin(angle);
+			var c = Cos(angle);
 
 			var temp1 = m00;
 			var temp2 = m01;
@@ -321,9 +337,9 @@ namespace CCreative
 			throw new NotSupportedException("Cannot use this version of scale() on a PMatrix2D.");
 		}
 
-		public void Set(PMatrix matrix)
+		public void Set(Matrix matrix)
 		{
-			if (matrix is PMatrix2D src)
+			if (matrix is Matrix2D src)
 			{
 				Set(src.m00, src.m01, src.m02,
 						src.m10, src.m11, src.m12);

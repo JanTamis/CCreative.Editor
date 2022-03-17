@@ -4,11 +4,6 @@
         <name>CCreative</name>
     </assembly>
     <members>
-        <member name="T:CCreative.Color">
-            <summary>
-            Datatype for storing color values
-            </summary>
-        </member>
         <member name="P:CCreative.Color.B">
             <summary>
             the blue component of the color
@@ -35,16 +30,7 @@
             </summary>
             <returns> the hexadecimal string</returns>
         </member>
-        <member name="P:CCreative.SkiaColor.B">
-            <inheritdoc />
-        </member>
-        <member name="P:CCreative.SkiaColor.G">
-            <inheritdoc />
-        </member>
-        <member name="P:CCreative.SkiaColor.R">
-            <inheritdoc />
-        </member>
-        <member name="P:CCreative.SkiaColor.A">
+        <member name="M:CCreative.Color.GetHashCode">
             <inheritdoc />
         </member>
         <member name="M:CCreative.PApplet.Size(System.Int32,System.Int32)">
@@ -62,7 +48,7 @@
             <param name="height">the height of the renderer</param>
             <param name="render">the renderer to use for this sketch</param>
         </member>
-        <member name="M:CCreative.PApplet.Cursor(CCreative.PImage,System.Int32,System.Int32)">
+        <member name="M:CCreative.PApplet.Cursor(CCreative.Image,System.Int32,System.Int32)">
             <summary>
             Sets the cursor to a predefined symbol or an image, or makes it visible if already hidden
             </summary>
@@ -76,13 +62,13 @@
             </summary>
             <param name="toPrint">data to print to console</param>
         </member>
-        <member name="M:CCreative.PApplet.Println``1(``0)">
+        <member name="M:CCreative.PApplet.PrintLine``1(``0)">
             <summary>
             Writes data to the console and adds a newline to the console (the ToString() method will be used)
             </summary>
             <param name="toPrint">data to print to console</param>
         </member>
-        <member name="M:CCreative.PApplet.PrintArray(System.Collections.IEnumerable)">
+        <member name="M:CCreative.PApplet.PrintArray``1(System.Collections.Generic.IEnumerable{``0})">
             <summary>
             Writes a list of data to the console and adds a newline to the console (the ToString() method will be used)
             </summary>
@@ -101,7 +87,7 @@
             <param name="x">the horizontal location of the window</param>
             <param name="y">the vertical location of the window</param>
         </member>
-        <member name="M:CCreative.PApplet.Location(CCreative.PVector)">
+        <member name="M:CCreative.PApplet.Location(CCreative.Vector)">
             <summary>
             Sets the location of the window
             </summary>
@@ -131,68 +117,93 @@
             </summary>
             <returns>the current day of the system</returns>
         </member>
-        <member name="T:CCreative.PImage">
+        <member name="P:CCreative.PApplet.MouseX">
+            <summary>
+            The horizontal location of the mouse on the window
+            </summary>
+        </member>
+        <member name="P:CCreative.PApplet.MouseY">
+            <summary>
+            The vertical location of the mouse on the window
+            </summary>
+        </member>
+        <member name="P:CCreative.PApplet.MousePos">
+            <summary>
+            The current location of the mouse on the window
+            </summary>
+        </member>
+        <member name="P:CCreative.PApplet.PmouseX">
+            <summary>
+            The vertical location of the mouse on the window on the previous frame
+            </summary>
+        </member>
+        <member name="P:CCreative.PApplet.PmouseY">
+            <summary>
+            The horizontal location of the mouse on the window on the previous frame
+            </summary>
+        </member>
+        <member name="T:CCreative.Image">
             <summary>
             Datatype for storing images. Images may be displayed in 2D and 3D space
             </summary>
         </member>
-        <member name="P:CCreative.PImage.Pixels">
+        <member name="P:CCreative.Image.Pixels">
             <summary>
             The pixels of the image
             </summary>
         </member>
-        <member name="P:CCreative.PImage.Width">
+        <member name="P:CCreative.Image.Width">
             <summary>
             The width of the image in units of pixels
             </summary>
         </member>
-        <member name="P:CCreative.PImage.Height">
+        <member name="P:CCreative.Image.Height">
             <summary>
             The height of the image in units of pixels
             </summary>
         </member>
-        <member name="P:CCreative.PImage.PixelDensity">
+        <member name="P:CCreative.Image.PixelDensity">
             <summary>
             The pixel density of the image
             </summary>
         </member>
-        <member name="P:CCreative.PImage.PixelWidth">
+        <member name="P:CCreative.Image.PixelWidth">
             <summary>
             The width of the image in pixels multiplied by the density
             </summary>
         </member>
-        <member name="P:CCreative.PImage.PixelHeight">
+        <member name="P:CCreative.Image.PixelHeight">
             <summary>
             The height of the image in pixels multiplied by the density
             </summary>
         </member>
-        <member name="M:CCreative.PImage.LoadPixels">
+        <member name="M:CCreative.Image.LoadPixels">
             <summary>
-            Loads the pixel data for the image into its <see cref="P:CCreative.PImage.Pixels"/> array
+            Loads the pixel data for the image into its <see cref="P:CCreative.Image.Pixels"/> array
             </summary>
         </member>
-        <member name="M:CCreative.PImage.UpdatePixels(System.Int32,System.Int32,System.Int32,System.Int32)">
+        <member name="M:CCreative.Image.UpdatePixels(System.Int32,System.Int32,System.Int32,System.Int32)">
             <summary>
-            Updates the image with the data in its <see cref="P:CCreative.PImage.Pixels"/> array
+            Updates the image with the data in its <see cref="P:CCreative.Image.Pixels"/> array
             </summary>
             <param name="x">x-coordinate of the upper-left corner</param>
             <param name="y">y-coordinate of the upper-left corner</param>
             <param name="w">the width</param>
             <param name="h">the height</param>
         </member>
-        <member name="M:CCreative.PImage.UpdatePixels">
+        <member name="M:CCreative.Image.UpdatePixels">
             <summary>
-            Updates the image with the data in its <see cref="P:CCreative.PImage.Pixels"/> array
+            Updates the image with the data in its <see cref="P:CCreative.Image.Pixels"/> array
             </summary>
         </member>
-        <member name="M:CCreative.PImage.Resize(System.Int32,System.Int32)">
+        <member name="M:CCreative.Image.Resize(System.Int32,System.Int32)">
             <summary>
             Resize the image to a new width and height
             </summary>
             <param name="width">the resized image width</param>
             <param name="height">the resized image height</param>
         </member>
-        <member name="M:CCreative.PImage.Get(System.Int32,System.Int32)">
+        <member name="M:CCreative.Image.Get(System.Int32,System.Int32)">
             <summary>
             Reads the color of any pixel
             </summary>
@@ -200,7 +211,7 @@
             <param name="y">y-coordinate of the pixel</param>
             <returns>the pixel at the coordinates</returns>
         </member>
-        <member name="M:CCreative.PImage.Get(System.Int32,System.Int32,System.Int32,System.Int32)">
+        <member name="M:CCreative.Image.Get(System.Int32,System.Int32,System.Int32,System.Int32)">
             <summary>
             Reads a block of pixels
             </summary>
@@ -210,19 +221,19 @@
             <param name="h">the height of the block</param>
             <returns>the block of pixels</returns>
         </member>
-        <member name="M:CCreative.PImage.Get">
+        <member name="M:CCreative.Image.Get">
             <summary>
             Gets a copy of the image
             </summary>
             <returns></returns>
         </member>
-        <member name="M:CCreative.PImage.Copy">
+        <member name="M:CCreative.Image.Copy">
             <summary>
             Copies the entire image
             </summary>
             <returns>the copied image</returns>
         </member>
-        <member name="M:CCreative.PImage.Set(System.Int32,System.Int32,CCreative.Color)">
+        <member name="M:CCreative.Image.Set(System.Int32,System.Int32,CCreative.Color)">
             <summary>
             Writes a color to any pixel
             </summary>
@@ -230,7 +241,7 @@
             <param name="y">y-coordinate of the pixel</param>
             <param name="color">the color to set to the location</param>
         </member>
-        <member name="M:CCreative.PImage.Set(System.Int32,System.Int32,CCreative.PImage)">
+        <member name="M:CCreative.Image.Set(System.Int32,System.Int32,CCreative.Image)">
             <summary>
             Writes a block of pixels
             </summary>
@@ -238,13 +249,13 @@
             <param name="y">y-coordinate of the upper-left corner</param>
             <param name="img">image to copy into the original image</param>
         </member>
-        <member name="M:CCreative.PImage.Mask(CCreative.Color[])">
+        <member name="M:CCreative.Image.Mask(CCreative.Color[])">
             <summary>
             Masks part of an image with pixels as an alpha channel
             </summary>
             <param name="maskArray">pixels to use as the mask</param>
         </member>
-        <member name="M:CCreative.PImage.Mask(CCreative.PImage)">
+        <member name="M:CCreative.Image.Mask(CCreative.Image)">
             <summary>
             Masks part of an image from displaying by loading another image and using it as an alpha channel
             </summary>
@@ -266,7 +277,7 @@
             <param name="high">maximum limit</param>
             <returns>the constraint value</returns>
         </member>
-        <member name="M:CCreative.Math.Dist(CCreative.PVector,CCreative.PVector)">
+        <member name="M:CCreative.Math.Dist(CCreative.Vector,CCreative.Vector)">
             <summary>
             Calculates the distance between two PVectors
             </summary>
@@ -274,7 +285,7 @@
             <param name="endPoint">the second PVector</param>
             <returns>the distance between the points</returns>
         </member>
-        <member name="M:CCreative.Math.Dist(CCreative.PVector[])">
+        <member name="M:CCreative.Math.Dist(CCreative.Vector[])">
             <summary>
             Calculate the distance between the given points
             </summary>
@@ -378,12 +389,26 @@
             <param name="number">number to square</param>
             <returns>returns the squared number</returns>
         </member>
+        <member name="M:CCreative.Math.Cb``1(``0)">
+            <summary>
+            Cubes a number (number * number * number)
+            </summary>
+            <param name="number">number to square</param>
+            <returns>returns the squared number</returns>
+        </member>
         <member name="M:CCreative.Math.InverseSqrt``1(``0)">
             <summary>
             Calculates 1 / sqrt(x) of the given number
             </summary>
             <param name="x">the number to calculate the inverse square root of</param>
             <returns>1 / sqrt(x)</returns>
+        </member>
+        <member name="M:CCreative.Math.Log2``1(``0)">
+            <summary>
+            Calculates the log2 of <see cref="!:x"/>
+            </summary>
+            <param name="x">number to find the log2 of</param>
+            <returns>returns the log2 of <see cref="!:x"/></returns>
         </member>
         <member name="M:CCreative.Math.Noise(System.Single)">
             <summary>
@@ -505,11 +530,6 @@
             <param name="list">the array to pick a random item from</param>
             <returns>a rando item from the list</returns>
         </member>
-        <member name="M:CCreative.Math.Random``1(System.Collections.Generic.IList{``0})">
-            <summary> Returns a random item form the array. </summary>
-            <param name="array"> The array to fick a random item from.</param>
-            <returns></returns>
-        </member>
         <member name="M:CCreative.Math.RandomInt(System.Int32,System.Int32)">
             <summary> Return a random int number. </summary>
             <param name="lowerBound"> The lower bound (inclusive). </param>
@@ -523,7 +543,6 @@
         </member>
         <member name="M:CCreative.Math.RandomInt">
             <summary> Return a random int number between 0 and <see cref="F:System.Int32.MaxValue"/> (exclusive)</summary>
-            
             <returns> System.Single. </returns>
         </member>
         <member name="M:CCreative.Math.RandomByte">
@@ -541,10 +560,6 @@
             <param name="mean"> The mean. </param>
             <param name="sd"> The standard deviation. </param>
             <returns> A float. </returns>
-        </member>
-        <member name="M:CCreative.Math.RandomGaussian">
-            <summary> Returns a random number fitting a Gaussian, or normal, distribution. There is theoretically no minimum or maximum value that randomGaussian() might return. </summary>
-            <returns> A Gaussian of mean 0 and deviation of 1. </returns>
         </member>
         <member name="M:CCreative.Math.RandomBoolean">
             <summary> Returns a true or false the chance is 50-50. </summary>
@@ -615,6 +630,13 @@
             <param name="list">the items ot shuffle</param>
             <returns>a shuffled copy of the list</returns>
         </member>
+        <member name="M:CCreative.Math.Shuffle``1(System.Collections.Generic.IList{``0})">
+            <summary>
+            Shuffles the given list and returns a copy which can be iterated over
+            </summary>
+            <param name="list">the items ot shuffle</param>
+            <returns>a shuffled copy of the list</returns>
+        </member>
         <member name="M:CCreative.Math.BinarySearch``1(System.Collections.Generic.IList{``0},``0)">
             <summary>
             Search for a value in a sorted list
@@ -623,22 +645,30 @@
             <param name="value">the value to search for</param>
             <returns>the index of <paramref name="value"/></returns>
         </member>
-        <member name="M:CCreative.Math.Binary(System.Int64)">
-            <summary> Converts an int, byte, or a long to a String containing the equivalent binary notation </summary>
-            <param name="value"> Value to convert </param>
-            <returns> Returns the binary string </returns>
-        </member>
-        <member name="M:CCreative.Math.Binary(System.Char)">
-            <summary> Converts an char to a String containing the equivalent binary notation </summary>
-            <param name="value"> Value to convert </param>
-            <returns> Returns the binary string </returns>
+        <member name="M:CCreative.Math.InterpolationSearch``1(System.Collections.Generic.IList{``0},``0)">
+            <summary>
+            Search for a value in a sorted list
+            </summary>
+            <param name="values">the sorted list to search though</param>
+            <param name="value">the value to search for</param>
+            <returns>the index of <paramref name="value"/></returns>
         </member>
         <member name="M:CCreative.Math.Binary(CCreative.Color)">
             <summary> Converts an char to a String containing the equivalent binary notation </summary>
             <param name="value"> Value to convert </param>
             <returns> Returns the binary string </returns>
         </member>
-        <member name="M:CCreative.Math.Unbinary(System.String)">
+        <member name="M:CCreative.Math.Binary(System.Object)">
+            <summary> Converts an object to a String containing the equivalent binary notation </summary>
+            <param name="value"> Value to convert </param>
+            <returns> Returns the binary string </returns>
+        </member>
+        <member name="M:CCreative.Math.Binary``1(``0)">
+            <summary> Converts an number to a String containing the equivalent binary notation </summary>
+            <param name="value"> Value to convert </param>
+            <returns> Returns the binary string </returns>
+        </member>
+        <member name="M:CCreative.Math.UnBinary``1(System.String)">
             <summary> Converts a String representation of a binary number to its equivalent integer value </summary>
             <param name="value"> String to convert to an integer </param>
             <returns> Returns the result of the conversion </returns>
@@ -648,22 +678,17 @@
             <param name="value"> The value to convert to a hex value </param>
             <returns> Returns the hex value </returns>
         </member>
-        <member name="M:CCreative.Math.Hex(System.Char)">
-            <summary> Converts an char to a String containing the equivalent hexadecimal notation </summary>
-            <param name="value"> The value to convert to a hex value </param>
-            <returns> Returns the hex value </returns>
-        </member>
         <member name="M:CCreative.Math.Hex(CCreative.Color)">
             <summary> Converts an int or a byte to a String containing the equivalent hexadecimal notation </summary>
             <param name="value"> The value to convert to a hex value </param>
             <returns> Returns the hex value </returns>
         </member>
-        <member name="M:CCreative.Math.Unhex(System.String)">
+        <member name="M:CCreative.Math.UnHex(System.String)">
             <summary> Converts a String representation of a hexadecimal number to its equivalent integer value </summary>
             <param name="value"> String to convert to an integer </param>
             <returns> Returns a integer from a hexadecimal number </returns>
         </member>
-        <member name="M:CCreative.Math.Str``1(``0)">
+        <member name="M:CCreative.Math.String``1(``0)">
             <summary>
             Converts the given value to a string, returns <see cref="F:System.String.Empty"/> if the value is null
             </summary>
@@ -698,7 +723,7 @@
             <param name="value">the value to convert to a float</param>
             <returns>the converted value</returns>
         </member>
-        <member name="M:CCreative.Math.Convert``2(``1)">
+        <member name="M:CCreative.Math.Convert``2(``0)">
             <summary> Converts a value to a different type </summary>
             <param name="value"> The value to convert </param>
             
@@ -725,36 +750,71 @@
             <param name="numbers">array of get the sum of</param>
             <returns>returns the sum</returns>
         </member>
-        <member name="M:CCreative.Math.Average``1(System.Span{``0})">
+        <member name="M:CCreative.Math.Average``1(``0[])">
             <summary>
             Determines the average value in a sequence of numbers
             </summary>
             <param name="numbers">array of numbers to compare</param>
             <returns>returns the average value</returns>
         </member>
+        <member name="M:CCreative.Math.Add``1(``0[],``0)">
+            <summary>
+            Adds a number to every element of the array
+            </summary>
+            <param name="numbers">the numbers to add the number to</param>
+            <param name="number">the number to add to every element</param>
+        </member>
+        <member name="M:CCreative.Math.Subtract``1(``0[],``0)">
+            <summary>
+            Subtracts a number to the array
+            </summary>
+            <param name="numbers">the numbers to subtract the number from from</param>
+            <param name="number"></param>
+        </member>
+        <member name="M:CCreative.Math.Multiply``1(``0[],``0)">
+            <summary>
+            Multiplies a number with the numbers
+            </summary>
+            <param name="numbers">the numbers to multiply the number with</param>
+            <param name="number">the number to multiply the numbers with</param>
+        </member>
+        <member name="M:CCreative.Math.Divide``1(``0[],``0)">
+            <summary>
+            Divide the numbers with the given number
+            </summary>
+            <param name="numbers">the numbers to divide the number with</param>
+            <param name="number">the number to divide the numbers with</param>
+        </member>
+        <member name="M:CCreative.Math.SetMaxConcurrencyLevel(System.Int32)">
+            <summary>
+            Use this method to set the concurrency level of a few methods in the Math methods
+            </summary>
+            <remarks>Only Use this method if you know what you are doing!!!</remarks>
+            <param name="concurrencyLevel">the maximum concurrency level</param>
+        </member>
         <member name="M:CCreative.NoiseMaker.Noise1(System.Single)">
-            1D float Perlin noise, SL "noise()"
+            1D float Perlin noise, SL "noise()" 
         </member>
         <member name="M:CCreative.NoiseMaker.Pnoise1(System.Single,System.Int32)">
-            1D float Perlin periodic noise, SL "pnoise()"
+            1D float Perlin periodic noise, SL "pnoise()" 
         </member>
         <member name="M:CCreative.NoiseMaker.Noise2(System.Single,System.Single)">
-            2D float Perlin noise.
+            2D float Perlin noise. 
         </member>
         <member name="M:CCreative.NoiseMaker.Pnoise2(System.Single,System.Single,System.Int32,System.Int32)">
-            2D float Perlin periodic noise.
+            2D float Perlin periodic noise. 
         </member>
         <member name="M:CCreative.NoiseMaker.Noise3(System.Single,System.Single,System.Single)">
-            3D float Perlin noise.
+            3D float Perlin noise. 
         </member>
         <member name="M:CCreative.NoiseMaker.Pnoise3(System.Single,System.Single,System.Single,System.Int32,System.Int32,System.Int32)">
-            3D float Perlin periodic noise.
+            3D float Perlin periodic noise. 
         </member>
         <member name="M:CCreative.NoiseMaker.Noise4(System.Single,System.Single,System.Single,System.Single)">
-            4D float Perlin noise.
+            4D float Perlin noise. 
         </member>
         <member name="M:CCreative.NoiseMaker.Pnoise4(System.Single,System.Single,System.Single,System.Single,System.Int32,System.Int32,System.Int32,System.Int32)">
-            4D float Perlin periodic noise.
+            4D float Perlin periodic noise. 
         </member>
         <member name="P:CCreative.PConstants.MouseX">
             <summary>
@@ -796,7 +856,7 @@
             <param name="color">the background color</param>
             <returns>the window background color</returns>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.Background(CCreative.PImage)">
+        <member name="M:CCreative.Rendering.PGraphics.Background(CCreative.Image)">
             <summary>
             Sets the background of the window to a image and erases all drawings on the screen
             </summary>
@@ -1176,7 +1236,7 @@
             <param name="n32">numbers which define the 4x4 matrix to be multiplied</param>
             <param name="n33">numbers which define the 4x4 matrix to be multiplied</param>
         </member>
-        <member name="M:CCreative.Rendering.PGraphics.ApplyMatrix(CCreative.PMatrix)">
+        <member name="M:CCreative.Rendering.PGraphics.ApplyMatrix(CCreative.Matrix)">
             <summary>
             Multiplies the current matrix by the one specified through the parameter
             </summary>

@@ -9,8 +9,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="RoslynPad.Editor.Avalonia" Version="1.2.0" />
-      <PackageReference Include="RoslynPad.Roslyn.Avalonia" Version="3.6.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0-1.final"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.1.0-1.final"/>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.1.0-1.final"/>
+        <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="2.2.0"/>
     </ItemGroup>
 
 </Project>

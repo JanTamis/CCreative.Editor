@@ -9,30 +9,86 @@ using System.Threading.Tasks.Dataflow;
 
 namespace CCreative
 {
+	internal delegate TResult VectorDelegate<T, out TResult>(Span<Vector<T>> data) where T : struct;
+
+	internal delegate void VectorDelegate<T>(Span<Vector<T>> data, T state) where T : struct;
+
+	internal delegate TResult SpanDelegate<T, out TResult>(Span<T> data, T vectorResult) where T : struct;
+
+	internal delegate void SpanDelegate<T>(Span<T> data) where T : struct;
+	
 	public static partial class Math
 	{
-		private static int _degreeOfParallelism = Floor(System.Math.Log2(Environment.ProcessorCount));
-		
+		private static int _degreeOfParallelism = 1; // BitOperations.Log2((uint)Environment.ProcessorCount);
+
+		private const int SIZE_RESTRAINT = 1024 * 64;
+
+		// private static readonly ConcurrentExclusiveSchedulerPair concurrentExclusiveScheduler = new(TaskScheduler.Default, Environment.ProcessorCount / 2); // BitOperations.Log2((uint)Environment.ProcessorCount));
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Min<T>(T num1, T num2) where T : INumber<T>
 		{
 			return T.Min(num1, num2);
 		}
-		
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Min<T>(T num1, T num2, T num3) where T : INumber<T>
 		{
-			return T.Min(T.Min(num1, num2), num3);
+			return Min(Min(num1, num2), num3);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Max<T>(T num1, T num2) where T : INumber<T>
+		{
+			return T.Max(num1, num2);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Max<T>(T num1, T num2, T num3) where T : INumber<T>
+		{
+			return Max(Max(num1, num2), num3);
 		}
 
 		public static T Min<T>(params T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 		{
-			if (numbers.Length * Unsafe.SizeOf<T>() >= 65536)
+			if (numbers.Length >= SIZE_RESTRAINT && _degreeOfParallelism > 1)
 			{
-				var temp = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
+				var result = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
 
-				var block = new ActionBlock<(T[] array, int index, int length)>(tuple =>
+				var block = new ActionBlock<(T[] array, T[] temp, int index, int length)>(tuple =>
 				{
-					var (tempArray, index, length) = tuple;
+					var (tempArray, temp, index, length) = tuple;
 					temp[index] = Min(tempArray.AsSpan(index * _degreeOfParallelism, length));
+				}, new ExecutionDataflowBlockOptions
+				{
+					EnsureOrdered = false,
+					MaxDegreeOfParallelism = _degreeOfParallelism,
+				});
+				
+				for (var i = 0; i < _degreeOfParallelism; i++)
+				{
+					block.Post((numbers, result, i, numbers.Length / _degreeOfParallelism));
+				}
+
+				block.Complete();
+				block.Completion.Wait();
+
+				return Min(result.AsSpan());
+			}
+
+			return Min(numbers.AsSpan());
+		}
+
+		public static T Max<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+		{
+			if (numbers.Length >= SIZE_RESTRAINT && _degreeOfParallelism > 1)
+			{
+				var result = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
+
+				var block = new ActionBlock<(T[] array, T[] temp, int index, int length)>(tuple =>
+				{
+					var (tempArray, temp, index, length) = tuple;
+					temp[index] = Max(tempArray.AsSpan(index * _degreeOfParallelism, length));
 				}, new ExecutionDataflowBlockOptions
 				{
 					EnsureOrdered = false,
@@ -41,55 +97,15 @@ namespace CCreative
 
 				for (var i = 0; i < _degreeOfParallelism; i++)
 				{
-					block.Post((numbers, i, numbers.Length / _degreeOfParallelism));
+					block.Post((numbers, result, i, numbers.Length / _degreeOfParallelism));
 				}
-			
+
 				block.Complete();
 				block.Completion.Wait();
 
-				return Min(temp.AsSpan());
+				return Max(result.AsSpan());
 			}
-		
-			return Min(numbers.AsSpan());
-		}
 
-		public static T Max<T>(T num1, T num2) where T : unmanaged, INumber<T>
-		{
-			return T.Max(num1, num2);
-		}
-		
-		public static T Max<T>(T num1, T num2, T num3) where T : INumber<T>
-		{
-			return T.Max(T.Max(num1, num2), num3);
-		}
-
-		public static T Max<T>(params T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-		{
-			if (numbers.Length * Unsafe.SizeOf<T>() >= 65536)
-			{
-				var temp = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
-
-				var block = new ActionBlock<(T[] array, int index, int length)>(tuple =>
-				{
-					var (tempArray, index, length) = tuple;
-					temp[index] = Max(tempArray.AsSpan(index * _degreeOfParallelism, length));
-				}, new ExecutionDataflowBlockOptions()
-				{
-					EnsureOrdered = false,
-					MaxDegreeOfParallelism = _degreeOfParallelism,
-				});
-
-				for (var i = 0; i < _degreeOfParallelism; i++)
-				{
-					block.Post((numbers, i, numbers.Length / _degreeOfParallelism));
-				}
-			
-				block.Complete();
-				block.Completion.Wait();
-
-				return Max(temp.AsSpan());
-			}
-		
 			return Max(numbers.AsSpan());
 		}
 
@@ -98,17 +114,17 @@ namespace CCreative
 			return Max(CollectionsMarshal.AsSpan(numbers));
 		}
 
-		public static T Sum<T>(params T[] numbers) where T : unmanaged, INumber<T>
+		public static T Sum<T>(T[] numbers) where T : unmanaged, INumber<T>
 		{
-			if (numbers.Length * Unsafe.SizeOf<T>() >= 65536)
+			if (numbers.Length >= SIZE_RESTRAINT && _degreeOfParallelism > 1)
 			{
-				var temp = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
+				var result = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
 
-				var block = new ActionBlock<(T[] array, int index, int length)>(tuple =>
+				var block = new ActionBlock<(T[] array, T[] temp, int index, int length)>(tuple =>
 				{
-					var (tempArray, index, length) = tuple;
+					var (tempArray, temp, index, length) = tuple;
 					temp[index] = Sum(tempArray.AsSpan(index * _degreeOfParallelism, length));
-				}, new ExecutionDataflowBlockOptions()
+				}, new ExecutionDataflowBlockOptions
 				{
 					EnsureOrdered = false,
 					MaxDegreeOfParallelism = _degreeOfParallelism,
@@ -116,15 +132,15 @@ namespace CCreative
 
 				for (var i = 0; i < _degreeOfParallelism; i++)
 				{
-					block.Post((numbers, i, numbers.Length / _degreeOfParallelism));
+					block.Post((numbers, result, i, numbers.Length / _degreeOfParallelism));
 				}
-			
+
 				block.Complete();
 				block.Completion.Wait();
 
-				return Sum(temp.AsSpan());
+				return Sum(result.AsSpan());
 			}
-		
+
 			return Sum(numbers.AsSpan());
 		}
 
@@ -133,36 +149,33 @@ namespace CCreative
 		/// </summary>
 		/// <param name="numbers">array of numbers to compare</param>
 		/// <returns>returns the minimum value</returns>
-		[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 		internal static T Min<T>(Span<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 		{
-			var min = T.MaxValue;
-			var j = 0;
-			var count = Vector<T>.Count;
-
-			if (Vector.IsHardwareAccelerated && numbers.Length >= count * 2)
+			return Aggregate(numbers, vectors =>
 			{
-				var setVectors = MemoryMarshal.Cast<T, Vector<T>>(numbers);
+				var result = vectors[0];
+				var min = T.MaxValue;
 
-				var result = setVectors[0];
-
-				for (var i = 1; i < setVectors.Length; i++)
+				for (var i = 1; i < vectors.Length; i++)
 				{
-					result = Vector.Min(result, setVectors[i]);
+					result = System.Numerics.Vector.Min(result, vectors[i]);
 				}
 
-				for (var i = 0; i < count; i++)
+				for (var i = 0; i < Vector<T>.Count; i++)
 				{
-					min = T.Min(min, result[i]);
+					min = Min(min, result[i]);
 				}
 
-				j = count * setVectors.Length;
-			}
+				return min;
+			}, (data, min) =>
+			{
+				foreach (var number in data)
+				{
+					min = Min(number, min);
+				}
 
-			for (; j < numbers.Length; j++)
-				min = T.Min(min, numbers[j]);
-
-			return min;
+				return min;
+			});
 		}
 
 		/// <summary>
@@ -170,35 +183,33 @@ namespace CCreative
 		/// </summary>
 		/// <param name="numbers">array of numbers to compare</param>
 		/// <returns>returns the maximum value</returns>
-		[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 		internal static T Max<T>(Span<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 		{
-			var max = T.MinValue;
-			var j = 0;
-			var count = Vector<T>.Count;
-
-			if (Vector.IsHardwareAccelerated && numbers.Length >= count * 2)
+			return Aggregate(numbers, vectors =>
 			{
-				var setVectors = MemoryMarshal.Cast<T, Vector<T>>(numbers);
-				var result = setVectors[0];
+				var result = vectors[0];
+				var max = T.MinValue;
 
-				for (var i = 1; i < setVectors.Length; i++)
+				for (var i = 1; i < vectors.Length; i++)
 				{
-					result = Vector.Max(result, setVectors[i]);
+					result = System.Numerics.Vector.Max(result, vectors[i]);
 				}
 
-				for (var i = 0; i < count; i++)
+				for (var i = 0; i < Vector<T>.Count; i++)
 				{
-					max = T.Max(max, result[i]);
+					max = Max(max, result[i]);
 				}
 
-				j = count * setVectors.Length;
-			}
+				return max;
+			}, (data, max) =>
+			{
+				foreach (var number in data)
+				{
+					max = Max(number, max);
+				}
 
-			for (; j < numbers.Length; j++)
-				max = T.Max(max, numbers[j]);
-
-			return max;
+				return max;
+			});
 		}
 
 		/// <summary>
@@ -206,35 +217,27 @@ namespace CCreative
 		/// </summary>
 		/// <param name="numbers">array of get the sum of</param>
 		/// <returns>returns the sum</returns>
-		[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 		internal static T Sum<T>(Span<T> numbers) where T : unmanaged, INumber<T>
 		{
-			var vSum = Vector<T>.Zero;
-			var count = Vector<T>.Count;
-
-			var sum = T.Zero;
-			var i = 0;
-
-			if (Vector.IsHardwareAccelerated && numbers.Length >= count)
+			return Aggregate(numbers, vectors =>
 			{
-				var setVectors = MemoryMarshal.Cast<T, Vector<T>>(numbers);
+				var vSum = Vector<T>.Zero;
 
-				for (i = 0; i < setVectors.Length; i++)
+				for (var i = 1; i < vectors.Length; i++)
 				{
-					vSum = Vector.Add(vSum, setVectors[i]);
+					vSum = System.Numerics.Vector.Add(vSum, vectors[i]);
 				}
 
-				sum = Vector.Sum(vSum);
-
-				i = count * setVectors.Length;
-			}
-			
-			for (; i < numbers.Length; i++)
+				return System.Numerics.Vector.Sum(vSum);
+			}, (data, sum) =>
 			{
-				sum += numbers[i];
-			}
+				foreach (var number in data)
+				{
+					sum += number;
+				}
 
-			return sum;
+				return sum;
+			});
 		}
 
 		/// <summary>
@@ -244,9 +247,111 @@ namespace CCreative
 		/// <returns>returns the average value</returns>
 		public static T Average<T>(T[] numbers) where T : unmanaged, INumber<T>
 		{
-			return Sum(numbers) / ConvertNumber<T, int>(numbers.Length);
+			return Sum(numbers) / T.Create(numbers.Length);
 		}
-		
+
+		/// <summary>
+		/// Adds a number to every element of the array
+		/// </summary>
+		/// <param name="numbers">the numbers to add the number to</param>
+		/// <param name="number">the number to add to every element</param>
+		public static void Add<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+		{
+			Aggregate(numbers, (vectors, state) =>
+			{
+				var vValue = new Vector<T>(state);
+
+				for (var i = 0; i < vectors.Length; i++)
+				{
+					vectors[i] += vValue;
+				}
+			}, number);
+		}
+
+		/// <summary>
+		/// Subtracts a number to the array
+		/// </summary>
+		/// <param name="numbers">the numbers to subtract the number from from</param>
+		/// <param name="number"></param>
+		public static void Subtract<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+		{
+			Aggregate(numbers, (vectors, state) =>
+			{
+				var vValue = new Vector<T>(state);
+
+				for (var i = 0; i < vectors.Length; i++)
+				{
+					vectors[i] -= vValue;
+				}
+			}, number);
+		}
+
+		/// <summary>
+		/// Multiplies a number with the numbers
+		/// </summary>
+		/// <param name="numbers">the numbers to multiply the number with</param>
+		/// <param name="number">the number to multiply the numbers with</param>
+		public static void Multiply<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+		{
+			Aggregate(numbers, (vectors, state) =>
+			{
+				var vValue = new Vector<T>(state);
+
+				for (var i = 0; i < vectors.Length; i++)
+				{
+					vectors[i] *= vValue;
+				}
+			}, number);
+		}
+
+		/// <summary>
+		/// Divide the numbers with the given number
+		/// </summary>
+		/// <param name="numbers">the numbers to divide the number with</param>
+		/// <param name="number">the number to divide the numbers with</param>
+		public static void Divide<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+		{
+			Aggregate(numbers, (vectors, state) =>
+			{
+				var vValue = new Vector<T>(state);
+
+				for (var i = 0; i < vectors.Length; i++)
+				{
+					vectors[i] /= vValue;
+				}
+			}, number);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private static T Aggregate<T>(Span<T> numbers, VectorDelegate<T, T> vectorAction, SpanDelegate<T, T> spanAction) where T : unmanaged, INumber<T>
+		{
+			var count = Vector<T>.Count;
+			var result = default(T);
+			var index = 0;
+
+			if (System.Numerics.Vector.IsHardwareAccelerated && numbers.Length >= count * 2)
+			{
+				var vectors = MemoryMarshal.Cast<T, Vector<T>>(numbers);
+
+				result = vectorAction(vectors);
+				index = count * vectors.Length;
+			}
+
+			if (index < numbers.Length - 1)
+			{
+				result = spanAction(numbers[index..], result);
+			}
+
+			return result;
+		}
+
+		private static unsafe void Aggregate<T>(Span<T> numbers, VectorDelegate<T> vectorAction, T state) where T : unmanaged, INumber<T>
+		{
+			var vectors = new Span<Vector<T>>(Unsafe.AsPointer(ref numbers[0]), Ceil((double)numbers.Length / Vector<T>.Count));
+
+			vectorAction(vectors, state);
+		}
+
 		/// <summary>
 		/// Use this method to set the concurrency level of a few methods in the Math methods
 		/// </summary>

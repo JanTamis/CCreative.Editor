@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -12,21 +13,16 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 	{
 	}
 
-	public NumberList(Span<T> span) : base(span.Length)
+	public NumberList(ReadOnlySpan<T> span) : base(span.Length)
 	{
 		for (var i = 0; i < span.Length; i++)
 		{
-			Add(span[i]);
+			base.Add(span[i]);
 		}
 	}
 
 	public NumberList(int capacity) : base(capacity)
 	{
-	}
-
-	public void Append(T value)
-	{
-		base.Add(value);
 	}
 
 	public void SortReverse()
@@ -55,7 +51,7 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 		}
 	}
 
-	public void Sub(T value)
+	public void Subtract(T value)
 	{
 		for (var i = 0; i < Count; i++)
 		{
@@ -63,7 +59,7 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 		}
 	}
 
-	public void Div(T value)
+	public void Divide(T value)
 	{
 		for (var i = 0; i < Count; i++)
 		{
@@ -71,7 +67,7 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 		}
 	}
 
-	public void Mult(T value)
+	public void Multiply(T value)
 	{
 		for (var i = 0; i < Count; i++)
 		{
@@ -104,12 +100,7 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 		return Contains(value);
 	}
 
-	public T[] Array()
-	{
-		return ToArray();
-	}
-
-	public static implicit operator Span<T>(NumberList<T> list)
+	public static explicit operator Span<T>(NumberList<T> list)
 	{
 		return CollectionsMarshal.AsSpan(list);
 	}

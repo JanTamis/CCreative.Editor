@@ -10,7 +10,7 @@ internal static class NoiseMaker
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static float Fade(float t)
 	{
-		return t * t * t * MathF.FusedMultiplyAdd(t, t * 6f - 15f, 10f);
+		return Math.Cb(t) * Math.FusedMultiplyAdd(t, Math.FusedMultiplySubtract(t, 6f, 15), 10f);
 	}
 
 	private static readonly Vector<float> S6F = new(6.0f);
@@ -33,7 +33,7 @@ internal static class NoiseMaker
 	private static Vector<float> FloorSimd(Vector<float> f)
 	{
 		var ft = (Vector<float>)(Vector<int>)f;
-		return ft - Vector.BitwiseAnd(Vector.LessThan<float>(f, ft), Vector<float>.One);
+		return ft - System.Numerics.Vector.BitwiseAnd(System.Numerics.Vector.LessThan<float>(f, ft), Vector<float>.One);
 	}
 
 	//---------------------------------------------------------------------
@@ -126,13 +126,17 @@ internal static class NoiseMaker
 		var u = h < 4 ? x : y; // into 8 simple gradient directions,
 		var v = h < 4 ? y : x; // and compute the dot product with (x,y).
 
-		if ((h & 1) == 1)
+		if ((h & 1) is 1)
+		{
 			u = -u;
+		}
 
 		var n = 2.0f * v;
 
-		if ((h & 2) == 1)
+		if ((h & 2) is 1)
+		{
 			n = -2.0f * v;
+		}
 
 		return u + n;
 	}
@@ -164,18 +168,18 @@ internal static class NoiseMaker
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static Vector<float> Grad3Simd(Vector<int> h, Vector<float> x, Vector<float> y, Vector<float> z)
 	{
-		h = Vector.BitwiseAnd(h, S15);
-		var h1 = Vector.Equals(Vector<int>.Zero, Vector.BitwiseAnd(h, Vector<int>.One));
-		var h2 = Vector.Equals(Vector<int>.Zero, Vector.BitwiseAnd(h, S2));
+		h = System.Numerics.Vector.BitwiseAnd(h, S15);
+		var h1 = System.Numerics.Vector.Equals(Vector<int>.Zero, System.Numerics.Vector.BitwiseAnd(h, Vector<int>.One));
+		var h2 = System.Numerics.Vector.Equals(Vector<int>.Zero, System.Numerics.Vector.BitwiseAnd(h, S2));
 
-		var u = Vector.ConditionalSelect(Vector.LessThan(h, S8), x, y);
+		var u = System.Numerics.Vector.ConditionalSelect(System.Numerics.Vector.LessThan(h, S8), x, y);
 
-		var orh = Vector.BitwiseOr(Vector.Equals(h, S12), Vector.Equals(h, S14));
-		var xorz = Vector.ConditionalSelect(orh, x, z);
-		var v = Vector.ConditionalSelect(Vector.LessThan(h, S4), y, xorz);
+		var orh = System.Numerics.Vector.BitwiseOr(System.Numerics.Vector.Equals(h, S12), System.Numerics.Vector.Equals(h, S14));
+		var xorz = System.Numerics.Vector.ConditionalSelect(orh, x, z);
+		var v = System.Numerics.Vector.ConditionalSelect(System.Numerics.Vector.LessThan(h, S4), y, xorz);
 
-		u = Vector.ConditionalSelect(h1, u, Vector<float>.Zero - u);
-		v = Vector.ConditionalSelect(h2, v, Vector<float>.Zero - v);
+		u = System.Numerics.Vector.ConditionalSelect(h1, u, Vector<float>.Zero - u);
+		v = System.Numerics.Vector.ConditionalSelect(h2, v, Vector<float>.Zero - v);
 
 		return u + v;
 	}
@@ -204,43 +208,35 @@ internal static class NoiseMaker
 	/** 1D float Perlin noise, SL "noise()" */
 	public static float Noise1(float x)
 	{
-		int ix0, ix1;
-		float fx0, fx1;
-		float s;
-		float n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)x - 1; //FASTFLOOR(x); // Integer part of x
-		fx0 = x - ix0; // Fractional part of x
-		fx1 = fx0 - 1.0f;
-		ix1 = (ix0 + 1) & 0xff;
+		var ix0 = x > 0 ? (int)x : (int)x - 1;
+		var fx0 = x - ix0;
+		var fx1 = fx0 - 1.0f;
+		var ix1 = (ix0 + 1) & 0xff;
+		
 		ix0 &= 0xff; // Wrap to 0..255
 
-		s = Fade(fx0);
+		var s = Fade(fx0);
 
-		n0 = Grad1(_perm[ix0], fx0);
-		n1 = Grad1(_perm[ix1], fx1);
+		var n0 = Grad1(_perm[ix0], fx0);
+		var n1 = Grad1(_perm[ix1], fx1);
 		return 0.188f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
 	/** 1D float Perlin periodic noise, SL "pnoise()" */
-	public static float Pnoise1(float x, int px)
+	public static float PNoise1(float x, int px)
 	{
-		int ix0, ix1;
-		float fx0, fx1;
-		float s;
-		float n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)x - 1; //FASTFLOOR(x); // Integer part of x
-		fx0 = x - ix0; // Fractional part of x
-		fx1 = fx0 - 1.0f;
-		ix1 = ((ix0 + 1) % px) & 0xff; // Wrap to 0..px-1 *and* wrap to 0..255
+		var ix0 = x > 0 ? (int)x : (int)x - 1;
+		var fx0 = x - ix0;
+		var fx1 = fx0 - 1.0f;
+		var ix1 = ((ix0 + 1) % px) & 0xff;
+		
 		ix0 = (ix0 % px) & 0xff; // (because px might be greater than 256)
 
-		s = Fade(fx0);
+		var s = Fade(fx0);
 
-		n0 = Grad1(_perm[ix0], fx0);
-		n1 = Grad1(_perm[ix1], fx1);
+		var n0 = Grad1(_perm[ix0], fx0);
+		var n1 = Grad1(_perm[ix1], fx1);
 		return 0.188f * Math.Lerp(n0, n1, s);
 	}
 
@@ -248,78 +244,72 @@ internal static class NoiseMaker
 	/** 2D float Perlin noise. */
 	public static float Noise2(float x, float y)
 	{
-		int ix0, iy0, ix1, iy1;
-		float fx0, fy0, fx1, fy1;
-		float s, t;
-		float nx0, nx1, n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)(x - 1);
-		iy0 = y > 0 ? (int)y : (int)(y - 1);
-		fx0 = x - ix0; // Fractional part of x
-		fy0 = y - iy0; // Fractional part of y
-		fx1 = fx0 - 1.0f;
-		fy1 = fy0 - 1.0f;
-		ix1 = (ix0 + 1) & 0xff; // Wrap to 0..255
-		iy1 = (iy0 + 1) & 0xff;
+		var ix0 = x > 0 ? (int)x : (int)(x - 1);
+		var iy0 = y > 0 ? (int)y : (int)(y - 1);
+		var fx0 = x - ix0;
+		var fy0 = y - iy0;
+		var fx1 = fx0 - 1.0f;
+		var fy1 = fy0 - 1.0f;
+		var ix1 = (ix0 + 1) & 0xff;
+		var iy1 = (iy0 + 1) & 0xff;
+		
 		ix0 &= 0xff;
 		iy0 &= 0xff;
 
-		t = Fade(fy0);
-		s = Fade(fx0);
+		var t = Fade(fy0);
+		var s = Fade(fx0);
 
-		nx0 = Grad2(_perm[ix0 + _perm[iy0]], fx0, fy0);
-		nx1 = Grad2(_perm[ix0 + _perm[iy1]], fx0, fy1);
-		n0 = Math.Lerp(nx0, nx1, t);
+		var nx0 = Grad2(_perm[ix0 + _perm[iy0]], fx0, fy0);
+		var nx1 = Grad2(_perm[ix0 + _perm[iy1]], fx0, fy1);
+		var n0 = Math.Lerp(nx0, nx1, t);
 
 		nx0 = Grad2(_perm[ix1 + _perm[iy0]], fx1, fy0);
 		nx1 = Grad2(_perm[ix1 + _perm[iy1]], fx1, fy1);
-		n1 = Math.Lerp(nx0, nx1, t);
+
+		var n1 = Math.Lerp(nx0, nx1, t);
 
 		return 0.507f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
 	/** 2D float Perlin periodic noise. */
-	public static float Pnoise2(float x, float y, int px, int py)
+	public static float PNoise2(float x, float y, int px, int py)
 	{
-		int ix0, iy0, ix1, iy1;
-		float fx0, fy0, fx1, fy1;
-		float s, t;
-		float nx0, nx1, n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)(x - 1);
-		iy0 = y > 0 ? (int)y : (int)(y - 1);
-		fx0 = x - ix0; // Fractional part of x
-		fy0 = y - iy0; // Fractional part of y
-		fx1 = fx0 - 1.0f;
-		fy1 = fy0 - 1.0f;
-		ix1 = ((ix0 + 1) % px) & 0xff; // Wrap to 0..px-1 and wrap to 0..255
-		iy1 = ((iy0 + 1) % py) & 0xff; // Wrap to 0..py-1 and wrap to 0..255
+		var ix0 = x > 0 ? (int)x : (int)(x - 1);
+		var iy0 = y > 0 ? (int)y : (int)(y - 1);
+		var fx0 = x - ix0;
+		var fy0 = y - iy0;
+		var fx1 = fx0 - 1.0f;
+		var fy1 = fy0 - 1.0f;
+		var ix1 = ((ix0 + 1) % px) & 0xff;
+		var iy1 = ((iy0 + 1) % py) & 0xff;
+		
 		ix0 = (ix0 % px) & 0xff;
 		iy0 = (iy0 % py) & 0xff;
 
-		t = fy0 * fy0 * fy0 * (fy0 * (fy0 * 6 - 15) + 10);
-		s = fx0 * fx0 * fx0 * (fx0 * (fx0 * 6 - 15) + 10);
+		var t = Math.Cb(fy0) * Math.FusedMultiplyAdd(fy0, Math.FusedMultiplySubtract(fy0, 6, 15), 10);
+		var s = Math.Cb(fx0) * Math.FusedMultiplyAdd(fx0, Math.FusedMultiplySubtract(fx0, 6, 15), 10);
 
-		nx0 = Grad2(_perm[ix0 + _perm[iy0]], fx0, fy0);
-		nx1 = Grad2(_perm[ix0 + _perm[iy1]], fx0, fy1);
-		n0 = Math.Lerp(nx0, nx1, t);
+		var nx0 = Grad2(_perm[ix0 + _perm[iy0]], fx0, fy0);
+		var nx1 = Grad2(_perm[ix0 + _perm[iy1]], fx0, fy1);
+		var n0 = Math.Lerp(nx0, nx1, t);
 
 		nx0 = Grad2(_perm[ix1 + _perm[iy0]], fx1, fy0);
 		nx1 = Grad2(_perm[ix1 + _perm[iy1]], fx1, fy1);
-		n1 = Math.Lerp(nx0, nx1, t);
 
-		return 0.446f * Math.Lerp(n0, n1, s) + .5f;
+		var n1 = Math.Lerp(nx0, nx1, t);
+
+		return Math.FusedMultiplyAdd(0.446f, Math.Lerp(n0, n1, s), .5f);
 	}
 
-	private static int[] _a = new int[Vector<float>.Count];
-	private static int[] _b = new int[Vector<float>.Count];
-	private static int[] _c = new int[Vector<float>.Count];
-	private static int[] _d = new int[Vector<float>.Count];
-	private static int[] _e = new int[Vector<float>.Count];
-	private static int[] _f = new int[Vector<float>.Count];
-	private static int[] _g = new int[Vector<float>.Count];
-	private static int[] _h = new int[Vector<float>.Count];
+	private static readonly int[] _a = new int[Vector<float>.Count];
+	private static readonly int[] _b = new int[Vector<float>.Count];
+	private static readonly int[] _c = new int[Vector<float>.Count];
+	private static readonly int[] _d = new int[Vector<float>.Count];
+	private static readonly int[] _e = new int[Vector<float>.Count];
+	private static readonly int[] _f = new int[Vector<float>.Count];
+	private static readonly int[] _g = new int[Vector<float>.Count];
+	private static readonly int[] _h = new int[Vector<float>.Count];
 
 	private static readonly Vector<int> S255 = new(255);
 	private static readonly Vector<float> Scale = new(0.935f);
@@ -338,13 +328,13 @@ internal static class NoiseMaker
 		var fy1 = fy0 - Vector<float>.One;
 		var fz1 = fz0 - Vector<float>.One;
 
-		var ix1 = Vector.BitwiseAnd(ix0 + Vector<int>.One, S255);
-		var iy1 = Vector.BitwiseAnd(iy0 + Vector<int>.One, S255);
-		var iz1 = Vector.BitwiseAnd(iz0 + Vector<int>.One, S255);
+		var ix1 = System.Numerics.Vector.BitwiseAnd(ix0 + Vector<int>.One, S255);
+		var iy1 = System.Numerics.Vector.BitwiseAnd(iy0 + Vector<int>.One, S255);
+		var iz1 = System.Numerics.Vector.BitwiseAnd(iz0 + Vector<int>.One, S255);
 
-		ix0 = Vector.BitwiseAnd(ix0, S255);
-		iy0 = Vector.BitwiseAnd(iy0, S255);
-		iz0 = Vector.BitwiseAnd(iz0, S255);
+		ix0 = System.Numerics.Vector.BitwiseAnd(ix0, S255);
+		iy0 = System.Numerics.Vector.BitwiseAnd(iy0, S255);
+		iz0 = System.Numerics.Vector.BitwiseAnd(iz0, S255);
 
 		var r = FadeSimd(fz0);
 		var t = FadeSimd(fy0);
@@ -415,40 +405,36 @@ internal static class NoiseMaker
 	/** 3D float Perlin noise. */
 	public static float Noise3(float x, float y, float z)
 	{
-		int ix0, iy0, iz0, ix1, iy1, iz1;
-		float fx0, fy0, fz0, fx1, fy1, fz1;
-		float s, t, r;
-		float nxy0, nxy1, nx0, nx1, n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)x - 1; //FASTFLOOR(x); // Integer part of x
-		iy0 = y > 0 ? (int)y : (int)y - 1; //FASTFLOOR(y); // Integer part of y
-		iz0 = z > 0 ? (int)z : (int)z - 1; //FASTFLOOR(z); // Integer part of z
-		fx0 = x - ix0; // Fractional part of x
-		fy0 = y - iy0; // Fractional part of y
-		fz0 = z - iz0; // Fractional part of z
-		fx1 = fx0 - 1.0f;
-		fy1 = fy0 - 1.0f;
-		fz1 = fz0 - 1.0f;
-		ix1 = (ix0 + 1) & 0xff; // Wrap to 0..255
-		iy1 = (iy0 + 1) & 0xff;
-		iz1 = (iz0 + 1) & 0xff;
+		var ix0 = x > 0 ? (int)x : (int)x - 1;
+		var iy0 = y > 0 ? (int)y : (int)y - 1;
+		var iz0 = z > 0 ? (int)z : (int)z - 1;
+		var fx0 = x - ix0;
+		var fy0 = y - iy0;
+		var fz0 = z - iz0;
+		var fx1 = fx0 - 1.0f;
+		var fy1 = fy0 - 1.0f;
+		var fz1 = fz0 - 1.0f;
+		var ix1 = (ix0 + 1) & 0xff;
+		var iy1 = (iy0 + 1) & 0xff;
+		var iz1 = (iz0 + 1) & 0xff;
+		
 		ix0 &= 0xff;
 		iy0 &= 0xff;
 		iz0 &= 0xff;
 
-		r = Fade(fz0);
-		t = Fade(fy0);
-		s = Fade(fx0);
+		var r = Fade(fz0);
+		var t = Fade(fy0);
+		var s = Fade(fx0);
 
-		nxy0 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz0]]], fx0, fy0, fz0);
-		nxy1 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz1]]], fx0, fy0, fz1);
-		nx0 = Math.Lerp(nxy0, nxy1, r);
+		var nxy0 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz0]]], fx0, fy0, fz0);
+		var nxy1 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz1]]], fx0, fy0, fz1);
+		var nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxy0 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz0]]], fx0, fy1, fz0);
 		nxy1 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz1]]], fx0, fy1, fz1);
-		nx1 = Math.Lerp(nxy0, nxy1, r);
+		var nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Math.Lerp(nx0, nx1, t);
+		var n0 = Math.Lerp(nx0, nx1, t);
 
 		nxy0 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz0]]], fx1, fy0, fz0);
 		nxy1 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz1]]], fx1, fy0, fz1);
@@ -458,49 +444,45 @@ internal static class NoiseMaker
 		nxy1 = Grad3(_perm[ix1 + _perm[iy1 + _perm[iz1]]], fx1, fy1, fz1);
 		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Math.Lerp(nx0, nx1, t);
+		var n1 = Math.Lerp(nx0, nx1, t);
 
-		return Math.Lerp(n0, n1, s) * .936f;
+		return Math.Lerp(n0, n1, s) * 0.936f;
 	}
 
 	//---------------------------------------------------------------------
 	/** 3D float Perlin periodic noise. */
-	public static float Pnoise3(float x, float y, float z, int px, int py, int pz)
+	public static float PNoise3(float x, float y, float z, int px, int py, int pz)
 	{
-		int ix0, iy0, iz0, ix1, iy1, iz1;
-		float fx0, fy0, fz0, fx1, fy1, fz1;
-		float s, t, r;
-		float nxy0, nxy1, nx0, nx1, n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)x - 1; //FASTFLOOR(x); // Integer part of x
-		iy0 = y > 0 ? (int)y : (int)y - 1; //FASTFLOOR(y); // Integer part of y
-		iz0 = z > 0 ? (int)z : (int)z - 1; //FASTFLOOR(z); // Integer part of z
-		fx0 = x - ix0; // Fractional part of x
-		fy0 = y - iy0; // Fractional part of y
-		fz0 = z - iz0; // Fractional part of z
-		fx1 = fx0 - 1.0f;
-		fy1 = fy0 - 1.0f;
-		fz1 = fz0 - 1.0f;
-		ix1 = ((ix0 + 1) % px) & 0xff; // Wrap to 0..px-1 and wrap to 0..255
-		iy1 = ((iy0 + 1) % py) & 0xff; // Wrap to 0..py-1 and wrap to 0..255
-		iz1 = ((iz0 + 1) % pz) & 0xff; // Wrap to 0..pz-1 and wrap to 0..255
+		var ix0 = x > 0 ? (int)x : (int)x - 1;
+		var iy0 = y > 0 ? (int)y : (int)y - 1;
+		var iz0 = z > 0 ? (int)z : (int)z - 1;
+		var fx0 = x - ix0;
+		var fy0 = y - iy0;
+		var fz0 = z - iz0;
+		var fx1 = fx0 - 1.0f;
+		var fy1 = fy0 - 1.0f;
+		var fz1 = fz0 - 1.0f;
+		var ix1 = ((ix0 + 1) % px) & 0xff;
+		var iy1 = ((iy0 + 1) % py) & 0xff;
+		var iz1 = ((iz0 + 1) % pz) & 0xff;
+		
 		ix0 = (ix0 % px) & 0xff;
 		iy0 = (iy0 % py) & 0xff;
 		iz0 = (iz0 % pz) & 0xff;
 
-		r = Fade(fz0);
-		t = Fade(fy0);
-		s = Fade(fx0);
+		var r = Fade(fz0);
+		var t = Fade(fy0);
+		var s = Fade(fx0);
 
-		nxy0 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz0]]], fx0, fy0, fz0);
-		nxy1 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz1]]], fx0, fy0, fz1);
-		nx0 = Math.Lerp(nxy0, nxy1, r);
+		var nxy0 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz0]]], fx0, fy0, fz0);
+		var nxy1 = Grad3(_perm[ix0 + _perm[iy0 + _perm[iz1]]], fx0, fy0, fz1);
+		var nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxy0 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz0]]], fx0, fy1, fz0);
 		nxy1 = Grad3(_perm[ix0 + _perm[iy1 + _perm[iz1]]], fx0, fy1, fz1);
-		nx1 = Math.Lerp(nxy0, nxy1, r);
+		var nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Math.Lerp(nx0, nx1, t);
+		var n0 = Math.Lerp(nx0, nx1, t);
 
 		nxy0 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz0]]], fx1, fy0, fz0);
 		nxy1 = Grad3(_perm[ix1 + _perm[iy0 + _perm[iz1]]], fx1, fy0, fz1);
@@ -510,7 +492,7 @@ internal static class NoiseMaker
 		nxy1 = Grad3(_perm[ix1 + _perm[iy1 + _perm[iz1]]], fx1, fy1, fz1);
 		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Math.Lerp(nx0, nx1, r);
+		var n1 = Math.Lerp(nx0, nx1, r);
 
 		return 0.936f * Math.Lerp(n0, n1, s);
 	}
@@ -519,46 +501,42 @@ internal static class NoiseMaker
 	/** 4D float Perlin noise. */
 	public static float Noise4(float x, float y, float z, float w)
 	{
-		int ix0, iy0, iz0, iw0, ix1, iy1, iz1, iw1;
-		float fx0, fy0, fz0, fw0, fx1, fy1, fz1, fw1;
-		float s, t, r, q;
-		float nxyz0, nxyz1, nxy0, nxy1, nx0, nx1, n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)x - 1; //FASTFLOOR(x); // Integer part of x
-		iy0 = y > 0 ? (int)y : (int)y - 1; //FASTFLOOR(y); // Integer part of y
-		iz0 = z > 0 ? (int)z : (int)z - 1; //FASTFLOOR(z); // Integer part of z
-		iw0 = w > 0 ? (int)w : (int)w - 1; //FASTFLOOR(w); // Integer part of w
-		fx0 = x - ix0; // Fractional part of x
-		fy0 = y - iy0; // Fractional part of y
-		fz0 = z - iz0; // Fractional part of z
-		fw0 = w - iw0; // Fractional part of w
-		fx1 = fx0 - 1.0f;
-		fy1 = fy0 - 1.0f;
-		fz1 = fz0 - 1.0f;
-		fw1 = fw0 - 1.0f;
-		ix1 = (ix0 + 1) & 0xff; // Wrap to 0..255
-		iy1 = (iy0 + 1) & 0xff;
-		iz1 = (iz0 + 1) & 0xff;
-		iw1 = (iw0 + 1) & 0xff;
+		var ix0 = x > 0 ? (int)x : (int)x - 1;
+		var iy0 = y > 0 ? (int)y : (int)y - 1;
+		var iz0 = z > 0 ? (int)z : (int)z - 1;
+		var iw0 = w > 0 ? (int)w : (int)w - 1;
+		var fx0 = x - ix0;
+		var fy0 = y - iy0;
+		var fz0 = z - iz0;
+		var fw0 = w - iw0;
+		var fx1 = fx0 - 1.0f;
+		var fy1 = fy0 - 1.0f;
+		var fz1 = fz0 - 1.0f;
+		var fw1 = fw0 - 1.0f;
+		var ix1 = (ix0 + 1) & 0xff;
+		var iy1 = (iy0 + 1) & 0xff;
+		var iz1 = (iz0 + 1) & 0xff;
+		var iw1 = (iw0 + 1) & 0xff;
+		
 		ix0 &= 0xff;
 		iy0 &= 0xff;
 		iz0 &= 0xff;
 		iw0 &= 0xff;
 
-		q = Fade(fw0);
-		r = Fade(fz0);
-		t = Fade(fy0);
-		s = Fade(fx0);
+		var q = Fade(fw0);
+		var r = Fade(fz0);
+		var t = Fade(fy0);
+		var s = Fade(fx0);
 
-		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx0, fy0, fz0, fw0);
-		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx0, fy0, fz0, fw1);
-		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
+		var nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx0, fy0, fz0, fw0);
+		var nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx0, fy0, fz0, fw1);
+		var nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw0]]]], fx0, fy0, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw1]]]], fx0, fy0, fz1, fw1);
-		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
+		var nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx0 = Math.Lerp(nxy0, nxy1, r);
+		var nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw0]]]], fx0, fy1, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw1]]]], fx0, fy1, fz0, fw1);
@@ -568,9 +546,9 @@ internal static class NoiseMaker
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz1 + _perm[iw1]]]], fx0, fy1, fz1, fw1);
 		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx1 = Math.Lerp(nxy0, nxy1, r);
+		var nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n0 = Math.Lerp(nx0, nx1, t);
+		var n0 = Math.Lerp(nx0, nx1, t);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx1, fy0, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx1, fy0, fz0, fw1);
@@ -592,56 +570,50 @@ internal static class NoiseMaker
 
 		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Math.Lerp(nx0, nx1, t);
+		var n1 = Math.Lerp(nx0, nx1, t);
 
 		return 0.87f * Math.Lerp(n0, n1, s);
 	}
 
 	//---------------------------------------------------------------------
 	/** 4D float Perlin periodic noise. */
-	public static float Pnoise4(float x, float y, float z, float w,
-		int px, int py, int pz, int pw)
+	public static float PNoise4(float x, float y, float z, float w, int px, int py, int pz, int pw)
 	{
-		int ix0, iy0, iz0, iw0, ix1, iy1, iz1, iw1;
-		float fx0, fy0, fz0, fw0, fx1, fy1, fz1, fw1;
-		float s, t, r, q;
-		float nxyz0, nxyz1, nxy0, nxy1, nx0, nx1, n0, n1;
-
-		ix0 = x > 0 ? (int)x : (int)x - 1; //FASTFLOOR(x); // Integer part of x
-		iy0 = y > 0 ? (int)y : (int)y - 1; //FASTFLOOR(y); // Integer part of y
-		iz0 = z > 0 ? (int)z : (int)z - 1; //FASTFLOOR(z); // Integer part of z
-		iw0 = w > 0 ? (int)w : (int)w - 1; //FASTFLOOR(w); // Integer part of w
-		fx0 = x - ix0; // Fractional part of x
-		fy0 = y - iy0; // Fractional part of y
-		fz0 = z - iz0; // Fractional part of z
-		fw0 = w - iw0; // Fractional part of w
-		fx1 = fx0 - 1.0f;
-		fy1 = fy0 - 1.0f;
-		fz1 = fz0 - 1.0f;
-		fw1 = fw0 - 1.0f;
-		ix1 = ((ix0 + 1) % px) & 0xff; // Wrap to 0..px-1 and wrap to 0..255
-		iy1 = ((iy0 + 1) % py) & 0xff; // Wrap to 0..py-1 and wrap to 0..255
-		iz1 = ((iz0 + 1) % pz) & 0xff; // Wrap to 0..pz-1 and wrap to 0..255
-		iw1 = ((iw0 + 1) % pw) & 0xff; // Wrap to 0..pw-1 and wrap to 0..255
+		var ix0 = x > 0 ? (int)x : (int)x - 1;
+		var iy0 = y > 0 ? (int)y : (int)y - 1;
+		var iz0 = z > 0 ? (int)z : (int)z - 1;
+		var iw0 = w > 0 ? (int)w : (int)w - 1;
+		var fx0 = x - ix0;
+		var fy0 = y - iy0;
+		var fz0 = z - iz0;
+		var fw0 = w - iw0;
+		var fx1 = fx0 - 1.0f;
+		var fy1 = fy0 - 1.0f;
+		var fz1 = fz0 - 1.0f;
+		var fw1 = fw0 - 1.0f;
+		var ix1 = ((ix0 + 1) % px) & 0xff;
+		var iy1 = ((iy0 + 1) % py) & 0xff;
+		var iz1 = ((iz0 + 1) % pz) & 0xff;
+		var iw1 = ((iw0 + 1) % pw) & 0xff;
 		ix0 = (ix0 % px) & 0xff;
 		iy0 = (iy0 % py) & 0xff;
 		iz0 = (iz0 % pz) & 0xff;
 		iw0 = (iw0 % pw) & 0xff;
 
-		q = Fade(fw0);
-		r = Fade(fz0);
-		t = Fade(fy0);
-		s = Fade(fx0);
+		var q = Fade(fw0);
+		var r = Fade(fz0);
+		var t = Fade(fy0);
+		var s = Fade(fx0);
 
-		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx0, fy0, fz0, fw0);
-		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx0, fy0, fz0, fw1);
-		nxy0 = Math.Lerp(nxyz0, nxyz1, q);
+		var nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx0, fy0, fz0, fw0);
+		var nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx0, fy0, fz0, fw1);
+		var nxy0 = Math.Lerp(nxyz0, nxyz1, q);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw0]]]], fx0, fy0, fz1, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy0 + _perm[iz1 + _perm[iw1]]]], fx0, fy0, fz1, fw1);
-		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
+		var nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx0 = Math.Lerp(nxy0, nxy1, r);
+		var nx0 = Math.Lerp(nxy0, nxy1, r);
 
 		nxyz0 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw0]]]], fx0, fy1, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz0 + _perm[iw1]]]], fx0, fy1, fz0, fw1);
@@ -651,9 +623,8 @@ internal static class NoiseMaker
 		nxyz1 = Grad4(_perm[ix0 + _perm[iy1 + _perm[iz1 + _perm[iw1]]]], fx0, fy1, fz1, fw1);
 		nxy1 = Math.Lerp(nxyz0, nxyz1, q);
 
-		nx1 = Math.Lerp(nxy0, nxy1, r);
-
-		n0 = Math.Lerp(nx0, nx1, t);
+		var nx1 = Math.Lerp(nxy0, nxy1, r);
+		var n0 = Math.Lerp(nx0, nx1, t);
 
 		nxyz0 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw0]]]], fx1, fy0, fz0, fw0);
 		nxyz1 = Grad4(_perm[ix1 + _perm[iy0 + _perm[iz0 + _perm[iw1]]]], fx1, fy0, fz0, fw1);
@@ -675,7 +646,7 @@ internal static class NoiseMaker
 
 		nx1 = Math.Lerp(nxy0, nxy1, r);
 
-		n1 = Math.Lerp(nx0, nx1, t);
+		var n1 = Math.Lerp(nx0, nx1, t);
 
 		return 0.87f * Math.Lerp(n0, n1, s);
 	}
@@ -687,7 +658,7 @@ internal static class NoiseMaker
 		float b = 1;
 		for (var i = 1; i <= octaves; i++)
 		{
-			sum += 1f / a * Pnoise2(x * b, y * b, px, py);
+			sum += 1f / a * PNoise2(x * b, y * b, px, py);
 			a *= alpha;
 			b *= omega;
 		}

@@ -14,18 +14,19 @@ namespace CCreative
 
 		public short Ascent()
 		{
-			return font.Ascender;
+			return 0;
 		}
 
 		public short Descent()
 		{
-			return font.Descender;
+			return 0;
 		}
 
 		public double Width(char c)
 		{
-			return TextMeasurer.MeasureBounds(c.ToString(), new RendererOptions(font.Family.CreateFont(1)))
-												 .Width;
+			// return TextMeasurer.MeasureBounds(c.ToString(), new RendererOptions(font.Family.CreateFont(1)))
+			// 									 .Width;
+			return 0;
 		}
 
 		public static string[] List()

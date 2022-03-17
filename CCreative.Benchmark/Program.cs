@@ -1,98 +1,70 @@
 ﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+using System.Runtime.Intrinsics.X86;
 using System.Threading.Tasks.Dataflow;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
+using Microsoft.Toolkit.HighPerformance.Helpers;
 
-var result = BenchmarkRunner.Run<SIMDTest>();
+BenchmarkRunner.Run<SIMDTest>();
 
-[ThreadingDiagnoser]
 [MemoryDiagnoser]
+[Orderer(SummaryOrderPolicy.FastestToSlowest)]
 public class SIMDTest
 {
-	private static readonly int degreeOfParallelism = Environment.ProcessorCount;
-
-	private double[] array;
-
-	[Params(1000000)] 
-	public int N;
+	private float a = 10f;
 
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
-		array = new double[N]; // executed once per each N value
-
-		for (var i = 0; i < array.Length; i++) array[i] = Random.Shared.Next();
-	}
-
-	[Benchmark(Baseline = true)]
-	public double Baseline()
-	{
-		var min = 0d;
-
-		for (var i = 0; i < array.Length; i++) min += array[i];
-
-		return min;
+		a = Random.Shared.NextSingle() * 100;
 	}
 
 	[Benchmark]
-	public double SimdParallel()
+	public float Reciprocal()
 	{
-		if (array.Length >= 65536)
-		{
-			var temp = GC.AllocateUninitializedArray<double>(degreeOfParallelism);
-
-			var block = new ActionBlock<(double[] array, int index, int length)>(tuple =>
-			{
-				var (tempArray, index, length) = tuple;
-				temp[index] = Sum(tempArray.AsSpan(index * degreeOfParallelism, length));
-			}, new ExecutionDataflowBlockOptions
-			{
-				EnsureOrdered = false,
-				MaxDegreeOfParallelism = degreeOfParallelism
-			});
-
-			for (var i = 0; i < degreeOfParallelism; i++) block.Post((array, i, array.Length / degreeOfParallelism));
-
-			block.Complete();
-			block.Completion.Wait();
-
-			return Sum(temp.AsSpan());
-		}
-
-		return Sum(array.AsSpan());
+		return 1.0f / a;
 	}
 
 	[Benchmark]
-	public double SimdBase()
+	public float ReciprocalSimd()
 	{
-		return Sum(array.AsSpan());
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static double Sum(Span<double> numbers)
-	{
-		var vSum = Vector<double>.Zero;
-		var count = Vector<double>.Count;
-
-		var sum = 0d;
-		var i = 0;
-
-		if (Vector.IsHardwareAccelerated && numbers.Length >= count * 2)
+		if (AdvSimd.IsSupported)
 		{
-			var vsArray = MemoryMarshal.Cast<double, Vector<double>>(numbers);
-
-			for (i = 0; i < vsArray.Length; i++) vSum = Vector.Add(vSum, vsArray[i]);
-
-			sum = Vector.Sum(vSum);
-
-			i *= count;
+			return AdvSimd.ReciprocalEstimate(Vector128.CreateScalarUnsafe(a)).ToScalar();
 		}
 
-		for (; i < numbers.Length; i++)
-			sum += numbers[i];
+		if (Sse.IsSupported)
+		{
+			return Sse.Reciprocal(Vector128.CreateScalarUnsafe(a)).ToScalar();
+		}
 
-		return sum;
+		return 1.0f / a;
+	}
+
+	[Benchmark]
+	public float ReciprocalSimdScalar()
+	{
+		if (AdvSimd.IsSupported)
+		{
+			return AdvSimd.ReciprocalEstimate(Vector128.CreateScalarUnsafe(a)).ToScalar();
+		}
+
+		if (Sse.IsSupported)
+		{
+			return Sse.ReciprocalScalar(Vector128.CreateScalarUnsafe(a)).ToScalar();
+		}
+
+		return 1.0f / a;
+	}
+
+	[Benchmark]
+	public float ReciprocalMath()
+	{
+		return MathF.ReciprocalEstimate(a);
 	}
 }

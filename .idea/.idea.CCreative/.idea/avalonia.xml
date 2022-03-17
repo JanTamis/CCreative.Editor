@@ -7,6 +7,7 @@
         <entry key="CCreative.Editor/App.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
         <entry key="CCreative.Editor/Views/MainView.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
         <entry key="CCreative.Editor/Views/MainWindow.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
+        <entry key="CCreative.Editor/Views/PopupViews/AddTabView.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
         <entry key="CCreative.Editor/Views/ProjectView.axaml" value="CCreative.Editor/CCreative.Editor.csproj" />
       </map>
     </option>

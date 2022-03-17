@@ -1,26 +1,62 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using static System.MathF;
-// ReSharper disable MemberCanBePrivate.Global
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+using System.Runtime.Intrinsics.X86;
+using CCreative.Helpers;
 
 namespace CCreative
 {
 	public static partial class Math
 	{
-		private static Random rng => System.Random.Shared;
+		private static Random Rng => System.Random.Shared;
 
 		#region Calculations
+
+		public static void RadixSort<T>(T[] arr) where T : unmanaged, IBinaryInteger<T>
+		{
+			var pool = ArrayPool<T>.Shared;
+			var tmp = pool.Rent(arr.Length);
+
+			Array.Clear(tmp);
+
+			for (var shift = Unsafe.SizeOf<T>() * 8 - 1; shift > -1; --shift)
+			{
+				var j = 0;
+
+				for (var i = 0; i < arr.Length; ++i)
+				{
+					var move = arr[i] << shift >= T.Zero;
+
+					if (shift is 0 ? !move : move)
+					{
+						arr[i - j] = arr[i];
+					}
+					else
+					{
+						tmp[j++] = arr[i];
+					}
+				}
+
+				Array.Copy(tmp, 0, arr, arr.Length - j, j);
+			}
+
+			pool.Return(tmp);
+		}
 
 		/// <summary>
 		/// Calculates the closest int value that is greater than or equal to the value of the parameter
 		/// </summary>
 		/// <param name="number">number to round up</param>
 		/// <returns>the result of the calculation</returns>
-		public static int Ceil<T>(T number) where T : IFloatingPoint<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int Ceil<T>(T number) where T : IFloatingPoint<T>, IConvertible
 		{
-			return ConvertNumber<int, T>(T.Ceiling(number));
+			return Int(T.Ceiling(number));
 		}
 
 		/// <summary>
@@ -30,9 +66,20 @@ namespace CCreative
 		/// <param name="low">minimum limit</param>
 		/// <param name="high">maximum limit</param>
 		/// <returns>the constraint value</returns>
-		public static T Constrain<T>(T value, T low, T high) where T : INumber<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Constrain<T>(T value, T low, T high) where T : IComparisonOperators<T, T>
 		{
-			return T.Clamp(value, low, high);
+			if (value < low)
+			{
+				return low;
+			}
+
+			if (value > high)
+			{
+				return high;
+			}
+
+			return value;
 		}
 
 		/// <summary>
@@ -41,9 +88,10 @@ namespace CCreative
 		/// <param name="beginPoint">the first PVector</param>
 		/// <param name="endPoint">the second PVector</param>
 		/// <returns>the distance between the points</returns>
-		public static float Dist(PVector beginPoint, PVector endPoint)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static float Dist(Vector beginPoint, Vector endPoint) 
 		{
-			return PVector.Dist(beginPoint, endPoint);
+			return Vector.Distance(beginPoint, endPoint);
 		}
 
 		/// <summary>
@@ -51,9 +99,10 @@ namespace CCreative
 		/// </summary>
 		/// <param name="points">the points to calculate the distance with</param>
 		/// <returns>the distance between the points</returns>
-		public static float Dist(params PVector[] points)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static float Dist(params Vector[] points)
 		{
-			float d = 0;
+			var d = 0f;
 
 			for (var i = 0; i < points.Length - 1; i++)
 			{
@@ -74,10 +123,11 @@ namespace CCreative
 		/// <param name="endX">x-coordinate of the second point</param>
 		/// <param name="endY">y-coordinate of the second point</param>
 		/// <returns>the distance between the points</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Dist<T>(T beginX, T beginY, T endX, T endY) where T : IFloatingPoint<T>
 		{
 			// return Sqrt(Sq(beginX - endX) + Sq(beginY - endY));
-			return Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX, Sq(beginY - endY)));
+			return T.Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX, Sq(beginY - endY)));
 		}
 
 		/// <summary>
@@ -90,11 +140,43 @@ namespace CCreative
 		/// <param name="endY">y-coordinate of the second point</param>
 		/// <param name="endZ">z-coordinate of the second point</param>
 		/// <returns>the distance between the points</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Dist<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPoint<T>
 		{
 			// return Sqrt(Sq(beginX - endX) + Sq(beginY - endY) + Sq(beginZ - endZ));
-			return Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX,
-				T.FusedMultiplyAdd(beginY - endY, beginY - endY, Sq(beginZ - endZ))));
+			return T.Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX, T.FusedMultiplyAdd(beginY - endY, beginY - endY, Sq(beginZ - endZ))));
+		}
+
+		/// <summary>
+		/// Calculate the distance between the given points squared
+		/// </summary>
+		/// <param name="beginX">x-coordinate of the first point</param>
+		/// <param name="beginY">y-coordinate of the first point</param>
+		/// <param name="beginZ">z-coordinate of the first point</param>
+		/// <param name="endX">x-coordinate of the second point</param>
+		/// <param name="endY">y-coordinate of the second point</param>
+		/// <param name="endZ">z-coordinate of the second point</param>
+		/// <returns>the distance between the points</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T DistSq<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPoint<T>
+		{
+			// return Sq(beginX - endX) + Sq(beginY - endY) + Sq(beginZ - endZ);
+			return T.FusedMultiplyAdd(beginX - endX, beginX - endX, T.FusedMultiplyAdd(beginY - endY, beginY - endY, Sq(beginZ - endZ)));
+		}
+
+		/// <summary>
+		/// Calculate the distance between the given points squared
+		/// </summary>
+		/// <param name="beginX">x-coordinate of the first point</param>
+		/// <param name="beginY">y-coordinate of the first point</param>
+		/// <param name="endX">x-coordinate of the second point</param>
+		/// <param name="endY">y-coordinate of the second point</param>
+		/// <returns>the distance between the points</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T DistSq<T>(T beginX, T beginY, T endX, T endY) where T : INumber<T>
+		{
+			// return Sq(beginX - endX) + Sq(beginY - endY);
+			return FusedMultiplyAdd(beginX - endX, beginX - endX, Sq(beginY - endY));
 		}
 
 		/// <summary>
@@ -102,9 +184,10 @@ namespace CCreative
 		/// </summary>
 		/// <param name="number">number to round down</param>
 		/// <returns>the result of the calculation</returns>
-		public static int Floor<T>(T number) where T : IFloatingPoint<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int Floor<T>(T number) where T : IFloatingPoint<T>, IConvertible
 		{
-			return ConvertNumber<int, T>(T.Floor(number));
+			return Int(T.Floor(number));
 		}
 
 		/// <summary>
@@ -115,9 +198,12 @@ namespace CCreative
 		/// <param name="atm">number between 0.0 and 1.0</param>
 		/// <returns>the result of the calculation</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static T Lerp<T>(T start, T stop, T atm) where T : IFloatingPoint<T>
+		public static T Lerp<T>(T start, T stop, T atm) where T :
+			IMultiplyOperators<T, T, T>,
+			IAdditionOperators<T, T, T>,
+			ISubtractionOperators<T, T, T>
 		{
-			return T.FusedMultiplyAdd(atm, stop - start, start);
+			return FusedMultiplyAdd(atm, stop - start, start);
 		}
 
 		/// <summary>
@@ -127,9 +213,28 @@ namespace CCreative
 		/// <param name="number">the specified number</param>
 		/// <returns>the square root of <paramref name="number"/></returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static T Sqrt<T>(T number) where T : IFloatingPoint<T>
+		public static T Sqrt<T>(T number) where T : INumber<T>
 		{
-			return T.Sqrt(number);
+			if (typeof(T) == typeof(float))
+			{
+				var result = MathF.Sqrt(Unsafe.As<T, float>(ref number));
+				return Unsafe.As<float, T>(ref result);
+			}
+
+			if (typeof(T) == typeof(double))
+			{
+				var result = System.Math.Sqrt(Unsafe.As<T, double>(ref number));
+				return Unsafe.As<double, T>(ref result);
+			}
+
+			var root = T.One;
+
+			for (var i = T.Zero; i != number + T.One; i++)
+			{
+				root = (number / root + root) / T.Create(2);
+			}
+
+			return root;
 		}
 
 		/// <summary>
@@ -139,9 +244,45 @@ namespace CCreative
 		/// <param name="base"></param>
 		/// <param name="exponent"></param>
 		/// <returns></returns>
-		public static T Pow<T>(T @base, T exponent) where T : IFloatingPoint<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Pow<T>(T @base, T exponent) where T : INumber<T>
 		{
-			return T.Pow(@base, exponent);
+			if (typeof(T) == typeof(float))
+			{
+				var result = MathF.Pow(Unsafe.As<T, float>(ref @base), Unsafe.As<T, float>(ref exponent));
+				return Unsafe.As<float, T>(ref result);
+			}
+
+			if (typeof(T) == typeof(double))
+			{
+				var result = System.Math.Pow(Unsafe.As<T, double>(ref @base), Unsafe.As<T, double>(ref exponent));
+				return Unsafe.As<double, T>(ref result);
+			}
+
+			if (exponent < T.Zero)
+			{
+				exponent *= -T.One;
+
+				var result = T.One / @base;
+
+				for (var i = T.One; i < exponent; i++)
+				{
+					result /= @base;
+				}
+
+				return result;
+			}
+			else
+			{
+				var result = @base;
+
+				for (var i = T.One; i < exponent; i++)
+				{
+					result *= @base;
+				}
+
+				return result;
+			}
 		}
 
 		/// <summary>
@@ -150,9 +291,10 @@ namespace CCreative
 		/// <param name="numberX">x-axis of the vector</param>
 		/// <param name="numberY">y-axis of the vector</param>
 		/// <returns>the magnitude (or length) of the vector</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Mag<T>(T numberX, T numberY) where T : IFloatingPoint<T>
 		{
-			return Sqrt(T.FusedMultiplyAdd(numberX, numberX, Sq(numberY)));
+			return T.Sqrt(T.FusedMultiplyAdd(numberX, numberX, Sq(numberY)));
 		}
 
 		/// <summary>
@@ -164,10 +306,14 @@ namespace CCreative
 		/// <param name="start2">lower bound of the value's target range</param>
 		/// <param name="stop2">upper bound of the value's target range</param>
 		/// <returns>the remapped number</returns>
-		public static T Map<T>(T value, T start1, T stop1, T start2, T stop2) where T : IFloatingPoint<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Map<T>(T value, T start1, T stop1, T start2, T stop2) where T :
+			IDivisionOperators<T, T, T>,
+			ISubtractionOperators<T, T, T>,
+			IAdditionOperators<T, T, T>,
+			IMultiplyOperators<T, T, T>
 		{
-			// return start2 + (stop2 - start2) * Norm(value, start1, stop1);
-			return T.FusedMultiplyAdd(stop2 - start2,  Norm(value, start1, stop1), start2);
+			return FusedMultiplyAdd((value - start1) / (stop1 - start1), stop2 - start2, start2);
 		}
 
 		/// <summary>
@@ -178,7 +324,9 @@ namespace CCreative
 		/// <param name="stop">upper bound of the value's current range</param>
 		/// <returns>the normalized value</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static T Norm<T>(T value, T start, T stop) where T : IFloatingPoint<T>
+		public static T Norm<T>(T value, T start, T stop) where T :
+			IDivisionOperators<T, T, T>,
+			ISubtractionOperators<T, T, T>
 		{
 			return (value - start) / (stop - start);
 		}
@@ -188,9 +336,9 @@ namespace CCreative
 		/// </summary>
 		/// <param name="number">number to round</param>
 		/// <returns>returns the rounded number</returns>
-		public static int Round<T>(T number) where T : IFloatingPoint<T>
+		public static int Round<T>(T number) where T : IFloatingPoint<T>, IConvertible
 		{
-			return ConvertNumber<int, T>(T.Round(number));
+			return Int(T.Round(number));
 		}
 
 		/// <summary>
@@ -199,9 +347,20 @@ namespace CCreative
 		/// <param name="number">number to square</param>
 		/// <returns>returns the squared number</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static T Sq<T>(T number) where T : INumber<T>
+		public static T Sq<T>(T number) where T : IMultiplyOperators<T, T, T>
 		{
 			return number * number;
+		}
+
+		/// <summary>
+		/// Cubes a number (number * number * number)
+		/// </summary>
+		/// <param name="number">number to square</param>
+		/// <returns>returns the squared number</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Cb<T>(T number) where T : IMultiplyOperators<T, T, T>
+		{
+			return number * number * number;
 		}
 
 		/// <summary>
@@ -209,8 +368,21 @@ namespace CCreative
 		/// </summary>
 		/// <param name="x">the number to calculate the inverse square root of</param>
 		/// <returns>1 / sqrt(x)</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T InverseSqrt<T>(T x) where T : IFloatingPoint<T>
 		{
+			if (typeof(float) == typeof(T))
+			{
+				var result = MathF.ReciprocalSqrtEstimate(Unsafe.As<T, float>(ref x));
+				return Unsafe.As<float, T>(ref result);
+			}
+
+			if (typeof(double) == typeof(T))
+			{
+				var result = System.Math.ReciprocalSqrtEstimate(Unsafe.As<T, double>(ref x));
+				return Unsafe.As<double, T>(ref result);
+			}
+
 			return T.One / T.Sqrt(x);
 		}
 
@@ -219,9 +391,44 @@ namespace CCreative
 		/// </summary>
 		/// <param name="x">number to find the log2 of</param>
 		/// <returns>returns the log2 of <see cref="x"/></returns>
-		public static T Log2<T>(T x) where T : IFloatingPoint<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Log2<T>(T x) where T : IBinaryNumber<T>
 		{
 			return T.Log2(x);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Log<T>(T x) where T : IFloatingPoint<T>
+		{
+			return T.Log(x);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Sin<T>(T x) where T : IFloatingPoint<T>
+		{
+			return T.Sin(x);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Abs<T>(T x) where T : INumber<T>
+		{
+			return T.Abs(x);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Factorial<T>(T number) where T : INumber<T>
+		{
+			var fact = T.One;
+
+			if (number > T.One)
+			{
+				for (var k = T.Create(2); k <= number; k++)
+				{
+					fact *= k;
+				}
+			}
+
+			return fact;
 		}
 
 		#endregion
@@ -236,6 +443,7 @@ namespace CCreative
 		/// </remarks>
 		/// <param name="x">x-coordinate in noise space</param>
 		/// <returns>the Perlin noise value at the specified coordinates</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static float Noise(float x)
 		{
 			return (NoiseMaker.Noise1(x) + 1) / 2;
@@ -250,6 +458,7 @@ namespace CCreative
 		/// <param name="x">x-coordinate in noise space</param>
 		/// <param name="y">y-coordinate in noise space</param>
 		/// <returns>the Perlin noise value at the specified coordinates</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static float Noise(float x, float y)
 		{
 			return (NoiseMaker.Noise2(x, y) + 1) / 2;
@@ -286,6 +495,7 @@ namespace CCreative
 		/// <param name="y">y-coordinate in noise space</param>
 		/// <param name="z">z-coordinate in noise space</param>
 		/// <returns>the Perlin noise value at the specified coordinates</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static float Noise(float x, float y, float z)
 		{
 			return (NoiseMaker.Noise3(x, y, z) + 1) / 2;
@@ -359,6 +569,7 @@ namespace CCreative
 		/// <summary> Converts degrees to radians. </summary>
 		/// <param name="radians"> The radians to convert. </param>
 		/// <returns>degrees</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Degrees<T>(T radians) where T : IFloatingPoint<T>
 		{
 			return radians * (T.Create(180) / T.Pi);
@@ -369,6 +580,7 @@ namespace CCreative
 		/// </summary>
 		/// <param name="degrees">the radians</param>
 		/// <returns>radians</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static T Radians<T>(T degrees) where T : IFloatingPoint<T>
 		{
 			return degrees * (T.Pi / T.Create(180));
@@ -380,13 +592,17 @@ namespace CCreative
 		/// Returns a random string with a given length</summary>
 		/// <param name="length">the length</param>
 		/// <returns>a random string</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static string RandomString(int length)
 		{
-			return String.Create(length, System.Random.Shared, (span, random) =>
+			return System.String.Create(length, System.Random.Shared, (span, random) =>
 			{
 				for (var i = 0; i < span.Length; i++)
 				{
-					span[i] = (char)random.Next('A', 'Z');
+					var value = random.Next(33, 127);
+
+					// the code 33 and 126 are in the range of ascii readable characters (see https://www.rapidtables.com/code/text/ascii-table.html)
+					span[i] = Unsafe.As<Int32, Char>(ref value);
 				}
 			});
 		}
@@ -442,14 +658,10 @@ namespace CCreative
 		/// Return a random float floating point number between 0 and 1
 		/// </summary>
 		/// <returns>a random float-point number between 0 and 1</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static float Random()
 		{
-			return rng.NextSingle();
-		}
-
-		public static void Random(byte[] array)
-		{
-			rng.NextBytes(array);
+			return Rng.NextSingle();
 		}
 
 		/// <summary>
@@ -461,123 +673,118 @@ namespace CCreative
 		/// <param name="seed"></param>
 		public static void RandomSeed(int seed)
 		{
-			// rng = new Random(seed);
+			// Rng = new Random(seed);
 		}
 
 		/// <summary>
 		/// Returns a random item from the list
 		/// </summary>
-		/// <param name="list">the array to pick a random item from</param>
-		/// <returns>a rando item from the list</returns>
-		public static T? Random<T>(IEnumerable<T> list)
+		/// <param name="enumerable">the array to pick a random item from</param>
+		/// <returns>a random item from the list, if the list is empty de default value will be returnt</returns>
+		public static T? Random<T>(IEnumerable<T> enumerable)
 		{
 			// https://stackoverflow.com/a/648240/6448711
 
-			var current = default(T);
+			if (enumerable is IList<T> list)
+			{
+				return list[RandomInt(list.Count)];
+			}
+
+			T? current = default;
 			var count = 0;
 
-			foreach (var element in list)
+			foreach (var element in enumerable)
 			{
 				count++;
 
-				if (RandomInt(count) == 0)
+				if (RandomInt(count) is 0)
+				{
 					current = element;
+				}
 			}
 
-			if (count == 0)
-				throw new InvalidOperationException("Sequence was empty");
-
 			return current;
-		}
-
-		/// <summary> Returns a random item form the array. </summary>
-		/// <param name="array"> The array to pick a random item from.</param>
-		/// <returns></returns>
-		public static T Random<T>(IList<T> array)
-		{
-			return array[RandomInt(array.Count)];
 		}
 
 		/// <summary> Return a random int number. </summary>
 		/// <param name="lowerBound"> The lower bound (inclusive). </param>
 		/// <param name="upperBound"> The upper bound (exclusive). </param>
 		/// <returns> A random int between the given range. </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int RandomInt(int lowerBound, int upperBound)
 		{
-			return rng.Next(lowerBound, upperBound);
+			return Rng.Next(lowerBound, upperBound);
 		}
 
 		/// <summary> Return a random int number. </summary>
 		/// <param name="upperBound">  the upper bound (exclusive). </param>
 		/// <returns> System.Single. </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int RandomInt(int upperBound)
 		{
-			return rng.Next(upperBound);
+			return Rng.Next(upperBound);
 		}
 
 		/// <summary> Return a random int number between 0 and <see cref="Int32.MaxValue"/> (exclusive)</summary>
-		/// 
 		/// <returns> System.Single. </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int RandomInt()
 		{
-			return rng.Next();
+			return Rng.Next();
 		}
 
 		/// <summary> Return a random byte number. </summary>
 		/// <returns> System.Single. </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static byte RandomByte()
 		{
-			return (byte)rng.Next(Byte.MaxValue);
+			var value = RandomInt(Byte.MaxValue);
+			return Unsafe.As<Int32, Byte>(ref value);
 		}
 
 		/// <summary>
 		/// Fills the provided byte array with random bytes.
 		/// </summary>
-		/// <param name="buffer"></param>
-		public static void RandomBytes(byte[] buffer)
+		/// <param name="buffer">the buffer to fill with random data</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void RandomBytes(Span<byte> buffer)
 		{
-			rng.NextBytes(buffer);
+			Rng.NextBytes(buffer);
 		}
 
 		/// <summary> Returns a random number fitting a Gaussian, or normal, distribution. There is theoretically no minimum or maximum value that randomGaussian() might return.  </summary>
 		/// <param name="mean"> The mean. </param>
 		/// <param name="sd"> The standard deviation. </param>
 		/// <returns> A float. </returns>
-		public static float RandomGaussian(float mean, float sd)
+		public static float RandomGaussian(float mean = 0, float sd = 1)
 		{
 			var u1 = Random();
 			var u2 = Random();
 
 			var randStdNormal = Sqrt(-2.0f * Log(u1)) * Sin(PConstants.TWO_PI * u2);
-			var randNormal = mean + sd * randStdNormal;
+			var randNormal = FusedMultiplyAdd(sd, randStdNormal, mean);
 
 			return randNormal;
 		}
 
-		/// <summary> Returns a random number fitting a Gaussian, or normal, distribution. There is theoretically no minimum or maximum value that randomGaussian() might return. </summary>
-		/// <returns> A Gaussian of mean 0 and deviation of 1. </returns>
-		public static float RandomGaussian()
-		{
-			return RandomGaussian(0, 1);
-		}
-
 		/// <summary> Returns a true or false the chance is 50-50. </summary>
 		/// <returns> The result. </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool RandomBoolean()
 		{
-			return rng.Next() > (Int32.MaxValue / 2);
+			return Rng.Next() > (Int32.MaxValue - 1) / 2;
 		}
 
 		/// <summary>
-		/// Returns a random color with the alpha channel set to <see cref="byte.MaxValue"/>
+		/// Returns a random color with the alpha channel set to <see cref="Byte.MaxValue"/>
 		/// </summary>
 		/// <returns></returns>
 		public static Color RandomColor()
 		{
-			Span<byte> bytes = stackalloc byte[3];
-			rng.NextBytes(bytes);
+			var result = Rng.Next(Int32.MinValue, Int32.MaxValue);
+			result |= Byte.MaxValue << 24;
 
-			return new MemoryColor(Byte.MaxValue, bytes[0], bytes[1], bytes[2]);
+			return Unsafe.As<Int32, Color>(ref result);
 		}
 
 		/// <summary>
@@ -586,9 +793,10 @@ namespace CCreative
 		/// <param name="min">the minimum value of the bounds</param>
 		/// <param name="max"> the maximum value of the bounds</param>
 		/// <returns>a random long between <paramref name="min"/> and <paramref name="max"/></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static long RandomLong(long min, long max)
 		{
-			return rng.NextInt64(min, max);
+			return Rng.NextInt64(min, max);
 		}
 
 		/// <summary>
@@ -596,11 +804,9 @@ namespace CCreative
 		/// </summary>
 		/// <param name="max"> the maximum value of the bounds</param>
 		/// <returns>a random long between 0 and <paramref name="max"/></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static long RandomLong(long max)
 		{
-			if (max == 0)
-				throw new ArgumentException("max can't be 0 (Zero)", nameof(max));
-
 			return RandomLong(0, max);
 		}
 
@@ -608,9 +814,10 @@ namespace CCreative
 		/// Calculate a random long between <see cref="Int64.MinValue"/> and <see cref="Int64.MaxValue"/>
 		/// </summary>
 		/// <returns>a random long between <see cref="Int64.MinValue"/> and <see cref="Int64.MaxValue"/></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static long RandomLong()
 		{
-			return rng.NextInt64();
+			return Rng.NextInt64();
 		}
 
 		/// <summary>
@@ -626,7 +833,7 @@ namespace CCreative
 			do
 			{
 				var nextDecimalSample = RandomDecimal();
-				value = maxValue * nextDecimalSample + minValue * (1 - nextDecimalSample);
+				value = FusedMultiplyAdd(maxValue, nextDecimalSample, minValue * (1 - nextDecimalSample));
 			} while (value == maxValue);
 
 			return value;
@@ -637,6 +844,7 @@ namespace CCreative
 		/// </summary>
 		/// <param name="maxValue">the maximum value of the bounds</param>
 		/// <returns>a random decimal between <see cref="Decimal.Zero"/> and <paramref name="maxValue"/></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static decimal RandomDecimal(decimal maxValue)
 		{
 			return RandomDecimal(Decimal.Zero, maxValue);
@@ -666,9 +874,10 @@ namespace CCreative
 		/// <summary> returns the sign of a number, indicating whether the number is positive, negative or zero </summary>
 		/// <param name="number"> The number to check. </param>
 		/// <returns> -1 if lower than 0, 0 if equal to 0 and 1 if higher that 0. </returns>
-		public static int Sign<T>(T number) where T : INumber<T>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static int Sign<T>(T number) where T : INumber<T>, IConvertible
 		{
-			return ConvertNumber<int, T>(T.Sign(number));
+			return Int(T.Sign(number));
 		}
 
 		/// <summary> Returns the fibonacci of the given number. </summary>
@@ -682,9 +891,7 @@ namespace CCreative
 			// In N steps compute Fibonacci sequence iteratively.
 			for (var i = T.Zero; i < number; i++)
 			{
-				var temp = a;
-				a = b;
-				b += temp;
+				(a, b) = (b, b + a);
 			}
 
 			return a;
@@ -695,17 +902,43 @@ namespace CCreative
 		/// </summary>
 		/// <param name="list">the items ot shuffle</param>
 		/// <returns>a shuffled copy of the list</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static IEnumerable<T> Shuffle<T>(IEnumerable<T> list)
 		{
 			var array = list.ToArray(); // keeps track of count items shuffled
 
-			for (var i = 0; i < array.Length; i++)
+			Shuffle(array);
+
+			return array;
+		}
+
+		/// <summary>
+		/// Shuffles the given list
+		/// </summary>
+		/// <param name="list">the items ot shuffle</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Shuffle<T>(IList<T> list)
+		{
+			for (var i = 0; i < list.Count; i++)
 			{
-				var j = RandomInt(i, array.Length);
+				var j = RandomInt(i, list.Count);
 
-				yield return array[j];
+				list[j] = list[i];
+			}
+		}
 
-				array[j] = array[i];
+		/// <summary>
+		/// Shuffles the given data
+		/// </summary>
+		/// <param name="list">the data ot shuffle</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Shuffle<T>(Span<T> list)
+		{
+			for (var i = 0; i < list.Length; i++)
+			{
+				var j = RandomInt(i, list.Length);
+
+				list[j] = list[i];
 			}
 		}
 
@@ -715,7 +948,7 @@ namespace CCreative
 		/// <param name="values">the sorted list to search though</param>
 		/// <param name="value">the value to search for</param>
 		/// <returns>the index of <paramref name="value"/></returns>
-		public static int BinarySearch<T>(IList<T> values, T value) where T : INumber<T>
+		public static int BinarySearch<T>(IList<T> values, T value) where T : IEqualityOperators<T, T>, IComparisonOperators<T, T>
 		{
 			var lo = 0;
 			var hi = values.Count - 1;
@@ -725,7 +958,9 @@ namespace CCreative
 				var i = lo + ((hi - lo) >> 1);
 
 				if (values[i] == value)
+				{
 					return i;
+				}
 
 				if (values[i] < value)
 				{
@@ -740,68 +975,238 @@ namespace CCreative
 			return ~lo;
 		}
 
-		/// <summary> Converts an int, byte, or a long to a String containing the equivalent binary notation </summary>
-		/// <param name="value"> Value to convert </param>
-		/// <returns> Returns the binary string </returns>
-		public static string Binary(long value)
+		/// <summary>
+		/// Search for a value in a sorted list
+		/// </summary>
+		/// <param name="values">the sorted list to search though</param>
+		/// <param name="value">the value to search for</param>
+		/// <returns>the index of <paramref name="value"/></returns>
+		public static int BinarySearch<T>(ReadOnlySpan<T> values, T value) where T : IEqualityOperators<T, T>, IComparisonOperators<T, T>
 		{
-			return System.Convert.ToString(value, 2);
+			var lo = 0;
+			var hi = values.Length - 1;
+
+			while (lo <= hi)
+			{
+				var i = lo + ((hi - lo) >> 1);
+
+				if (values[i] == value)
+				{
+					return i;
+				}
+
+				if (values[i] < value)
+				{
+					lo = i + 1;
+				}
+				else
+				{
+					hi = i - 1;
+				}
+			}
+
+			return ~lo;
+		}
+
+		/// <summary>
+		/// Search for a value in a sorted list
+		/// </summary>
+		/// <param name="values">the sorted list to search though</param>
+		/// <param name="value">the value to search for</param>
+		/// <returns>the index of <paramref name="value"/></returns>
+		public static int InterpolationSearch<T>(IList<T> values, T value) where T : struct, INumber<T>, IConvertible
+		{
+			var lo = 0;
+			var hi = values.Count - 1;
+
+			while (lo <= hi)
+			{
+				var i = lo + hi - lo / Int(values[hi] - values[lo]) * Int(value - values[lo]);
+
+				if (values[i] == value)
+				{
+					return i;
+				}
+
+				if (values[i] < value)
+				{
+					lo = i + 1;
+				}
+				else
+				{
+					hi = i - 1;
+				}
+			}
+
+			return ~lo;
+		}
+
+		/// <summary>
+		/// Search for a value in a sorted list
+		/// </summary>
+		/// <param name="values">the sorted list to search though</param>
+		/// <param name="value">the value to search for</param>
+		/// <returns>the index of <paramref name="value"/></returns>
+		public static int InterpolationSearch<T>(ReadOnlySpan<T> values, T value) where T : struct, INumber<T>, IConvertible
+		{
+			var lo = 0;
+			var hi = values.Length;
+
+			while (lo <= hi)
+			{
+				var i = lo + hi - lo / Int(values[hi] - values[lo]) * Int(value - values[lo]);
+
+				if (values[i] == value)
+				{
+					return i;
+				}
+
+				if (values[i] < value)
+				{
+					lo = i + 1;
+				}
+				else
+				{
+					hi = i - 1;
+				}
+			}
+
+			return ~lo;
 		}
 
 		/// <summary> Converts an char to a String containing the equivalent binary notation </summary>
 		/// <param name="value"> Value to convert </param>
 		/// <returns> Returns the binary string </returns>
-		public static string Binary(char value)
-		{
-			return System.Convert.ToString(value, 2);
-		}
-
-		/// <summary> Converts an char to a String containing the equivalent binary notation </summary>
-		/// <param name="value"> Value to convert </param>
-		/// <returns> Returns the binary string </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static string Binary(Color value)
 		{
-			return System.Convert.ToString(value.GetHashCode(), 2);
+			return Binary(value.GetHashCode());
+		}
+
+		/// <summary> Converts an object to a String containing the equivalent binary notation </summary>
+		/// <param name="value"> Value to convert </param>
+		/// <returns> Returns the binary string </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string Binary(object? value)
+		{
+			return value is not null
+				? Binary(value.GetHashCode())
+				: System.String.Empty;
+		}
+
+		/// <summary> Converts an number to a String containing the equivalent binary notation </summary>
+		/// <param name="value"> Value to convert </param>
+		/// <returns> Returns the binary string </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string Binary(Half value)
+		{
+			return Binary(BitConverter.HalfToInt16Bits(value));
+		}
+
+		/// <summary> Converts an number to a String containing the equivalent binary notation </summary>
+		/// <param name="value"> Value to convert </param>
+		/// <returns> Returns the binary string </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string Binary(float value)
+		{
+			return Binary(BitConverter.SingleToInt32Bits(value));
+		}
+
+		/// <summary> Converts an number to a String containing the equivalent binary notation </summary>
+		/// <param name="value"> Value to convert </param>
+		/// <returns> Returns the binary string </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string Binary(double value)
+		{
+			return Binary(BitConverter.DoubleToInt64Bits(value));
+		}
+
+		/// <summary> Converts an number to a String containing the equivalent binary notation </summary>
+		/// <param name="value"> Value to convert </param>
+		/// <returns> Returns the binary string </returns>
+		public static string Binary<T>(T value) where T : IBinaryInteger<T>, IConvertible
+		{
+			return string.Create(Unsafe.SizeOf<T>() * 8, value, (buffer, number) =>
+			{
+				for (var i = buffer.Length - 1; i >= 0; i--)
+				{
+					buffer[i] = Char((number & T.One) + T.Create('0'));
+					number >>= 1;
+				}
+			});
 		}
 
 		/// <summary> Converts a String representation of a binary number to its equivalent integer value </summary>
-		/// <param name="value"> String to convert to an integer </param>
+		/// <param name="value"> String to convert to an integer (must only contain 0 and 1's) </param>
 		/// <returns> Returns the result of the conversion </returns>
-		public static int Unbinary(string value)
+		public static T UnBinary<T>(ReadOnlySpan<char> value) where T : IBinaryInteger<T>
 		{
-			return System.Convert.ToInt32(value, 2);
+			var result = T.Zero;
+
+			for (var i = value.Length - 1; i >= 0; i--)
+			{
+				var isOne = value[i] is '1';
+
+				result += Unsafe.As<Boolean, T>(ref isOne) << (value.Length - 1 - i);
+			}
+
+			return result;
 		}
 
 		/// <summary> Converts an int or a byte to a String containing the equivalent hexadecimal notation </summary>
 		/// <param name="value"> The value to convert to a hex value </param>
 		/// <returns> Returns the hex value </returns>
-		public static string Hex<T>(T value) where T : IConvertible
+		public static string Hex<T>(T value) where T : INumber<T>, IConvertible
 		{
-			return System.Convert.ToString(value.ToInt64(null), 16).ToUpper();
-		}
+			const string characters = "0123456789ABCDEF";
 
-		/// <summary> Converts an char to a String containing the equivalent hexadecimal notation </summary>
-		/// <param name="value"> The value to convert to a hex value </param>
-		/// <returns> Returns the hex value </returns>
-		public static string Hex(char value)
-		{
-			return System.Convert.ToString(value, 16).ToUpper();
+			var buffer = new ValueStringBuilder(stackalloc char[256]);
+			var baseNumber = T.Create(characters.Length);
+
+			while (value > T.Zero)
+			{
+				(value, var remainder) = T.DivRem(value, baseNumber);
+
+				buffer.Insert(0, characters[Int(remainder)]);
+			}
+
+			return new string(buffer.AsSpan());
 		}
 
 		/// <summary> Converts an int or a byte to a String containing the equivalent hexadecimal notation </summary>
 		/// <param name="value"> The value to convert to a hex value </param>
 		/// <returns> Returns the hex value </returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static string Hex(Color value)
 		{
-			return System.Convert.ToString(value.GetHashCode(), 16).ToUpper();
+			return Hex(Unsafe.As<Color, Int32>(ref value));
 		}
 
 		/// <summary> Converts a String representation of a hexadecimal number to its equivalent integer value </summary>
 		/// <param name="value"> String to convert to an integer </param>
 		/// <returns> Returns a integer from a hexadecimal number </returns>
-		public static int Unhex(string value)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T UnHex<T>(ReadOnlySpan<char> value) where T : INumber<T>
 		{
-			return System.Convert.ToInt32(value, 16);
+			const string characters = "0123456789ABCDEF";
+
+			long result = 0;
+			long power = 1;
+
+			for (var i = value.Length - 1; i >= 0; i--)
+			{
+				var index = characters.IndexOf(char.ToUpper(value[i]));
+
+				if (index is -1)
+				{
+					throw new ArgumentException("Value must must only hex characters", nameof(value));
+				}
+
+				result += index * power;
+				power *= 16;
+			}
+
+			return T.Create(result);
 		}
 
 		/// <summary>
@@ -809,9 +1214,10 @@ namespace CCreative
 		/// </summary>
 		/// <param name="value">the value to convert</param>
 		/// <returns>the converted value</returns>
-		public static string Str<T>(T? value)
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string? String<T>(T value) where T : notnull
 		{
-			return value?.ToString() ?? String.Empty;
+			return value.ToString();
 		}
 
 		/// <summary>
@@ -819,9 +1225,10 @@ namespace CCreative
 		/// </summary>
 		/// <param name="value">the value to convert</param>
 		/// <returns>the converted value</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int Int<T>(T value) where T : IConvertible
 		{
-			return value?.ToInt32(null) ?? default;
+			return value.ToInt32(CultureInfo.InvariantCulture);
 		}
 
 		/// <summary>
@@ -829,9 +1236,10 @@ namespace CCreative
 		/// </summary>
 		/// <param name="value">the value to convert</param>
 		/// <returns>the converted value</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static char Char<T>(T value) where T : IConvertible
 		{
-			return value?.ToChar(null) ?? default;
+			return value.ToChar(CultureInfo.InvariantCulture);
 		}
 
 		/// <summary>
@@ -839,9 +1247,10 @@ namespace CCreative
 		/// </summary>
 		/// <param name="value">the value to convert</param>
 		/// <returns>the converted value</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool Boolean<T>(T value) where T : IConvertible
 		{
-			return value?.ToBoolean(null) ?? default;
+			return value.ToBoolean(CultureInfo.InvariantCulture);
 		}
 
 		/// <summary>
@@ -849,25 +1258,231 @@ namespace CCreative
 		/// </summary>
 		/// <param name="value">the value to convert to a float</param>
 		/// <returns>the converted value</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static float Float<T>(T value) where T : IConvertible
 		{
-			return value?.ToSingle(null) ?? default;
+			return value.ToSingle(CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>
+		/// Parses the given text to the given value
+		/// </summary>
+		/// <param name="text">the text to parse</param>
+		/// <param name="result">the result of the parse</param>
+		/// <returns>if the <see cref="text"/> can be parsed</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static bool TryParse<T>(ReadOnlySpan<char> text, out T result) where T : ISpanParseable<T>
+		{
+			return T.TryParse(text, null, out result);
+		}
+
+		/// <summary>
+		/// Parses the given text to the given value
+		/// </summary>
+		/// <param name="text">the text to parse</param>
+		/// <returns>the result of the parse</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T Parse<T>(ReadOnlySpan<char> text) where T : ISpanParseable<T>
+		{
+			return T.Parse(text, CultureInfo.InvariantCulture);
+		}
+
+		/// <summary>
+		/// Tries the estimate the time to finish the progress
+		/// </summary>
+		/// <param name="elapsedTime">the time that has elapsed</param>
+		/// <param name="progress">the progress between 0 and 1</param>
+		/// <returns>the estimated time</returns>
+		public static TimeSpan EstimateTime(TimeSpan elapsedTime, float progress)
+		{
+			return 1f / progress * elapsedTime - elapsedTime;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T FusedMultiplyAdd<T>(T a, T b, T addend) where T :
+			IMultiplyOperators<T, T, T>,
+			IAdditionOperators<T, T, T>
+		{
+			if (typeof(T) == typeof(float))
+			{
+				if (AdvSimd.IsSupported)
+				{
+					var left = Vector64.CreateScalarUnsafe(Unsafe.As<T, float>(ref a));
+					var right = Vector64.CreateScalarUnsafe(Unsafe.As<T, float>(ref b));
+					var add = Vector64.CreateScalarUnsafe(Unsafe.As<T, float>(ref addend));
+
+					var result = AdvSimd.FusedMultiplyAddScalar(add, left, right).ToScalar();
+					return Unsafe.As<float, T>(ref result);
+				}
+
+				if (Fma.IsSupported)
+				{
+					var left = Vector128.CreateScalarUnsafe(Unsafe.As<T, float>(ref a));
+					var right = Vector128.CreateScalarUnsafe(Unsafe.As<T, float>(ref b));
+					var add = Vector128.CreateScalarUnsafe(Unsafe.As<T, float>(ref addend));
+
+					var result = Fma.MultiplyAddScalar(add, left, right).ToScalar();
+					return Unsafe.As<float, T>(ref result);
+				}
+			}
+			else if (typeof(T) == typeof(double))
+			{
+				if (AdvSimd.Arm64.IsSupported)
+				{
+					var left = Vector128.CreateScalarUnsafe(Unsafe.As<T, double>(ref a));
+					var right = Vector128.CreateScalarUnsafe(Unsafe.As<T, double>(ref b));
+					var add = Vector128.CreateScalarUnsafe(Unsafe.As<T, double>(ref addend));
+
+					var result = AdvSimd.Arm64.FusedMultiplyAdd(add, left, right).ToScalar();
+					return Unsafe.As<double, T>(ref result);
+				}
+
+				if (Fma.IsSupported)
+				{
+					var left = Vector128.CreateScalarUnsafe(Unsafe.As<T, double>(ref a));
+					var right = Vector128.CreateScalarUnsafe(Unsafe.As<T, double>(ref b));
+					var add = Vector128.CreateScalarUnsafe(Unsafe.As<T, double>(ref addend));
+
+					var result = Fma.MultiplyAddScalar(add, left, right).ToScalar();
+					return Unsafe.As<double, T>(ref result);
+				}
+			}
+
+			return a * b + addend;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static float FusedMultiplyAdd(float a, float b, float addend)
+		{
+			return MathF.FusedMultiplyAdd(a, b, addend);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static double FusedMultiplyAdd(double a, double b, double addend)
+		{
+			return System.Math.FusedMultiplyAdd(a, b, addend);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static float FusedMultiplySubtract(float a, float b, float minuend)
+		{
+			if (AdvSimd.IsSupported)
+			{
+				var left = Vector64.CreateScalarUnsafe(a);
+				var right = Vector64.CreateScalarUnsafe(b);
+				var minus = Vector64.CreateScalarUnsafe(minuend);
+
+				return AdvSimd.FusedMultiplySubtractScalar(minus, left, right).ToScalar();
+			}
+
+			if (Fma.IsSupported)
+			{
+				var left = Vector128.CreateScalarUnsafe(a);
+				var right = Vector128.CreateScalarUnsafe(b);
+				var minus = Vector128.CreateScalarUnsafe(minuend);
+
+				return Fma.MultiplySubtractScalar(minus, left, right).ToScalar();
+			}
+
+			return a * b - minuend;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static double FusedMultiplySubtract(double a, double b, double minuend)
+		{
+			if (AdvSimd.Arm64.IsSupported)
+			{
+				var left = Vector128.CreateScalarUnsafe(a);
+				var right = Vector128.CreateScalarUnsafe(b);
+				var minus = Vector128.CreateScalarUnsafe(minuend);
+
+				return AdvSimd.Arm64.FusedMultiplySubtract(minus, left, right).ToScalar();
+			}
+
+			if (Fma.IsSupported)
+			{
+				var left = Vector128.CreateScalarUnsafe(a);
+				var right = Vector128.CreateScalarUnsafe(b);
+				var minus = Vector128.CreateScalarUnsafe(minuend);
+
+				return Fma.MultiplySubtractScalar(minus, left, right).ToScalar();
+			}
+
+			return a * b - minuend;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static T FusedMultiplySubtract<T>(T a, T b, T minuend) where T :
+			ISubtractionOperators<T, T, T>,
+			IMultiplyOperators<T, T, T>,
+			IConvertible
+		{
+			if (typeof(T) == typeof(float))
+			{
+				if (AdvSimd.IsSupported)
+				{
+					var left = Vector64.CreateScalarUnsafe(a.ToSingle(null));
+					var right = Vector64.CreateScalarUnsafe(b.ToSingle(null));
+					var minus = Vector64.CreateScalarUnsafe(minuend.ToSingle(null));
+
+					var result = AdvSimd.FusedMultiplySubtractScalar(minus, left, right).ToScalar();
+					return Unsafe.As<float, T>(ref result);
+				}
+
+				if (Fma.IsSupported)
+				{
+					var left = Vector128.CreateScalarUnsafe(a.ToSingle(null));
+					var right = Vector128.CreateScalarUnsafe(b.ToSingle(null));
+					var minus = Vector128.CreateScalarUnsafe(minuend.ToSingle(null));
+
+					var result = Fma.MultiplySubtractScalar(minus, left, right).ToScalar();
+					return Unsafe.As<float, T>(ref result);
+				}
+			}
+			else if (typeof(T) == typeof(double))
+			{
+				if (AdvSimd.Arm64.IsSupported)
+				{
+					var left = Vector128.CreateScalarUnsafe(a.ToDouble(null));
+					var right = Vector128.CreateScalarUnsafe(b.ToDouble(null));
+					var minus = Vector128.CreateScalarUnsafe(minuend.ToDouble(null));
+
+					var result = AdvSimd.Arm64.FusedMultiplySubtract(minus, left, right).ToScalar();
+					return Unsafe.As<double, T>(ref result);
+				}
+
+				if (Fma.IsSupported)
+				{
+					var left = Vector128.CreateScalarUnsafe(a.ToDouble(null));
+					var right = Vector128.CreateScalarUnsafe(b.ToDouble(null));
+					var minus = Vector128.CreateScalarUnsafe(minuend.ToDouble(null));
+
+					var result = Fma.MultiplySubtractScalar(minus, left, right).ToScalar();
+					return Unsafe.As<double, T>(ref result);
+				}
+			}
+
+			return a * b - minuend;
+		}
+
+		/// <summary>
+		/// Swaps two variables
+		/// </summary>
+		/// <param name="value1">variable one to swap</param>
+		/// <param name="value2">variable tow to swap</param>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static void Swap<T>(ref T value1, ref T value2)
+		{
+			(value1, value2) = (value2, value1);
 		}
 
 		/// <summary> Converts a value to a different type </summary>
 		/// <param name="value"> The value to convert </param>
-		/// 
 		/// <returns> Returns the converted value </returns>
-		public static T Convert<T, U>(U value)
-		{
-			return (T)System.Convert.ChangeType(value, typeof(T))!;
-		}
-
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		private static TResult ConvertNumber<TResult, TOrigin>(TOrigin origin) where TResult : INumber<TResult>
-			where TOrigin : INumber<TOrigin>
+		public static TResult Convert<TSource, TResult>(TSource value) where TSource : IConvertible
 		{
-			return TResult.Create(origin);
+			return (TResult)System.Convert.ChangeType(value, typeof(TResult))!;
 		}
 
 		#endregion

@@ -60,7 +60,7 @@ namespace CCreative
 			set => window.Load += value;
 		}
 
-		public Action<PVector> MouseMove
+		public Action<Vector> MouseMove
 		{
 			set
 			{
@@ -68,7 +68,7 @@ namespace CCreative
 				{
 					if (mouse.IsConnected)
 					{
-						mouse.MouseMove += (_, vector2) => value(new PVector(vector2.X * DisplayDensity, vector2.Y * DisplayDensity));
+						mouse.MouseMove += (_, vector2) => value(new Vector(vector2.X * DisplayDensity, vector2.Y * DisplayDensity));
 					}
 				}
 			}

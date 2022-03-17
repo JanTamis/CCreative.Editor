@@ -7,7 +7,7 @@ namespace CCreative.Rendering
 	/// <summary>
 	/// Main graphics and rendering context
 	/// </summary>
-	public interface PGraphics : PImage
+	public interface PGraphics : Image
 	{
 		#region Background
 
@@ -25,7 +25,7 @@ namespace CCreative.Rendering
 		/// Sets the background of the window to a image and erases all drawings on the screen
 		/// </summary>
 		/// <param name="image">PImage to set as background</param>
-		void Background(PImage image)
+		void Background(Image image)
 		{
 			Clear();
 			Image(image, 0, 0);
@@ -610,7 +610,7 @@ namespace CCreative.Rendering
 		/// Multiplies the current matrix by the one specified through the parameter
 		/// </summary>
 		/// <param name="matrix">the matrix to multiply the current with</param>
-		void ApplyMatrix(PMatrix matrix);
+		void ApplyMatrix(Matrix matrix);
 		
 		/// <summary>
 		/// Draws an arc to the screen
@@ -665,8 +665,8 @@ namespace CCreative.Rendering
 
 		void Clip(int a, int b, int c, int d);
 
-		PImage CreateImage(int width, int height);
-		PImage? LoadImage(string path);
+		Image CreateImage(int width, int height);
+		Image? LoadImage(string path);
 
 		void Curve(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 		void Curve(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4);
@@ -708,18 +708,18 @@ namespace CCreative.Rendering
 
 		void Frustum(float left, float right, float bottom, float top, float near, float far);
 
-		PMatrix GetMatrix();
-		PMatrix2D GetMatrix(PMatrix2D target);
-		PMatrix3D GetMatrix(PMatrix3D target);
+		Matrix GetMatrix();
+		Matrix2D GetMatrix(Matrix2D target);
+		Matrix3D GetMatrix(Matrix3D target);
 
 		PStyle GetStyle();
 		PStyle GetStyle(PStyle target);
 
 		void Hint(int which);
 
-		void Image(PImage img, float a, float b);
-		void Image(PImage img, float a, float b, float c, float d);
-		void Image(PImage img, float a, float b, float c, float d, int u1, int v1, int u2, int v2);
+		void Image(Image img, float a, float b);
+		void Image(Image img, float a, float b, float c, float d);
+		void Image(Image img, float a, float b, float c, float d, int u1, int v1, int u2, int v2);
 
 		void ImageMode(int mode);
 
@@ -813,11 +813,10 @@ namespace CCreative.Rendering
 		float ScreenZ(float x, float y);
 		float ScreenZ(float x, float y, float z);
 
-		void SetMatrix(PMatrix source);
-		void SetMatrix(PMatrix2D source);
-		void SetMatrix(PMatrix3D source);
+		void SetMatrix(Matrix source);
+		void SetMatrix(Matrix2D source);
+		void SetMatrix(Matrix3D source);
 
-		void SetParent(PApplet parent);
 		void SetPath(string path);
 		void SetPrimary(bool primary);
 		void SetSize(int w, int h);
@@ -853,13 +852,9 @@ namespace CCreative.Rendering
 
 		void Style(PStyle style);
 
-		void Text(string text, Index start, Index end, float x, float y);
-		void Text(string text, Index start, Index end, float x, float y, float z);
 		void Text(string text, Range range, float x, float y);
 		void Text(string text, Range range, float x, float y, float z);
 
-		void Text(char[] chars, Index start, Index end, float x, float y);
-		void Text(char[] chars, Index start, Index end, float x, float y, float z);
 		void Text(char[] chars, Range range, float x, float y);
 		void Text(char[] chars, Range range, float x, float y, float z);
 
@@ -871,8 +866,8 @@ namespace CCreative.Rendering
 		void TextAlign(int alignX);
 		void TextAlign(int alignX, int alignY);
 
-		short TextAcent();
-		short TextDecent();
+		float TextAcent();
+		float TextDecent();
 
 		void TextFont(PFont which);
 		void TextFont(PFont which, int size);
@@ -881,7 +876,7 @@ namespace CCreative.Rendering
 		void TextMode(int mode);
 		void TextSize(float size);
 
-		void Texture(PImage texture);
+		void Texture(Image texture);
 		void TextureMode(int mode);
 		void TextureWrap(int wrap);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Runtime.Versioning;
 using static CCreative.Math;
 
 namespace CCreative

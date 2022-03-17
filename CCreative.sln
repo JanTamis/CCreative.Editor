@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCreative.Test", "CCreative
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCreative.Benchmark", "CCreative.Benchmark\CCreative.Benchmark.csproj", "{F11FF9FF-BC9F-4D37-8333-CBFE436F1D8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AvaloniaEdit", "..\AvaloniaEdit\src\AvaloniaEdit\AvaloniaEdit.csproj", "{65BBA5AB-FC40-4360-AF0B-8F88CCE96FAD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{F11FF9FF-BC9F-4D37-8333-CBFE436F1D8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F11FF9FF-BC9F-4D37-8333-CBFE436F1D8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F11FF9FF-BC9F-4D37-8333-CBFE436F1D8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65BBA5AB-FC40-4360-AF0B-8F88CCE96FAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65BBA5AB-FC40-4360-AF0B-8F88CCE96FAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65BBA5AB-FC40-4360-AF0B-8F88CCE96FAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65BBA5AB-FC40-4360-AF0B-8F88CCE96FAD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

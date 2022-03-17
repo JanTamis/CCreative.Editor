@@ -3,7 +3,11 @@
              xmlns:local="using:CCreative.Editor"
              xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
              xmlns:aura="using:Aura.UI"
+             xmlns:cc="clr-namespace:AvaloniaEdit.CodeCompletion;assembly=AvaloniaEdit"
              xmlns:idc="clr-namespace:Dock.Avalonia.Controls;assembly=Dock.Avalonia"
+             xmlns:assist="clr-namespace:Material.Styles.Assists;assembly=Material.Styles"
+             xmlns:styles="clr-namespace:Material.Styles;assembly=Material.Styles"
+             xmlns:dialogHost="clr-namespace:DialogHost;assembly=DialogHost.Avalonia"
              x:Class="CCreative.Editor.App">
 	<Application.DataTemplates>
 		<local:ViewLocator />
@@ -14,10 +18,59 @@
 	</Application.Resources>
 
 	<Application.Styles>
-		<aura:AuraUITheme />
-		
 		<StyleInclude Source="avares://Material.Avalonia/Material.Avalonia.Templates.xaml" />
-		<StyleInclude Source="avares://Material.DataGrid/DataGrid.xaml"/>
+		<StyleInclude Source="avares://Material.Icons.Avalonia/App.xaml" />
+		<StyleInclude Source="avares://DialogHost.Avalonia/Styles.xaml" />
+		<StyleInclude Source="avares://Material.DataGrid/DataGrid.xaml" />
 		<StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
+
+		<Style Selector="dialogHost|DialogHost Border#PART_ContentBackground">
+			<Setter Property="Background" Value="{DynamicResource MaterialDesignCardBackground}" />
+		</Style>
+
+		<Style Selector="cc|CompletionList">
+			<Setter Property="Template">
+				<ControlTemplate>
+					<styles:Card assist:ShadowAssist.ShadowDepth="CenterDepth1"
+					             Margin="5"
+					             Padding="0">
+						<cc:CompletionListBox Name="PART_ListBox" FontSize="11">
+							<cc:CompletionListBox.ItemTemplate>
+								<DataTemplate>
+									<StackPanel Orientation="Horizontal" Margin="0">
+										<Image Source="{Binding Image}"
+										       Width="16"
+										       Height="16"
+										       Margin="0,0,2,0" />
+										<TextBlock Text="{Binding Text}" />
+									</StackPanel>
+								</DataTemplate>
+							</cc:CompletionListBox.ItemTemplate>
+						</cc:CompletionListBox>
+					</styles:Card>
+				</ControlTemplate>
+			</Setter>
+		</Style>
+
+		<Style Selector="cc|CompletionList > ListBox">
+			<Setter Property="Padding" Value="0" />
+		</Style>
+
+		<Style Selector="cc|CompletionList > ListBox > ListBoxItem">
+			<Setter Property="Padding" Value="4, 0, 0, 0" />
+			<Setter Property="Height" Value="20" />
+		</Style>
+
+		<Style Selector="ContentControl.ToolTip">
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="BorderThickness"
+			        Value="1" />
+			<Setter Property="BorderBrush"
+			        Value="Black" />
+			<Setter Property="Background"
+			        Value="#eeeeee" />
+			<Setter Property="Padding"
+			        Value="2" />
+		</Style>
 	</Application.Styles>
 </Application>

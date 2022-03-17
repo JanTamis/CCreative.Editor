@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnablePreviewFeatures>true</EnablePreviewFeatures>
         <Nullable>enable</Nullable>
+        <EnablePreviewFeatures>true</EnablePreviewFeatures>
     </PropertyGroup>
 
     <ItemGroup>

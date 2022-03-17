@@ -7,9 +7,9 @@
                     xmlns:styles="clr-namespace:Material.Styles;assembly=Material.Styles"
                     xmlns:assist="clr-namespace:Material.Styles.Assists;assembly=Material.Styles"
                     xmlns:avalonia="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+                    xmlns:dialogHost="clr-namespace:DialogHost;assembly=DialogHost.Avalonia"
                     xmlns:idc="clr-namespace:Dock.Avalonia.Controls;assembly=Dock.Avalonia"
                     xmlns:avalonEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
-                    xmlns:roslynPad="clr-namespace:RoslynPad.Editor;assembly=RoslynPad.Editor.Avalonia"
                     xmlns:views="clr-namespace:CCreative.Editor.Views"
                     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                     x:Class="CCreative.Editor.Views.MainWindow"
@@ -27,87 +27,164 @@
 	</Design.DataContext>
 
 	<Panel Margin="{Binding #MainWindow.OffScreenMargin}">
+		<dialogHost:DialogHost CloseOnClickAway="True">
+			<Panel>
+				<Border VerticalAlignment="Stretch"
+				        IsHitTestVisible="False"
+				        Height="{Binding #MainWindow.WindowDecorationMargin.Top}"
+				        Background="{DynamicResource Background}"
+				        BoxShadow="{BoxShadow BlurRadius=2, ShadowColor=black}">
+					<TextBlock Text="{Binding #MainWindow.Title}"
+					           VerticalAlignment="Center"
+					           HorizontalAlignment="Center" />
+				</Border>
 
-		<Border VerticalAlignment="Stretch"
-		        IsHitTestVisible="False"
-		        Height="{Binding #MainWindow.WindowDecorationMargin.Top}"
-		        Background="{DynamicResource Background}"
-		        BoxShadow="{BoxShadow BlurRadius=2, ShadowColor=black}">
-			<TextBlock Text="{Binding #MainWindow.Title}"
-			           VerticalAlignment="Center"
-			           HorizontalAlignment="Center" />
-		</Border>
+				<Border Margin="{Binding #MainWindow.WindowDecorationMargin}">
 
-		<Menu VerticalAlignment="Top"
-		      HorizontalAlignment="Left"
-		      Height="{Binding #MainWindow.WindowDecorationMargin.Top}"
-		      IsHitTestVisible="True">
-			<MenuItem Header="File" />
-			<MenuItem Header="Edit" />
-			<MenuItem Header="View" />
-			<MenuItem Header="Plugins" />
-		</Menu>
-
-		<Border Margin="{Binding #MainWindow.WindowDecorationMargin}">
-
-			<Grid RowDefinitions="Auto,*">
-				<StackPanel Orientation="Horizontal"
-				            Margin="15 10 15 0">
-					<Button assist:ButtonAssist.CornerRadius="50"
-					        assist:ShadowAssist.ShadowDepth="Depth0"
-					        Padding="5"
-					        Margin="0 0 7.5 0"
-					        HorizontalAlignment="Left">
-						<avalonia:MaterialIcon Kind="Play" Width="40" Height="40" />
-					</Button>
-
-					<Button assist:ButtonAssist.CornerRadius="50"
-					        assist:ShadowAssist.ShadowDepth="Depth0"
-					        Padding="5"
-					        HorizontalAlignment="Left">
-						<avalonia:MaterialIcon Kind="Stop" Width="40" Height="40" />
-					</Button>
-				</StackPanel>
-
-				<styles:Card Grid.Row="1"
-				             assist:ShadowAssist.ShadowDepth="CenterDepth1"
-				             CornerRadius="7.5"
-				             Padding="0"
-				             Margin="15">
 					<Grid RowDefinitions="Auto,*">
-						<TabStrip Grid.Row="0">
-							<TabStrip.ItemsPanel>
-								<ItemsPanelTemplate>
-									<StackPanel Orientation="Horizontal" />
-								</ItemsPanelTemplate>
-							</TabStrip.ItemsPanel>
-							<TabStripItem>
-								<Viewbox MaxHeight="20">
-									<TextBlock Text="Hello" />
-								</Viewbox>
-							</TabStripItem>
 
-							<TabStripItem Padding="4">
-								<Viewbox MaxHeight="20">
-									<TextBlock Text="Hello" />
-								</Viewbox>
-							</TabStripItem>
-						</TabStrip>
+						<styles:ColorZone
+							Background="{DynamicResource MaterialDesignCardBackground}">
+							<StackPanel Orientation="Horizontal"
+							            Margin="15 10 15  10">
+								<Button assist:ButtonAssist.CornerRadius="50"
+								        assist:ShadowAssist.ShadowDepth="Depth0"
+								        Padding="5"
+								        Margin="0 0 7.5 0"
+								        Command="{Binding Start}"
+								        HorizontalAlignment="Left">
+									<avalonia:MaterialIcon Kind="Play" Width="40" Height="40" />
+								</Button>
 
-						<avalonEdit:TextEditor Name="Editor"
-						                       Grid.Row="1"
-						                       BorderBrush="{DynamicResource MaterialDesignDivider}"
-						                       BorderThickness="0 1 0 0"
-						                       FontFamily="avares://CCreative.Editor/Assets/CascadiaCode.ttf#Cascadia Code"
-						                       Background="Transparent"
-						                       HorizontalScrollBarVisibility="Auto"
-						                       VerticalScrollBarVisibility="Auto"
-						                       ShowLineNumbers="True"
-						                       FontWeight="Light"
-						                       FontSize="18" />
+								<Button assist:ButtonAssist.CornerRadius="50"
+								        assist:ShadowAssist.ShadowDepth="Depth0"
+								        Padding="5"
+								        Command="{Binding Stop}"
+								        IsEnabled="{Binding IsRunning}"
+								        HorizontalAlignment="Left">
+									<avalonia:MaterialIcon Kind="Stop" Width="40" Height="40" />
+								</Button>
+							</StackPanel>
+						</styles:ColorZone>
+
+						<Grid RowDefinitions="Auto,*,0.5*"
+						      ColumnDefinitions="*, Auto"
+
+						      Grid.Row="1">
+							<TabStrip Grid.Row="0"
+							          Items="{Binding Tabs}"
+							          SelectedItem="{Binding CurrentTab}">
+								<TabStrip.ItemsPanel>
+									<ItemsPanelTemplate>
+										<UniformGrid Rows="1" HorizontalAlignment="Left" />
+									</ItemsPanelTemplate>
+								</TabStrip.ItemsPanel>
+								<TabStrip.ItemTemplate>
+									<DataTemplate>
+										<StackPanel Orientation="Horizontal">
+											<TextBox Text="{Binding Title}"
+											         Margin="0"
+											         Padding="0"
+											         Classes="Solo"
+											         BorderThickness="0"
+											         TextWrapping="WrapWithOverflow"
+											         VerticalAlignment="Center" />
+										</StackPanel>
+									</DataTemplate>
+								</TabStrip.ItemTemplate>
+								<TabStrip.Styles>
+									<Style Selector="TabStripItem">
+										<Setter Property="ContextMenu">
+											<Setter.Value>
+												<ContextMenu>
+													<StackPanel Orientation="Horizontal">
+														<TextBlock Text="Title: "
+														           FontSize="16" />
+														<TextBox Text="{Binding Title}" />
+													</StackPanel>
+
+												</ContextMenu>
+											</Setter.Value>
+										</Setter>
+									</Style>
+								</TabStrip.Styles>
+							</TabStrip>
+
+							<Button assist:ButtonAssist.CornerRadius="50"
+							        assist:ShadowAssist.ShadowDepth="Depth0"
+							        Padding="5"
+							        Margin="5"
+							        Width="30"
+							        Height="30"
+							        Grid.Row="0"
+							        Grid.Column="1"
+							        Command="{Binding NewTab}"
+							        HorizontalAlignment="Left">
+								<avalonia:MaterialIcon Kind="Add" Width="25" Height="25" />
+							</Button>
+
+							<ContentPresenter Content="{Binding CurrentTab.TextEditor}"
+							                  Grid.Row="1"
+							                  Grid.ColumnSpan="2"
+							                  Grid.Column="0"
+							                  Background="Transparent"
+							                  BorderBrush="{DynamicResource MaterialDesignDivider}"
+							                  BorderThickness="0 1 0 0" />
+
+							<ContentPresenter Grid.Row="2"
+							                  Grid.ColumnSpan="2"
+							                  Margin="5 25 5 0"
+							                  Content="{Binding ConsoleEditor}" />
+
+							<TextBlock Text="{Binding ConsoleLineCount, StringFormat=Console: {0:N0} lines}"
+							           FontSize="14"
+							           Padding="5 4 0 0"
+							           Grid.Row="2" />
+
+
+							<GridSplitter Grid.Row="2"
+							              Grid.ColumnSpan="2"
+							              Height="25"
+							              VerticalAlignment="Top" />
+
+							<StackPanel Grid.Row="2"
+							            Grid.ColumnSpan="2"
+							            Orientation="Horizontal"
+							            VerticalAlignment="Top"
+							            HorizontalAlignment="Right"
+							            Height="25">
+								<Button Command="{Binding ClearConsole}"
+								        IsEnabled="{Binding CanClear}"
+								        Padding="10 0"
+								        Classes="Flat">
+									<StackPanel Orientation="Horizontal">
+										<avalonia:MaterialIcon Kind="TrashCan"
+										                       Margin="0 0 1 0" />
+										<TextBlock Text="Clear"
+										           FontWeight="Medium"
+										           FontSize="14" />
+									</StackPanel>
+								</Button>
+								<Button Command="{Binding ScrollDown}"
+								        IsEnabled="{Binding CanScrollDown}"
+								        Padding="10 0"
+								        Classes="Flat">
+									<StackPanel Orientation="Horizontal">
+										<avalonia:MaterialIcon Kind="ArrowDownThick"
+										                       Margin="0 0 1 0" />
+										<TextBlock Text="Scroll Down"
+										           FontWeight="Medium"
+										           FontSize="14" />
+									</StackPanel>
+								</Button>
+							</StackPanel>
+
+						</Grid>
 					</Grid>
-				</styles:Card>
-			</Grid>
-		</Border>
+				</Border>
+			</Panel>
+		</dialogHost:DialogHost>
+
+
 	</Panel>
 </views:FluentWindow>

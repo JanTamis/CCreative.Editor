@@ -1,15 +1,16 @@
 using System;
 using System.IO;
 using CCreative.Helpers;
+using Silk.NET.OpenGL;
 using SkiaSharp;
 
 namespace CCreative;
 
-public class SkiaImage : PImage
+public class SkiaImage : Image
 {
 	internal SKImage skImage;
-	
-	public byte[]? Pixels { get; set; }
+
+	public Color[]? Pixels { get; set; }
 	public int Width => skImage.Width;
 	public int Height => skImage.Height;
 	public int PixelDensity => 1;
@@ -21,7 +22,7 @@ public class SkiaImage : PImage
 
 	public void LoadPixels()
 	{
-		Pixels = GC.AllocateUninitializedArray<byte>(skImage.Info.BytesSize);
+		Pixels = GC.AllocateUninitializedArray<Color>(skImage.Info.Width * skImage.Info.Height);
 
 		using var pinner = new AutoPinner(Pixels);
 
@@ -38,8 +39,7 @@ public class SkiaImage : PImage
 		if (Pixels is not null)
 		{
 			using var pixmap = skImage.PeekPixels();
-
-			var span = pixmap.GetPixelSpan<byte>();
+			var span = pixmap.GetPixelSpan<Color>();
 
 			Pixels.CopyTo(span);
 		}
@@ -55,22 +55,28 @@ public class SkiaImage : PImage
 		using var pixMap = skImage.PeekPixels();
 		var color = pixMap.GetPixelColor(x, y);
 
-		return new SkiaColor(color);
+		return new Color
+		{
+			A = color.Alpha,
+			R = color.Red,
+			G = color.Green,
+			B = color.Blue,
+		};
 	}
 
-	public PImage Get(int x, int y, int w, int h)
+	public Image Get(int x, int y, int w, int h)
 	{
 		throw new NotImplementedException();
 	}
 
-	public PImage Get()
+	public Image Get()
 	{
 		using var pixMap = skImage.PeekPixels();
 
 		return new SkiaImage(SKImage.FromPixels(pixMap));
 	}
 
-	public PImage Copy()
+	public Image Copy()
 	{
 		using var pixMap = skImage.PeekPixels();
 		return new SkiaImage(SKImage.FromPixels(pixMap));
@@ -78,19 +84,13 @@ public class SkiaImage : PImage
 
 	public void Set(int x, int y, Color color)
 	{
-		if (color is SkiaColor skColor)
-		{
-			using var pixMap = skImage.PeekPixels();
+		using var pixMap = skImage.PeekPixels();
+		var span = pixMap.GetPixelSpan<SKColor>();
 
-			var span = pixMap.GetPixelSpan<SKColor>();
-
-			span[y * Width + x] = skColor.skColor;
-		}
-
-		throw new ArgumentException("Create a color using the Color method", nameof(color));
+		span[y * Width + x] = new SKColor((uint)color.GetHashCode());
 	}
 
-	public void Set(int x, int y, PImage img)
+	public void Set(int x, int y, Image img)
 	{
 		throw new NotImplementedException();
 	}
@@ -100,7 +100,7 @@ public class SkiaImage : PImage
 		throw new NotImplementedException();
 	}
 
-	public void Mask(PImage img)
+	public void Mask(Image img)
 	{
 		throw new NotImplementedException();
 	}
@@ -108,7 +108,7 @@ public class SkiaImage : PImage
 	public void Filter(FilterTypes kind)
 	{
 		SKImageFilter filter = null;
-		
+
 		switch (kind)
 		{
 			case FilterTypes.Threshold:
@@ -119,7 +119,7 @@ public class SkiaImage : PImage
 					0.21f, 0.72f, 0.07f, 0, 0,
 					0.21f, 0.72f, 0.07f, 0, 0,
 					0.21f, 0.72f, 0.07f, 0, 0,
-					0,     0,     0,     1, 0
+					0, 0, 0, 1, 0,
 				}));
 				break;
 			case FilterTypes.Opaque:
@@ -147,7 +147,7 @@ public class SkiaImage : PImage
 
 		var rect = new SKRectI(0, 0, Width, Height);
 		var tempImg = skImage.ApplyImageFilter(filter, rect, rect, out _, out SKPoint point);
-		
+
 		skImage.Dispose();
 		skImage = tempImg;
 	}
@@ -162,7 +162,7 @@ public class SkiaImage : PImage
 		throw new NotImplementedException();
 	}
 
-	public void Copy(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
+	public void Copy(Image src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
 	{
 		throw new NotImplementedException();
 	}
@@ -177,7 +177,7 @@ public class SkiaImage : PImage
 		throw new NotImplementedException();
 	}
 
-	public void Blend(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode)
+	public void Blend(Image src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode)
 	{
 		throw new NotImplementedException();
 	}
@@ -187,7 +187,7 @@ public class SkiaImage : PImage
 		try
 		{
 			using var stream = File.OpenWrite(filename);
-		
+
 			var data = skImage.Encode(SKEncodedImageFormat.Gif, 100);
 			stream.Write(data.Span);
 		}
@@ -198,7 +198,7 @@ public class SkiaImage : PImage
 
 		return true;
 	}
-	
+
 	public void Dispose()
 	{
 		skImage.Dispose();

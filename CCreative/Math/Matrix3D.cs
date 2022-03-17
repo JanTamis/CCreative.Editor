@@ -1,59 +1,76 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using static System.MathF;
 
 namespace CCreative
 {
-	public class PMatrix3D : PMatrix
+	public struct Matrix3D : Matrix
 	{
 		public float m00, m01, m02, m03;
 		public float m10, m11, m12, m13;
 		public float m20, m21, m22, m23;
 		public float m30, m31, m32, m33;
 
-		public PMatrix3D()
+		public Matrix3D()
+			: this(stackalloc float[]
+			{
+				1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			})
 		{
-			Reset();
+			
 		}
 
-		public PMatrix3D(float m00, float m01, float m02,
-										 float m10, float m11, float m12)
+		public Matrix3D(ReadOnlySpan<float> data)
 		{
-			Set(m00, m01, m02, 0,
-					m10, m11, m12, 0,
-					0, 0, 1, 0,
-					0, 0, 0, 1);
+			if (data.Length < 16)
+			{
+				throw new ArgumentException("Values must contain 16 elements", nameof(data));
+			}
+
+			this = Unsafe.ReadUnaligned<Matrix3D>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(data)));
 		}
 
-		public PMatrix3D(float m00, float m01, float m02, float m03,
+		public Matrix3D(float m00, float m01, float m02, float m10, float m11, float m12)
+			: this(m00, m01, m02, 0,
+				m10, m11, m12, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1)
+		{
+		}
+
+		public Matrix3D(float m00, float m01, float m02, float m03,
 										 float m10, float m11, float m12, float m13,
 										 float m20, float m21, float m22, float m23,
 										 float m30, float m31, float m32, float m33)
+			: this(stackalloc float[]
+			{
+				m00, m01, m02, m03,
+				m10, m11, m12, m13,
+				m20, m21, m22, m23,
+				m30, m31, m32, m33,
+			})
 		{
-			Set(m00, m01, m02, m03,
-					m10, m11, m12, m13,
-					m20, m21, m22, m23,
-					m30, m31, m32, m33);
 		}
 
-		public PMatrix3D(PMatrix matrix)
-		{
-			Set(matrix);
-		}
-
-		public void Apply(PMatrix source)
+		public void Apply(Matrix source)
 		{
 			switch (source)
 			{
-				case PMatrix2D matrix2D:
+				case Matrix2D matrix2D:
 					Apply(matrix2D);
 					break;
-				case PMatrix3D matrix3D:
+				case Matrix3D matrix3D:
 					Apply(matrix3D);
 					break;
 			}
 		}
 
-		public void Apply(PMatrix2D source)
+		public void Apply(Matrix2D source)
 		{
 			Apply(source.m00, source.m01, 0, source.m02,
 						source.m10, source.m11, 0, source.m12,
@@ -61,7 +78,7 @@ namespace CCreative
 						0, 0, 0, 1);
 		}
 
-		public void Apply(PMatrix3D source)
+		public void Apply(Matrix3D source)
 		{
 			Apply(source.m00, source.m01, source.m02, source.m03,
 						source.m10, source.m11, source.m12, source.m13,
@@ -135,17 +152,17 @@ namespace CCreative
 			return f;
 		}
 
-		public PMatrix Get()
+		public Matrix Get()
 		{
-			var outgoing = new PMatrix3D();
+			var outgoing = new Matrix3D();
 			outgoing.Set(this);
 
 			return outgoing;
 		}
 
-		public float[] Get(float[] target)
+		public float[] Get(float[]? target)
 		{
-			if (!(target is float[] { Length: 16 }))
+			if (target is not { Length: 16 })
 			{
 				target = new float[16];
 			}
@@ -238,18 +255,20 @@ namespace CCreative
 							t02 * (t10 * t21 - t11 * t20));
 		}
 
-		public PVector Mult(PVector source)
+		public Vector Mult(Vector source)
 		{
-			var x = m00 * source.X + m01 * source.Y + m02 * source.Z + m03;
-			var y = m10 * source.X + m11 * source.Y + m12 * source.Z + m13;
-			var z = m20 * source.X + m21 * source.Y + m22 * source.Z + m23;
+			var (x, y, z) = source;
 
-			return new PVector(x, y, z);
+			var xResult = m00 * x + m01 * y + m02 * z + m03;
+			var yResult = m10 * x + m11 * y + m12 * z + m13;
+			var zResult = m20 * x + m21 * y + m22 * z + m23;
+
+			return new Vector(xResult, yResult, zResult);
 		}
 
 		public float[] Mult(float[] source, float[] target)
 		{
-			if (target is not { Length: >= 3})
+			if (target is not { Length: >= 3 })
 			{
 				target = new float[3];
 			}
@@ -328,20 +347,20 @@ namespace CCreative
 			return m30 * x + m31 * y + m32 * z + m33 * w;
 		}
 
-		public void PreApply(PMatrix left)
+		public void PreApply(Matrix left)
 		{
 			switch (left)
 			{
-				case PMatrix2D matrix2D:
+				case Matrix2D matrix2D:
 					PreApply(matrix2D);
 					break;
-				case PMatrix3D matrix3D:
+				case Matrix3D matrix3D:
 					PreApply(matrix3D);
 					break;
 			}
 		}
 
-		public void PreApply(PMatrix2D left)
+		public void PreApply(Matrix2D left)
 		{
 			PreApply(left.m00, left.m01, 0, left.m02,
 							 left.m10, left.m11, 0, left.m12,
@@ -349,7 +368,7 @@ namespace CCreative
 							 0, 0, 0, 1);
 		}
 
-		public void PreApply(PMatrix3D left)
+		public void PreApply(Matrix3D left)
 		{
 			PreApply(left.m00, left.m01, left.m02, left.m03,
 							 left.m10, left.m11, left.m12, left.m13,
@@ -535,17 +554,17 @@ namespace CCreative
 			m30 *= x; m31 *= y; m32 *= z;
 		}
 
-		public void Set(PMatrix matrix)
+		public void Set(Matrix matrix)
 		{
 			switch (matrix)
 			{
-				case PMatrix2D src:
+				case Matrix2D src:
 					Set(src.m00, src.m01, 0, src.m02,
 							src.m10, src.m11, 0, src.m12,
 							0, 0, 1, 0,
 							0, 0, 0, 1);
 					break;
-				case PMatrix3D src:
+				case Matrix3D src:
 					Set(src.m00, src.m01, src.m02, src.m03,
 							src.m10, src.m11, src.m12, src.m13,
 							src.m20, src.m21, src.m22, src.m23,
@@ -556,33 +575,33 @@ namespace CCreative
 
 		public void Set(float[] source)
 		{
-			if (source.Length == 6)
+			switch (source.Length)
 			{
-				Set(source[0], source[1], source[2],
+				case 6:
+					Set(source[0], source[1], source[2],
 						source[3], source[4], source[5]);
+					break;
+				case 16:
+					m00 = source[0];
+					m01 = source[1];
+					m02 = source[2];
+					m03 = source[3];
 
-			}
-			else if (source.Length == 16)
-			{
-				m00 = source[0];
-				m01 = source[1];
-				m02 = source[2];
-				m03 = source[3];
+					m10 = source[4];
+					m11 = source[5];
+					m12 = source[6];
+					m13 = source[7];
 
-				m10 = source[4];
-				m11 = source[5];
-				m12 = source[6];
-				m13 = source[7];
+					m20 = source[8];
+					m21 = source[9];
+					m22 = source[10];
+					m23 = source[11];
 
-				m20 = source[8];
-				m21 = source[9];
-				m22 = source[10];
-				m23 = source[11];
-
-				m30 = source[12];
-				m31 = source[13];
-				m32 = source[14];
-				m33 = source[15];
+					m30 = source[12];
+					m31 = source[13];
+					m32 = source[14];
+					m33 = source[15];
+					break;
 			}
 		}
 
@@ -600,10 +619,15 @@ namespace CCreative
 										float m20, float m21, float m22, float m23,
 										float m30, float m31, float m32, float m33)
 		{
-			this.m00 = m00; this.m01 = m01; this.m02 = m02; this.m03 = m03;
-			this.m10 = m10; this.m11 = m11; this.m12 = m12; this.m13 = m13;
-			this.m20 = m20; this.m21 = m21; this.m22 = m22; this.m23 = m23;
-			this.m30 = m30; this.m31 = m31; this.m32 = m32; this.m33 = m33;
+			Span<float> data = stackalloc float[]
+			{
+				m00, m01, m02, m03,
+				m10, m11, m12, m13,
+				m20, m21, m22, m23,
+				m30, m31, m32, m33,
+			};
+
+			this = Unsafe.ReadUnaligned<Matrix3D>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(data)));
 		}
 
 		public void ShearX(float angle)

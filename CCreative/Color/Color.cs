@@ -1,46 +1,80 @@
-﻿using System;
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-namespace CCreative
+namespace CCreative;
+
+[StructLayout(LayoutKind.Sequential)]
+public struct Color
 {
 	/// <summary>
-	/// Datatype for storing color values
+	/// the blue component of the color
 	/// </summary>
-	public interface Color
+	public byte B { get; init; }
+
+	/// <summary>
+	/// the green component of the color
+	/// </summary>
+	public byte G { get; init; }
+
+	/// <summary>
+	/// the red component of the color
+	/// </summary>
+	public byte R { get; init; }
+
+	/// <summary>
+	/// the alpha component of the color
+	/// </summary>
+	public byte A { get; init; }
+
+	public Color(byte a, byte r, byte g, byte b)
 	{
-		/// <summary>
-		/// the blue component of the color
-		/// </summary>
-		byte B { get; set; }
+		A = a;
+		R = r;
+		G = g;
+		B = b;
+	}
 
-		/// <summary>
-		/// the green component of the color
-		/// </summary>
-		byte G { get; set; }
+	public Color(byte r, byte g, byte b)
+	{
+		A = Byte.MaxValue;
+		R = r;
+		G = g;
+		B = b;
+	}
 
-		/// <summary>
-		/// the red component of the color
-		/// </summary>
-		byte R { get; set; }
-
-		/// <summary>
-		/// the alpha component of the color
-		/// </summary>
-		public byte A { get; set; }
-
-		/// <summary>
-		/// Returns the color as a hexadecimal string
-		/// </summary>
-		/// <returns> the hexadecimal string</returns>
-		public string ToString()
+	/// <summary>
+	/// Returns the color as a hexadecimal string
+	/// </summary>
+	/// <returns> the hexadecimal string</returns>
+	public override string ToString()
+	{
+		return String.Create(9, GetHashCode(), (span, code) =>
 		{
-			return A is Byte.MaxValue ? $"#{R:X2}{G:X2}{B:X2}" : $"#{A:X2}{R:X2}{G:X2}{B:X2}";
-		}
+			span[0] = '#';
+			code.TryFormat(span[1..], out _, "X8");
+		});
+	}
 
-		public void Deconstruct(out byte r, out byte g, out byte b)
-		{
-			r = R;
-			g = G;
-			b = B;
-		}
+	/// <inheritdoc />
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public override int GetHashCode()
+	{
+		return Unsafe.As<Color, Int32>(ref this);
+	}
+
+	public void Deconstruct(out byte a, out byte r, out byte g, out byte b)
+	{
+		a = A;
+		r = R;
+		g = G;
+		b = B;
+	}
+
+	public void Deconstruct(out byte r, out byte g, out byte b)
+	{
+		r = R;
+		g = G;
+		b = B;
 	}
 }

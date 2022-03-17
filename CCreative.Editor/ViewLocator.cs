@@ -16,12 +16,10 @@ namespace CCreative.Editor
 
 			if (type != null)
 			{
-				return Activator.CreateInstance(type) as IControl;
+				return (IControl)Activator.CreateInstance(type)!;
 			}
-			else
-			{
-				return new TextBlock { Text = "Not Found: " + name };
-			}
+
+			return new TextBlock { Text = $"Not Found: {name}" };
 		}
 
 		public bool Match(object data)

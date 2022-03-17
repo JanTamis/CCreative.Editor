@@ -5,12 +5,12 @@ namespace CCreative
 	/// <summary>
 	/// Datatype for storing images. Images may be displayed in 2D and 3D space
 	/// </summary>
-	public interface PImage : IDisposable
+	public interface Image : IDisposable
 	{
 		/// <summary>
 		/// The pixels of the image
 		/// </summary>
-		byte[]? Pixels { get; set; }
+		Color[]? Pixels { get; set; }
 
 		/// <summary>
 		/// The width of the image in units of pixels
@@ -79,19 +79,19 @@ namespace CCreative
 		/// <param name="w">the width of the block</param>
 		/// <param name="h">the height of the block</param>
 		/// <returns>the block of pixels</returns>
-		PImage Get(int x, int y, int w, int h);
+		Image Get(int x, int y, int w, int h);
 
 		/// <summary>
 		/// Gets a copy of the image
 		/// </summary>
 		/// <returns></returns>
-		PImage Get();
+		Image Get();
 
 		/// <summary>
 		/// Copies the entire image
 		/// </summary>
 		/// <returns>the copied image</returns>
-		PImage Copy();
+		Image Copy();
 
 		/// <summary>
 		/// Writes a color to any pixel
@@ -107,7 +107,7 @@ namespace CCreative
 		/// <param name="x">x-coordinate of the upper-left corner</param>
 		/// <param name="y">y-coordinate of the upper-left corner</param>
 		/// <param name="img">image to copy into the original image</param>
-		void Set(int x, int y, PImage img);
+		void Set(int x, int y, Image img);
 
 		/// <summary>
 		/// Masks part of an image with pixels as an alpha channel
@@ -119,7 +119,7 @@ namespace CCreative
 		/// Masks part of an image from displaying by loading another image and using it as an alpha channel
 		/// </summary>
 		/// <param name="img">image to use as the mask</param>
-		void Mask(PImage img);
+		void Mask(Image img);
 
 		void Filter(FilterTypes kind);
 
@@ -127,13 +127,13 @@ namespace CCreative
 
 		void Copy(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh);
 
-		void Copy(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh);
+		void Copy(Image src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh);
 
 		Color BlendColor(Color c1, Color c2, BlendModes mode);
 
 		void Blend(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode);
 
-		void Blend(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode);
+		void Blend(Image src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode);
 
 		bool TrySave(string filename);
 	}

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using CCreative.Helpers;
 using Silk.NET.Core.Contexts;
@@ -18,6 +19,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	private SKSurface surface;
 	private GL gl;
+	private SKFont font;
 
 	private SKImageInfo defaultImageInfo => new(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
@@ -54,7 +56,8 @@ public class PGraphicsSkiaSharp : PGraphics
 		Width = width;
 		Height = height;
 		PixelDensity = pixelDensity;
-		Pixels = new byte[width * height * 4 * pixelDensity];
+		Pixels = new Color[width * height * pixelDensity];
+		font = stroke.ToFont();
 	}
 
 	public void Dispose()
@@ -65,7 +68,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		context.Dispose();
 	}
 
-	public byte[]? Pixels { get; set; }
+	public Color[]? Pixels { get; set; }
 
 	public int Width { get; }
 
@@ -76,11 +79,11 @@ public class PGraphicsSkiaSharp : PGraphics
 	public void LoadPixels()
 	{
 		var info = defaultImageInfo;
-		var size = Width * Height * PixelDensity * info.BitsPerPixel;
+		var size = Width * Height * PixelDensity;
 
 		if (Pixels is null || Pixels.Length != size)
 		{
-			Pixels = GC.AllocateUninitializedArray<byte>(size);
+			Pixels = GC.AllocateUninitializedArray<Color>(size);
 		}
 
 		using var pin = new AutoPinner(Pixels);
@@ -111,42 +114,39 @@ public class PGraphicsSkiaSharp : PGraphics
 	public Color Get(int x, int y)
 	{
 		var pixelSpan = surface.PeekPixels().GetPixelSpan();
-		var span = MemoryMarshal.Cast<byte, MemoryColor>(pixelSpan);
+		var span = MemoryMarshal.Cast<byte, Color>(pixelSpan);
 
 		return span[x * Width + y];
 	}
 
-	public PImage Get(int x, int y, int w, int h)
+	public Image Get(int x, int y, int w, int h)
 	{
 		throw new NotImplementedException();
 	}
 
-	public PImage Get()
+	public Image Get()
 	{
 		return new SkiaImage(surface.Snapshot());
 	}
 
-	public PImage Copy()
+	public Image Copy()
 	{
-		throw new NotImplementedException();
+		return new SkiaImage(surface.Snapshot());
 	}
 
 	public void Set(int x, int y, Color color)
 	{
 		if (Pixels is not null)
 		{
-			var index = (x * Width + y) * 4;
+			var index = x * Width + y;
 
-			Pixels[index] = color.B;
-			Pixels[index + 1] = color.G;
-			Pixels[index + 2] = color.R;
-			Pixels[index + 3] = color.A;
+			Pixels[index] = color;
 		}
 	}
 
-	public void Set(int x, int y, PImage img)
+	public void Set(int x, int y, Image img)
 	{
-		throw new NotImplementedException();
+		Image(img, x, y);
 	}
 
 	public void Mask(Color[] maskArray)
@@ -154,7 +154,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Mask(PImage img)
+	public void Mask(Image img)
 	{
 		throw new NotImplementedException();
 	}
@@ -239,12 +239,17 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Copy(int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
 	{
-		throw new NotImplementedException();
+		var img = surface.Snapshot(new SKRectI(sx, sy, sw, sh));
+
+		surface.Canvas.DrawImage(img, new SKRect(dx, dy, dw, dh));
 	}
 
-	public void Copy(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
+	public void Copy(Image src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh)
 	{
-		throw new NotImplementedException();
+		if (src is SkiaImage skiaImage)
+		{
+			surface.Canvas.DrawImage(skiaImage.skImage, new SKRect(sx, sy, sw, sh), new SKRect(dx, dy, dw, dh));
+		}
 	}
 
 	public Color BlendColor(Color c1, Color c2, BlendModes mode)
@@ -257,7 +262,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Blend(PImage src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode)
+	public void Blend(Image src, int sx, int sy, int sw, int sh, int dx, int dy, int dw, int dh, BlendModes mode)
 	{
 		throw new NotImplementedException();
 	}
@@ -284,15 +289,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Background(Color color)
 	{
-		switch (color)
-		{
-			case SkiaColor skiaColor:
-				surface.Canvas.Clear(skiaColor.skColor);
-				break;
-			case MemoryColor memoryColor:
-				surface.Canvas.Clear(new SKColor(memoryColor.R, memoryColor.G, memoryColor.B, memoryColor.A));
-				break;
-		}
+		surface.Canvas.Clear(new SKColor((uint)color.GetHashCode()));
 
 		return color;
 	}
@@ -311,13 +308,18 @@ public class PGraphicsSkiaSharp : PGraphics
 	{
 		var correctGray = (byte)gray;
 
-		return new SkiaColor(new SKColor(correctGray, correctGray, correctGray, Byte.MaxValue));
+		return new Color()
+		{
+			A = Byte.MaxValue,
+			R = correctGray,
+			G = correctGray,
+			B = correctGray,
+		};
 	}
 
 	public Color Color(Color color, float alpha)
 	{
-		var correctAlpha = (byte)alpha;
-		return new SkiaColor(correctAlpha, color.R, color.G, color.B);
+		return color with { A = (byte)alpha };
 	}
 
 	public Color Color(float gray, float alpha)
@@ -342,10 +344,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Stroke(Color color)
 	{
-		if (color is SkiaColor skiaColor)
-		{
-			stroke.Color = skiaColor.skColor;
-		}
+		stroke.Color = Unsafe.As<Color, SKColor>(ref color);
 
 		return color;
 	}
@@ -357,10 +356,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Fill(Color color)
 	{
-		if (color is SkiaColor skiaColor)
-		{
-			fill.Color = skiaColor.skColor;
-		}
+		fill.Color = Unsafe.As<Color, SKColor>(ref color);
 
 		return color;
 	}
@@ -397,24 +393,25 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void ApplyMatrix(PMatrix matrix)
+	public void ApplyMatrix(Matrix matrix)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void ApplyMatrix(PMatrix2D matrix)
+	public void ApplyMatrix(Matrix2D matrix)
 	{
-		throw new NotImplementedException();
+		surface.Canvas.SetMatrix(new SKMatrix(matrix.Get(null)));
 	}
 
-	public void ApplyMatrix(PMatrix3D matrix)
+	public void ApplyMatrix(Matrix3D matrix)
 	{
-		throw new NotImplementedException();
+		surface.Canvas.SetMatrix(new SKMatrix(matrix.Get(null)));
 	}
 
 	public void Arc(float a, float b, float c, float d, float start, float stop)
 	{
-		throw new NotImplementedException();
+		surface.Canvas.DrawArc(new SKRect(a, b, c, d), start, stop, true, fill);
+		surface.Canvas.DrawArc(new SKRect(a, b, c, d), start, stop, true, stroke);
 	}
 
 	public void BeginCamera()
@@ -443,13 +440,20 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Bezier(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 	{
-		throw new NotImplementedException();
+		using (var path = new SKPath())
+		{
+			path.MoveTo(x1, y1);
+			path.CubicTo(x2, y2, x3, y3, x4, y4);
+
+			surface.Canvas.DrawPath(path, fill);
+			surface.Canvas.DrawPath(path, stroke);
+		}
 	}
 
 	public void Bezier(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3,
 		float x4, float y4, float z4)
 	{
-		throw new NotImplementedException();
+		throw new NotSupportedException("this method is only supported of the 3D renderer");
 	}
 
 	public void BezierDetail(int detail)
@@ -512,16 +516,16 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Clip(int a, int b, int c, int d)
 	{
-		throw new NotImplementedException();
+		surface.Canvas.ClipRect(new SKRect(a, b, c, d));
 	}
 
-	public PImage CreateImage(int width, int height)
+	public Image CreateImage(int width, int height)
 	{
 		return new SkiaImage(SKImage.Create(new SKImageInfo(width * PixelDensity, height * PixelDensity,
 			SKColorType.Bgra8888, SKAlphaType.Premul)));
 	}
 
-	public PImage LoadImage(string path)
+	public Image LoadImage(string path)
 	{
 		using var stream = File.OpenRead(path);
 
@@ -577,7 +581,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public bool Displayable()
 	{
-		throw new NotImplementedException();
+		return true;
 	}
 
 	public void Edge(bool edge)
@@ -633,7 +637,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Flush()
 	{
-		throw new NotImplementedException();
+		surface.Flush();
 	}
 
 	public void Frustum(float left, float right, float bottom, float top, float near, float far)
@@ -641,17 +645,17 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public PMatrix GetMatrix()
+	public Matrix GetMatrix()
 	{
 		throw new NotImplementedException();
 	}
 
-	public PMatrix2D GetMatrix(PMatrix2D target)
+	public Matrix2D GetMatrix(Matrix2D target)
 	{
 		throw new NotImplementedException();
 	}
 
-	public PMatrix3D GetMatrix(PMatrix3D target)
+	public Matrix3D GetMatrix(Matrix3D target)
 	{
 		throw new NotImplementedException();
 	}
@@ -671,7 +675,7 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Image(PImage img, float a, float b)
+	public void Image(Image img, float a, float b)
 	{
 		if (img is SkiaImage skImage)
 		{
@@ -679,12 +683,15 @@ public class PGraphicsSkiaSharp : PGraphics
 		}
 	}
 
-	public void Image(PImage img, float a, float b, float c, float d)
+	public void Image(Image img, float a, float b, float c, float d)
 	{
-		throw new NotImplementedException();
+		if (img is SkiaImage skImage)
+		{
+			surface.Canvas.DrawImage(skImage.skImage, new SKRect(0, 0, img.Width, img.Height), new SKRect(a, b, c, d));
+		}
 	}
 
-	public void Image(PImage img, float a, float b, float c, float d, int u1, int v1, int u2, int v2)
+	public void Image(Image img, float a, float b, float c, float d, int u1, int v1, int u2, int v2)
 	{
 		throw new NotImplementedException();
 	}
@@ -801,7 +808,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Point(float x, float y)
 	{
-		throw new NotImplementedException();
+		surface.Canvas.DrawPoint(x, y, fill);
 	}
 
 	public void Point(float x, float y, float z)
@@ -969,22 +976,17 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void SetMatrix(PMatrix source)
+	public void SetMatrix(Matrix source)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void SetMatrix(PMatrix2D source)
+	public void SetMatrix(Matrix2D source)
 	{
 		throw new NotImplementedException();
 	}
 
-	public void SetMatrix(PMatrix3D source)
-	{
-		throw new NotImplementedException();
-	}
-
-	public void SetParent(PApplet parent)
+	public void SetMatrix(Matrix3D source)
 	{
 		throw new NotImplementedException();
 	}
@@ -1090,32 +1092,12 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public void Text(string text, Index start, Index end, float x, float y)
-	{
-		throw new NotImplementedException();
-	}
-
-	public void Text(string text, Index start, Index end, float x, float y, float z)
-	{
-		throw new NotImplementedException();
-	}
-
 	public void Text(string text, Range range, float x, float y)
 	{
 		throw new NotImplementedException();
 	}
 
 	public void Text(string text, Range range, float x, float y, float z)
-	{
-		throw new NotImplementedException();
-	}
-
-	public void Text(char[] chars, Index start, Index end, float x, float y)
-	{
-		throw new NotImplementedException();
-	}
-
-	public void Text(char[] chars, Index start, Index end, float x, float y, float z)
 	{
 		throw new NotImplementedException();
 	}
@@ -1132,11 +1114,22 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void Text<T>(T num, float x, float y)
 	{
-		var text = num.ToString();
-		var size = stroke.TextSize;
+		string? text = null;
 
-		surface.Canvas.DrawText(text, x, y + size, fill);
-		surface.Canvas.DrawText(text, x, y + size, stroke);
+		if (num is string s)
+		{
+			text = s;
+		}
+		else if (num is not null)
+		{
+			text = num.ToString();
+		}
+
+		if (!String.IsNullOrWhiteSpace(text))
+		{
+			Text(text, x, y, font, fill);
+			Text(text, x, y, font, stroke);
+		}
 	}
 
 	public void Text<T>(T num, float x, float y, float z)
@@ -1149,6 +1142,28 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
+	private void Text(ReadOnlySpan<char> text, float x, float y, SKFont textFont, SKPaint paint)
+	{
+		if (paint.TextAlign != SKTextAlign.Left)
+		{
+			var num = textFont.MeasureText(MemoryMarshal.Cast<char, ushort>(text));
+
+			if (paint.TextAlign == SKTextAlign.Center)
+			{
+				num *= 0.5f;
+			}
+
+			x -= num;
+		}
+
+		y += textFont.Size;
+
+		using (var textBlob = SKTextBlob.Create(text, textFont))
+		{
+			surface.Canvas.DrawText(textBlob, x, y, paint);
+		}
+	}
+
 	public void TextAlign(int alignX)
 	{
 		throw new NotImplementedException();
@@ -1159,14 +1174,18 @@ public class PGraphicsSkiaSharp : PGraphics
 		throw new NotImplementedException();
 	}
 
-	public short TextAcent()
+	public float TextAcent()
 	{
-		throw new NotImplementedException();
+		font.GetFontMetrics(out var metrics);
+
+		return metrics.Ascent;
 	}
 
-	public short TextDecent()
+	public float TextDecent()
 	{
-		throw new NotImplementedException();
+		font.GetFontMetrics(out var metrics);
+
+		return metrics.Descent;
 	}
 
 	public void TextFont(PFont which)
@@ -1191,11 +1210,10 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void TextSize(float size)
 	{
-		stroke.TextSize = size;
-		fill.TextSize = size;
+		font.Size = size;
 	}
 
-	public void Texture(PImage texture)
+	public void Texture(Image texture)
 	{
 		throw new NotImplementedException();
 	}
@@ -1257,10 +1275,12 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public void DrawShape(Span<float> vertecies)
 	{
-		using var path = new SKPath();
-		path.AddPoly(MemoryMarshal.Cast<float, SKPoint>(vertecies).ToArray());
+		using (var path = new SKPath())
+		{
+			path.AddPoly(MemoryMarshal.Cast<float, SKPoint>(vertecies).ToArray());
 
-		surface.Canvas.DrawPath(path, fill);
-		surface.Canvas.DrawPath(path, stroke);
+			surface.Canvas.DrawPath(path, fill);
+			surface.Canvas.DrawPath(path, stroke);
+		}
 	}
 }
