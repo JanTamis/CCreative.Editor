@@ -2,11 +2,13 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace CCreative.Helpers;
 
+[RequiresPreviewFeatures]
 internal ref struct ValueStringBuilder
 {
 	private char[]? _arrayToReturnToPool;

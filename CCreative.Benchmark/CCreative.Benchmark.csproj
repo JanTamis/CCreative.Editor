@@ -2,18 +2,28 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>preview</LangVersion>
+
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <DebugSymbols>true</DebugSymbols>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.13.1"/>
-        <PackageReference Include="HPCsharp" Version="3.16.1"/>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0-1.final"/>
-        <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2"/>
-        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0"/>
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.1.1780" />
+        <PackageReference Include="HPCsharp" Version="3.16.1" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0-1.final" />
+        <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
+        <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
+        <PackageReference Include="System.Utf8String.Experimental" Version="5.0.0-preview.7.20364.11" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\CCreative\CCreative.csproj" />
     </ItemGroup>
 
 </Project>

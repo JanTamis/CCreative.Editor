@@ -204,3 +204,4 @@ public static class CompilerEnumExtensions
 		return Application.Current.Resources["MaterialDesignBody"] as IBrush;
 	}
 }
+

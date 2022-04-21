@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
@@ -24,7 +22,7 @@ namespace CCreative.Editor.ViewModels
 	{
 		private TabViewModel _currentTab;
 		private TextDocument _document;
-		private ObservableCollection<TabViewModel> Tabs { get; set; } = new();
+		private ObservableCollection<TabViewModel> Tabs { get; } = new();
 
 		private Compiler? compiler;
 		private Process? process;
@@ -129,7 +127,7 @@ namespace CCreative.Editor.ViewModels
 			if (compiler is not null)
 			{
 				var tabViewModel = await DialogHost.DialogHost.Show(new AddTabViewModel());
-
+			
 				if (tabViewModel is AddTabViewModel model && !String.IsNullOrWhiteSpace(model.Name))
 				{
 					AddTab(model.Name);
@@ -143,10 +141,10 @@ namespace CCreative.Editor.ViewModels
 			{
 				var editor = TextEditorFactory.CreateTextEditor();
 				var id = compiler.CreateDocument(name);
-
+			
 				TextEditorFactory.RegisterEvents(editor, id, compiler);
 				TextEditorFactory.RegisterLayers(editor, id, compiler);
-
+			
 				Tabs.Add(new TabViewModel(name, editor, id));
 				CurrentTab = Tabs[^1];
 			}
@@ -162,19 +160,20 @@ namespace CCreative.Editor.ViewModels
 
 			if (compiler is not null)
 			{
-				var success = false;
 				var filePath = Path.Combine(Directory.GetCurrentDirectory(), "project.dll");
 
 				File.Delete(filePath);
+				Console.SetOut(new DocumentTextWriter(ConsoleDocument));
 
 #if DEBUG
 				var action = await compiler.Compile();
 
-				Console.SetOut(new DocumentTextWriter(ConsoleDocument, 0));
+				await Task.Run(() => action(null));
 
-				action(null);
 				return;
 #endif
+
+				var success = false;
 
 				using (var peStream = File.OpenWrite(filePath))
 				{
@@ -282,7 +281,7 @@ namespace CCreative.Editor.ViewModels
 
 		public void Dispose()
 		{
-			compiler?.Dispose();
+			// compiler?.Dispose();
 			GC.SuppressFinalize(this);
 		}
 

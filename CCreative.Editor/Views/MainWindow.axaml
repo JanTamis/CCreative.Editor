@@ -32,8 +32,7 @@
 				<Border VerticalAlignment="Stretch"
 				        IsHitTestVisible="False"
 				        Height="{Binding #MainWindow.WindowDecorationMargin.Top}"
-				        Background="{DynamicResource Background}"
-				        BoxShadow="{BoxShadow BlurRadius=2, ShadowColor=black}">
+				        Background="{DynamicResource Background}">
 					<TextBlock Text="{Binding #MainWindow.Title}"
 					           VerticalAlignment="Center"
 					           HorizontalAlignment="Center" />

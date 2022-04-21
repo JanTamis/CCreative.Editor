@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Controls.Primitives.PopupPositioning;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -34,6 +32,7 @@ public static class TextEditorFactory
 			IsHitTestVisible = false,
 			Content = new StackPanel(),
 			ClipToBounds = true,
+			Margin = new Thickness(5),
 		};
 		ShadowAssist.SetShadowDepth(tooltip, ShadowDepth.CenterDepth1);
 	}
@@ -239,3 +238,4 @@ public static class TextEditorFactory
 		}
 	}
 }
+

@@ -23,12 +23,13 @@ public class CompilerDocumentColorizingTransformer : DocumentColorizingTransform
 		if (!line.IsDeleted)
 		{
 			var classifiers = Compiler.GetClassifiers(Id, line.Offset, line.Length);
-			var errors = Compiler.GetErrors(Id);
+			// var errors = Compiler.GetErrors(Id);
 
 			await foreach (var classifier in classifiers)
 			{
-				ChangeLinePart(classifier.Start, classifier.End, element => { element.TextRunProperties.ForegroundBrush = classifier.Type.GetForeground(); });
+				ChangeLinePart(classifier.Start, classifier.End, element => element.TextRunProperties.ForegroundBrush = classifier.Type.GetForeground());
 			}
 		}
 	}
 }
+

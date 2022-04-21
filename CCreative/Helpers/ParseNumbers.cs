@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
 using SixLabors.ImageSharp;
 
 namespace CCreative.Helpers;
 
+[RequiresPreviewFeatures]
 internal static class ParseNumbers
 {
 	internal const int LeftAlign = 0x0001;

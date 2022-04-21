@@ -1,70 +1,47 @@
 ﻿using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.Arm;
-using System.Runtime.Intrinsics.X86;
-using System.Threading.Tasks.Dataflow;
+using System.Runtime.Versioning;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
-using Microsoft.Toolkit.HighPerformance.Helpers;
+using Math = CCreative.Math;
+using Vector = CCreative.Vector;
 
-BenchmarkRunner.Run<SIMDTest>();
+[RequiresPreviewFeatures]
+public static class Program
+{
+	public static void Main(string[] args)
+	{
+		BenchmarkRunner.Run<SIMDTest>();
+	}
+}
 
 [MemoryDiagnoser]
+[DisassemblyDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
+[RequiresPreviewFeatures]
 public class SIMDTest
 {
-	private float a = 10f;
+	Vector a = new Vector(1, 2, 3);
+	Vector b = new Vector(4, 5, 6);
 
+	Vector3 c = new Vector3(1, 2, 3);
+	Vector3 d = new Vector3(4, 5, 6);
+	
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
-		a = Random.Shared.NextSingle() * 100;
 	}
 
+
 	[Benchmark]
-	public float Reciprocal()
+	public Vector Base()
 	{
-		return 1.0f / a;
+		return Vector.Add(a, b);
 	}
-
+	
 	[Benchmark]
-	public float ReciprocalSimd()
+	public Vector3 SIMD()
 	{
-		if (AdvSimd.IsSupported)
-		{
-			return AdvSimd.ReciprocalEstimate(Vector128.CreateScalarUnsafe(a)).ToScalar();
-		}
-
-		if (Sse.IsSupported)
-		{
-			return Sse.Reciprocal(Vector128.CreateScalarUnsafe(a)).ToScalar();
-		}
-
-		return 1.0f / a;
-	}
-
-	[Benchmark]
-	public float ReciprocalSimdScalar()
-	{
-		if (AdvSimd.IsSupported)
-		{
-			return AdvSimd.ReciprocalEstimate(Vector128.CreateScalarUnsafe(a)).ToScalar();
-		}
-
-		if (Sse.IsSupported)
-		{
-			return Sse.ReciprocalScalar(Vector128.CreateScalarUnsafe(a)).ToScalar();
-		}
-
-		return 1.0f / a;
-	}
-
-	[Benchmark]
-	public float ReciprocalMath()
-	{
-		return MathF.ReciprocalEstimate(a);
+		return Vector3.Add(c, d);
 	}
 }

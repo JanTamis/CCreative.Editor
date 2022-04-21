@@ -7,6 +7,7 @@ using System.Runtime.Versioning;
 
 namespace CCreative.Data;
 
+[RequiresPreviewFeatures]
 public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxValue<T>
 {
 	public NumberList(IEnumerable<T> collection) : base(collection)

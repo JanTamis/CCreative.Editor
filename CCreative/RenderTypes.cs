@@ -1,8 +1,7 @@
-﻿namespace CCreative
+﻿namespace CCreative;
+
+public enum RenderTypes
 {
-	public enum RenderTypes
-	{
-		P2D,
-		P3D,
-	}
+	P2D,
+	P3D,
 }

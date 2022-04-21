@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace CCreative.Helpers;
 
-public ref struct Enumerable1<T> where T : IEquatable<T>
+internal ref struct Enumerable1<T> where T : IEquatable<T>
 {
 	public Enumerable1(ReadOnlySpan<T> span, T separator)
 	{
@@ -20,7 +20,7 @@ public ref struct Enumerable1<T> where T : IEquatable<T>
 	}
 }
 
-public ref struct Enumerable2<T> where T : IEquatable<T>
+internal ref struct Enumerable2<T> where T : IEquatable<T>
 {
 	public Enumerable2(ReadOnlySpan<T> span, T separator1, T separator2)
 	{
@@ -60,7 +60,7 @@ public ref struct Enumerable3<T> where T : IEquatable<T>
 	}
 }
 
-public ref struct EnumerableN<T> where T : IEquatable<T>
+internal ref struct EnumerableN<T> where T : IEquatable<T>
 {
 	public EnumerableN(ReadOnlySpan<T> span, ReadOnlySpan<T> separators)
 	{
@@ -77,7 +77,7 @@ public ref struct EnumerableN<T> where T : IEquatable<T>
 	}
 }
 
-public ref struct Enumerator1<T> where T : IEquatable<T>
+internal ref struct Enumerator1<T> where T : IEquatable<T>
 {
 	public Enumerator1(ReadOnlySpan<T> span, T separator)
 	{
@@ -337,7 +337,7 @@ public ref struct EnumeratorN<T> where T : IEquatable<T>
 	public ReadOnlySpan<T> Current { get; private set; }
 }
 
-public static class SpanSplitExtensions
+internal static class SpanSplitExtensions
 {
 	public static Enumerable1<T> Split<T>(this ReadOnlySpan<T> span, T separator) where T : IEquatable<T>
 	{

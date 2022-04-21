@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using CCreative.Helpers;
 using Silk.NET.Core.Contexts;
 using Silk.NET.OpenGL;
@@ -12,6 +13,7 @@ using SkiaSharp;
 
 namespace CCreative.Rendering;
 
+[RequiresPreviewFeatures]
 public class PGraphicsSkiaSharp : PGraphics
 {
 	private GRGlInterface glInterface;
