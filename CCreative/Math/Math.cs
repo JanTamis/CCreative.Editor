@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using CCreative.Helpers;
@@ -112,7 +113,7 @@ public static partial class Math
 	/// <param name="endY">y-coordinate of the second point</param>
 	/// <returns>the distance between the points</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Dist<T>(T beginX, T beginY, T endX, T endY) where T : IFloatingPoint<T>
+	public static T Dist<T>(T beginX, T beginY, T endX, T endY) where T : IFloatingPointIeee754<T>
 	{
 		// return Sqrt(Sq(beginX - endX) + Sq(beginY - endY));
 		return T.Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX, Sq(beginY - endY)));
@@ -129,7 +130,7 @@ public static partial class Math
 	/// <param name="endZ">z-coordinate of the second point</param>
 	/// <returns>the distance between the points</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Dist<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPoint<T>
+	public static T Dist<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPointIeee754<T>
 	{
 		// return Sqrt(Sq(beginX - endX) + Sq(beginY - endY) + Sq(beginZ - endZ));
 		return T.Sqrt(T.FusedMultiplyAdd(beginX - endX, beginX - endX, T.FusedMultiplyAdd(beginY - endY, beginY - endY, Sq(beginZ - endZ))));
@@ -146,7 +147,7 @@ public static partial class Math
 	/// <param name="endZ">z-coordinate of the second point</param>
 	/// <returns>the distance between the points</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T DistSq<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPoint<T>
+	public static T DistSq<T>(T beginX, T beginY, T beginZ, T endX, T endY, T endZ) where T : IFloatingPointIeee754<T>
 	{
 		// return Sq(beginX - endX) + Sq(beginY - endY) + Sq(beginZ - endZ);
 		return T.FusedMultiplyAdd(beginX - endX, beginX - endX, T.FusedMultiplyAdd(beginY - endY, beginY - endY, Sq(beginZ - endZ)));
@@ -187,7 +188,7 @@ public static partial class Math
 	/// <param name="number">the specified number</param>
 	/// <returns>the square root of <paramref name="number"/></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sqrt<T>(T number) where T : IFloatingPoint<T>
+	public static T Sqrt<T>(T number) where T : IFloatingPointIeee754<T>
 	{
 		return T.Sqrt(number);
 	}
@@ -200,7 +201,7 @@ public static partial class Math
 	/// <param name="exponent"></param>
 	/// <returns></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Pow<T>(T @base, T exponent) where T : IFloatingPoint<T>
+	public static T Pow<T>(T @base, T exponent) where T : IFloatingPointIeee754<T>
 	{
 		return T.Pow(@base, exponent);
 	}
@@ -212,7 +213,7 @@ public static partial class Math
 	/// <param name="numberY">y-axis of the vector</param>
 	/// <returns>the magnitude (or length) of the vector</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Mag<T>(T numberX, T numberY) where T : IFloatingPoint<T>
+	public static T Mag<T>(T numberX, T numberY) where T : IFloatingPointIeee754<T>
 	{
 		return T.Sqrt(T.FusedMultiplyAdd(numberX, numberX, Sq(numberY)));
 	}
@@ -273,7 +274,7 @@ public static partial class Math
 	/// <param name="x">the number to calculate the inverse square root of</param>
 	/// <returns>1 / sqrt(x)</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T InverseSqrt<T>(T x) where T : IFloatingPoint<T>
+	public static T InverseSqrt<T>(T x) where T : IFloatingPointIeee754<T>
 	{
 		if (typeof(float) == typeof(T))
 		{
@@ -302,15 +303,63 @@ public static partial class Math
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Log<T>(T x) where T : IFloatingPoint<T>
+	public static T Log<T>(T x) where T : IFloatingPointIeee754<T>
 	{
 		return T.Log(x);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sin<T>(T x) where T : IFloatingPoint<T>
+	public static T Sin<T>(T x) where T : IFloatingPointIeee754<T>
 	{
 		return T.Sin(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Cos<T>(T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.Cos(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static (float Sin, float Cos) SinCos(float x)
+	{
+		return MathF.SinCos(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static (double Sin, double Cos) SinCos(double x)
+	{
+		return System.Math.SinCos(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Tan<T>(T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.Tan(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Asin<T>(T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.Asin(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Acos<T>(T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.Acos(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Atan<T>(T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.Atan(x);
+	}
+	
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Atan2<T>(T y, T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.Atan2(y, x);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -326,7 +375,7 @@ public static partial class Math
 
 		if (number > fact)
 		{
-			for (var k = T.Create(2); k <= number; k++)
+			for (var k = T.CreateChecked(2); k <= number; k++)
 			{
 				fact *= k;
 			}
@@ -351,7 +400,7 @@ public static partial class Math
 		return T.MaxMagnitude(x, y);
 	}
 
-	public static TFloat ScaleB<TFloat, TInteger>(TFloat x, TInteger n) where TFloat : IFloatingPoint<TFloat> where TInteger : IBinaryInteger<TInteger>
+	public static TFloat ScaleB<TFloat>(TFloat x, int n) where TFloat : IFloatingPointIeee754<TFloat>
 	{
 		return TFloat.ScaleB(x, n);
 	}
@@ -495,9 +544,9 @@ public static partial class Math
 	/// <param name="radians"> The radians to convert. </param>
 	/// <returns>degrees</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Degrees<T>(T radians) where T : IFloatingPoint<T>
+	public static T Degrees<T>(T radians) where T : IFloatingPointIeee754<T>
 	{
-		return radians * (T.Create(180) / T.Pi);
+		return radians * (T.CreateChecked(180) / T.Pi);
 	}
 
 	/// <summary>
@@ -506,9 +555,9 @@ public static partial class Math
 	/// <param name="degrees">the radians</param>
 	/// <returns>radians</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Radians<T>(T degrees) where T : IFloatingPoint<T>
+	public static T Radians<T>(T degrees) where T : IFloatingPointIeee754<T>
 	{
-		return degrees * (T.Pi / T.Create(180));
+		return degrees * (T.Pi / T.CreateChecked(180));
 	}
 
 	#region Algorithms
@@ -914,29 +963,7 @@ public static partial class Math
 	/// <returns>the index of <paramref name="value"/></returns>
 	public static int BinarySearch<T>(ReadOnlySpan<T> values, T value) where T : IEqualityOperators<T, T>, IComparisonOperators<T, T>
 	{
-		var lo = 0;
-		var hi = values.Length - 1;
-
-		while (lo <= hi)
-		{
-			var i = lo + ((hi - lo) >> 1);
-
-			if (values[i] == value)
-			{
-				return i;
-			}
-
-			if (values[i] < value)
-			{
-				lo = i + 1;
-			}
-			else
-			{
-				hi = i - 1;
-			}
-		}
-
-		return ~lo;
+		return MemoryExtensions.BinarySearch(values, value);
 	}
 
 	/// <summary>
@@ -1061,7 +1088,7 @@ public static partial class Math
 		{
 			for (var i = buffer.Length - 1; i >= 0; i--)
 			{
-				buffer[i] = Char((number & T.One) + T.Create('0'));
+				buffer[i] = Char((number & T.One) + T.CreateChecked('0'));
 				number >>= 1;
 			}
 		});
@@ -1087,12 +1114,12 @@ public static partial class Math
 	/// <summary> Converts an int or a byte to a String containing the equivalent hexadecimal notation </summary>
 	/// <param name="value"> The value to convert to a hex value </param>
 	/// <returns> Returns the hex value </returns>
-	public static string Hex<T>(T value) where T : INumber<T>, IConvertible
+	public static string Hex<T>(T value) where T : IBinaryInteger<T>, IConvertible
 	{
 		const string characters = "0123456789ABCDEF";
 
 		var buffer = new ValueStringBuilder(stackalloc char[256]);
-		var baseNumber = T.Create(characters.Length);
+		var baseNumber = T.CreateChecked(characters.Length);
 
 		while (value > T.Zero)
 		{
@@ -1137,7 +1164,7 @@ public static partial class Math
 			power *= 16;
 		}
 
-		return T.Create(result);
+		return T.CreateChecked(result);
 	}
 
 	/// <summary>
@@ -1202,7 +1229,7 @@ public static partial class Math
 	/// <param name="result">the result of the parse</param>
 	/// <returns>if the <see cref="text"/> can be parsed</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool TryParse<T>(ReadOnlySpan<char> text, out T result) where T : ISpanParseable<T>
+	public static bool TryParse<T>(ReadOnlySpan<char> text, out T result) where T : ISpanParsable<T>
 	{
 		return T.TryParse(text, null, out result);
 	}
@@ -1213,7 +1240,7 @@ public static partial class Math
 	/// <param name="text">the text to parse</param>
 	/// <returns>the result of the parse</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Parse<T>(ReadOnlySpan<char> text) where T : ISpanParseable<T>
+	public static T Parse<T>(ReadOnlySpan<char> text) where T : ISpanParsable<T>
 	{
 		return T.Parse(text, CultureInfo.InvariantCulture);
 	}
@@ -1243,7 +1270,7 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumber<TNumber> where TOther : INumber<TOther>
 	{
-		return TOther.Create(number);
+		return TOther.CreateChecked(number);
 	}
 
 	#endregion

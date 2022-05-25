@@ -310,7 +310,7 @@ public class PGraphicsSkiaSharp : PGraphics
 	{
 		var correctGray = (byte)gray;
 
-		return new Color()
+		return new Color
 		{
 			A = Byte.MaxValue,
 			R = correctGray,

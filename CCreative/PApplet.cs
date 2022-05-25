@@ -3,11 +3,14 @@ using CCreative.Rendering;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -119,18 +122,8 @@ public static partial class PApplet
 	/// </summary>
 	/// <param name="width">the width of the renderer</param>
 	/// <param name="height">the height of the renderer</param>
-	public static void Size(int width, int height)
-	{
-		Size(width, height, RenderTypes.P2D);
-	}
-
-	/// <summary>
-	/// Defines the dimension of the display window width and height in units of pixels
-	/// </summary>
-	/// <param name="width">the width of the renderer</param>
-	/// <param name="height">the height of the renderer</param>
 	/// <param name="render">the renderer to use for this sketch</param>
-	public static async void Size(int width, int height, RenderTypes render)
+	public static async void Size(int width, int height, RenderTypes render = RenderTypes.P2D)
 	{
 		surface = new PSurface(width, height)
 		{
@@ -140,7 +133,7 @@ public static partial class PApplet
 
 		surface.Initialize();
 
-		surface.MouseMove = (position) => { (MouseX, MouseY) = position; };
+		surface.MouseMove = position => { (MouseX, MouseY) = position; };
 
 		surface.window.MakeCurrent();
 
@@ -383,7 +376,7 @@ public static partial class PApplet
 
 	public static string ToJSON<T>(T target)
 	{
-		return JsonSerializer.Serialize(target, new JsonSerializerOptions()
+		return JsonSerializer.Serialize(target, new JsonSerializerOptions
 		{
 			WriteIndented = true,
 		});
@@ -396,11 +389,11 @@ public static partial class PApplet
 
 	public static string ToXML<T>(T target)
 	{
-		using var stringwriter = new StringWriter();
+		using var stringWriter = new StringWriter();
 
 		var serializer = new XmlSerializer(typeof(T));
-		serializer.Serialize(stringwriter, target, new XmlSerializerNamespaces());
-		return stringwriter.ToString();
+		serializer.Serialize(stringWriter, target, new XmlSerializerNamespaces());
+		return stringWriter.ToString();
 	}
 
 	public static T? FromXML<T>(string xml)
@@ -571,12 +564,17 @@ public static partial class PApplet
 		return String.Concat(strings);
 	}
 
-	public static string Join(char seperator, params string[] strings)
+	public static string Join(char separator, params string[] strings)
 	{
-		return String.Join(seperator, strings);
+		return String.Join(separator, strings);
+	}
+	
+	public static bool IsMatch(string input, [StringSyntax(StringSyntaxAttribute.Regex)] string pattern)
+	{
+		return Regex.IsMatch(input, pattern);
 	}
 
-	public static string[] Match(string str, string regexp)
+	public static string[] Match(string str, [StringSyntax(StringSyntaxAttribute.Regex)] string regexp)
 	{
 		var matches = Regex.Matches(str, regexp);
 		var outgoing = new string[matches.Count];
@@ -589,7 +587,7 @@ public static partial class PApplet
 		return outgoing;
 	}
 
-	public static string[][] MatchAll(string str, string regexp)
+	public static string[][] MatchAll(string str, [StringSyntax(StringSyntaxAttribute.Regex)] string regexp)
 	{
 		var matches = Regex.Matches(str, regexp);
 
@@ -630,7 +628,7 @@ public static partial class PApplet
 
 	public static string Nf<T>(T num, int digits) where T : IFormattable
 	{
-		return num.ToString("N" + digits, null);
+		return num.ToString($"N{digits}" + digits, null);
 	}
 
 	public static string[] Nf<T>(T[] num, int digits) where T : IFormattable
@@ -648,14 +646,14 @@ public static partial class PApplet
 	public static string Nf<T>(T num, int left, int right) where T : IFormattable
 	{
 		var decSeparator = System.Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator;
-		var result = num?.ToString() ?? String.Empty;
+		var result = num.ToString() ?? String.Empty;
 
 		if (result.Contains(decSeparator))
 		{
 			var digits = result.IndexOf(decSeparator, StringComparison.Ordinal);
 
 			var decimals = result[(digits + 1)..];
-			var wholeNumber = result[0..digits].PadLeft(left, '0');
+			var wholeNumber = result[..digits].PadLeft(left, '0');
 
 			if (right == 0)
 			{
@@ -869,6 +867,8 @@ public static partial class PApplet
 		// return new PFont(font);
 		return null;
 	}
+	
+	
 
 	public static PFont LoadFont(string filename)
 	{

@@ -223,7 +223,7 @@ public static class TextEditorFactory
 					Orientation = Orientation.Vertical,
 				};
 
-				stack.Children.Add(new TextBlock()
+				stack.Children.Add(new TextBlock
 				{
 					Text = diagnostic.GetMessage(),
 

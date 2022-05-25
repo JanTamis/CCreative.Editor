@@ -1,37 +1,25 @@
 ﻿using System;
-using System.Globalization;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
-using System.Runtime.Versioning;
-using CCreative.Helpers;
 using static CCreative.Math;
 
 namespace CCreative;
 
-[RequiresPreviewFeatures]
-public struct Vector : IEquatable<Vector>,
-	ISpanParseable<Vector>,
-	IMultiplyOperators<Vector, Vector, Vector>,
-	IMultiplyOperators<Vector, float, Vector>,
-	IAdditionOperators<Vector, Vector, Vector>,
-	IAdditionOperators<Vector, float, Vector>,
-	IDivisionOperators<Vector, Vector, Vector>,
-	IDivisionOperators<Vector, float, Vector>,
-	ISubtractionOperators<Vector, Vector, Vector>,
-	ISubtractionOperators<Vector, float, Vector>
+// we need 16 byte for the SIMD registers
+[StructLayout(LayoutKind.Sequential, Size = 16)]
+public struct Vector : IEquatable<Vector>
 {
-	public float X { get; set; }
-	public float Y { get; set; }
-	public float Z { get; set; }
+	public float X, Y, Z;
+
+	public static readonly Vector Zero;
 
 	public Vector(float number)
 	{
-		X = number;
-		Y = number;
-		Z = number;
+		X = Y = Z = number;
 	}
 
 	public Vector(float x, float y, float z = 0)
@@ -45,13 +33,12 @@ public struct Vector : IEquatable<Vector>,
 	{
 		if (values.Length < 3)
 		{
-			throw new ArgumentException("Values must at least contain 3 elements", nameof(values));
+			throw new ArgumentException($"{nameof(values)} must at least contain 3 elements", nameof(values));
 		}
-
-		this = Unsafe.ReadUnaligned<Vector>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(values)));
+		
+		this = Unsafe.As<float, Vector>(ref MemoryMarshal.GetReference(values));
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void Set(float x, float y, float z = 0)
 	{
 		X = x;
@@ -59,23 +46,12 @@ public struct Vector : IEquatable<Vector>,
 		Z = z;
 	}
 
-	public void Set(ReadOnlySpan<float> values)
-	{
-		if (values.Length < 3)
-		{
-			throw new ArgumentException("Values must contain at least 3 elements", nameof(values));
-		}
-
-		this = Unsafe.ReadUnaligned<Vector>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(values)));
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public void Set(Vector vector)
 	{
 		(X, Y, Z) = vector;
 	}
 
-	public void Set(Span<float> data)
+	public void Set(ReadOnlySpan<float> data)
 	{
 		if (data.Length >= 2)
 		{
@@ -85,27 +61,186 @@ public struct Vector : IEquatable<Vector>,
 
 		Z = data.Length >= 3
 			? data[2]
-			: 0;
+			: 0f;
 	}
 
-	public float this[int index] => index switch
+	public float this[int index]
 	{
-		0 => X,
-		1 => Y,
-		2 => Z,
-		_ => throw new ArgumentException("Invalid index, must be between 0 and 2 (including)", nameof(index)),
-	};
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get
+		{
+			return index switch
+			{
+				0 => X,
+				1 => Y,
+				2 => Z,
+				_ => throw new IndexOutOfRangeException(),
+			};
+		}
+	}
 
 	#region Instance Functions
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Add(float number)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Add(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.Create(number));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X += number;
+			Y += number;
+			Z += number;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Add(Vector vector)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Add(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.LoadUnsafe(ref vector.X));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X += vector.X;
+			Y += vector.Y;
+			Z += vector.Z;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Subtract(float number)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Subtract(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.Create(number));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X -= number;
+			Y -= number;
+			Z -= number;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Subtract(Vector vector)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Subtract(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.LoadUnsafe(ref vector.X));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X -= vector.X;
+			Y -= vector.Y;
+			Z -= vector.Z;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Multiply(float number)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Multiply(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.Create(number));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X *= number;
+			Y *= number;
+			Z *= number;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Multiply(Vector vector)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Multiply(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.LoadUnsafe(ref vector.X));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X *= vector.X;
+			Y *= vector.Y;
+			Z *= vector.Z;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Divide(float number)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Divide(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.Create(number));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X /= number;
+			Y /= number;
+			Z /= number;
+		}
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public void Divide(Vector vector)
+	{
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var result = Vector128.Divide(
+				Vector128.LoadUnsafe(ref X),
+				Vector128.LoadUnsafe(ref vector.X));
+
+			result.StoreUnsafe(ref X);
+		}
+		else
+		{
+			X /= vector.X;
+			Y /= vector.Y;
+			Z /= vector.Z;
+		}
+	}
 
 	public float[] ToArray()
 	{
 		return new[] { X, Y, Z };
 	}
 
-	public ReadOnlySpan<float> AsSpan()
+	public Span<float> AsSpan()
 	{
-		return MemoryMarshal.Cast<Vector, float>(MemoryMarshal.CreateReadOnlySpan(ref this, 1));
+		return MemoryMarshal.CreateSpan(ref X, 3);
 	}
 
 	public Vector Copy()
@@ -113,26 +248,29 @@ public struct Vector : IEquatable<Vector>,
 		return this;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public float Heading()
 	{
 		return MathF.Atan2(Y, X);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public float Magnitude()
 	{
 		return Sqrt(MagnitudeSquared());
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public float MagnitudeSquared()
 	{
-		return Dot(this, this);
+		return Dot(this);
 	}
 
 	public void CopyTo(Span<float> destination)
 	{
 		if (destination.Length < 3)
 		{
-			throw new ArgumentException("Length of destination must be at least 3 elements long", nameof(destination));
+			throw new ArgumentException($"Length of {nameof(destination)} must be at least 3 elements long", nameof(destination));
 		}
 
 		Unsafe.WriteUnaligned(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(destination)), this);
@@ -142,212 +280,103 @@ public struct Vector : IEquatable<Vector>,
 
 	#region Static Functions
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Add(Vector v1, Vector v2)
 	{
-		var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-		var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
+		var result = Vector128.Add(
+			Vector128.LoadUnsafe(ref v1.X),
+			Vector128.LoadUnsafe(ref v2.X));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Add(temp1, temp2);
+		result.StoreUnsafe(ref v1.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Add(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return new Vector(
-			x1 + x2,
-			y1 + y2,
-			z1 + z2);
+		return v1;
 	}
 
-	public static Vector Add(Vector v1, float amt)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Add(Vector v, float m)
 	{
-		var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-		var temp2 = Vector128.CreateScalarUnsafe(amt);
+		var result = Vector128.Add(
+			Vector128.LoadUnsafe(ref v.X),
+			Vector128.Create(m));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Add(temp1, temp2);
+		result.StoreUnsafe(ref v.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Add(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-
-		return new Vector(
-			x1 + amt,
-			y1 + amt,
-			z1 + amt);
+		return v;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Subtract(Vector v1, Vector v2)
 	{
-		var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-		var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
+		var result = Vector128.Subtract(
+			Vector128.LoadUnsafe(ref v1.X),
+			Vector128.LoadUnsafe(ref v2.X));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Subtract(temp1, temp2);
+		result.StoreUnsafe(ref v1.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Subtract(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return new Vector(
-			x1 - x2,
-			y1 - y2,
-			z1 - z2);
+		return v1;
 	}
 
-	public static Vector Subtract(Vector v, float amt)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Subtract(Vector v, float number)
 	{
-		var temp1 = Vector128.Create(v.X, v.Y, v.Z, 0);
-		var temp2 = Vector128.CreateScalarUnsafe(amt);
+		var result = Vector128.Subtract(
+			Vector128.LoadUnsafe(ref v.X),
+			Vector128.Create(number));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Subtract(temp1, temp2);
+		result.StoreUnsafe(ref v.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Subtract(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v;
-
-		return new Vector(
-			x1 - amt,
-			y1 - amt,
-			z1 - amt);
+		return v;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Divide(Vector v1, Vector v2)
 	{
-		if (Sse.IsSupported)
-		{
-			var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-			var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
+		var result = Vector128.Divide(
+			Vector128.LoadUnsafe(ref v1.X),
+			Vector128.LoadUnsafe(ref v2.X));
 
-			var result = Sse.Divide(temp1, temp2);
+		result.StoreUnsafe(ref v1.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return new Vector(
-			x1 / x2,
-			y1 / y2,
-			z1 / z2);
+		return v1;
 	}
 
-	public static Vector Divide(Vector v, float n)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Divide(Vector v, float number)
 	{
-		var temp1 = Vector128.Create(v.X, v.Y, v.Z, 0);
-		var temp2 = Vector128.CreateScalarUnsafe(n);
+		var result = Vector128.Divide(
+			Vector128.LoadUnsafe(ref v.X),
+			Vector128.Create(number));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Divide(temp1, temp2);
+		Vector128.StoreUnsafe(result, ref v.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v;
-
-		return new Vector(
-			x1 / n,
-			y1 / n,
-			z1 / n);
+		return v;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Multiply(Vector v1, Vector v2)
 	{
-		var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-		var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
+		var result = Vector128.Multiply(
+			Vector128.LoadUnsafe(ref v1.X),
+			Vector128.LoadUnsafe(ref v2.X));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Multiply(temp1, temp2);
+		result.StoreUnsafe(ref v1.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Multiply(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return new Vector(
-			x1 * x2,
-			y1 * y2,
-			z1 * z2);
+		return v1;
 	}
 
-	public static Vector Multiply(Vector v, float n)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Multiply(Vector v, float number)
 	{
-		var temp1 = Vector128.Create(v.X, v.Y, v.Z, 0);
-		var temp2 = Vector128.CreateScalarUnsafe(n);
+		var result = Vector128.Multiply(
+			Vector128.LoadUnsafe(ref v.X),
+			Vector128.Create(number));
 
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Multiply(temp1, temp2);
+		Vector128.StoreUnsafe(result, ref v.X);
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Multiply(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v;
-
-		return new Vector(
-			x1 * n,
-			y1 * n,
-			z1 * n);
+		return v;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static float AngleBetween(Vector v1, Vector v2)
 	{
 		// We get NaN if we pass in a zero vector which can cause problems
@@ -376,21 +405,48 @@ public struct Vector : IEquatable<Vector>,
 		};
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Cross(Vector v1, Vector v2)
 	{
 		if (Sse.IsSupported)
 		{
-			var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-			var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
+			var left = Vector128.LoadUnsafe(ref v1.X);
+			var right = Vector128.LoadUnsafe(ref v2.X);
 
-			var left1 = Sse.Shuffle(temp1, temp1, 201);
-			var vector128 = Sse.Shuffle(temp2, temp2, 210);
-			var left2 = Sse.Shuffle(temp1, temp1, 210);
-			var right1 = Sse.Shuffle(temp2, temp2, 201);
+			// Cross product of A(x, y, z, _) and B(x, y, z, _) is
+			//                    0  1  2  3        0  1  2  3
+			//
+			// '(X = (Ay * Bz) - (Az * By), Y = (Az * Bx) - (Ax * Bz), Z = (Ax * By) - (Ay * Bx)'
+			//           1           2              1           2              1            2
+			// So we can do (Ay, Az, Ax, _) * (Bz, Bx, By, _) (last elem is irrelevant, as this is for Vector3)
+			// which leaves us with a of the first subtraction element for each (marked 1 above)
+			// Then we repeat with the right hand of subtractions (Az, Ax, Ay, _) * (By, Bz, Bx, _)
+			// which leaves us with the right hand sides (marked 2 above)
+			// Then we subtract them to get the correct vector
+			// We then mask out W to zero, because that is required for the Vector3 representation
 
-			var result = Sse.And(Sse.Subtract(Sse.Multiply(left1, vector128), Sse.Multiply(left2, right1)), MathSharp.Vector.SingleConstants.MaskW);
+			// lhs1 goes from x, y, z, _ to y, z, x, _
+			// rhs1 goes from x, y, z, _ to z, x, y, _
 
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
+			var leftHandSide1 = Sse.Shuffle(left, left, 201);
+			var rightHandSide1 = Sse.Shuffle(right, right, 210);
+
+			// lhs2 goes from x, y, z, _ to z, x, y, _
+			// rhs2 goes from x, y, z, _ to y, z, x, _
+
+			var leftHandSide2 = Sse.Shuffle(left, left, 210);
+			var rightHandSide2 = Sse.Shuffle(right, right, 201);
+
+			var mul1 = Sse.Multiply(leftHandSide1, rightHandSide1);
+			var mul2 = Sse.Multiply(leftHandSide2, rightHandSide2);
+
+			var resultNonMaskedW = Sse.Subtract(mul1, mul2);
+
+			var result = Sse.And(resultNonMaskedW, Vector128.Create(-1f, -1f, -1f, 0));
+
+			result.StoreUnsafe(ref v1.X);
+
+			return v1;
 		}
 
 		var (x1, y1, z1) = v1;
@@ -402,49 +458,36 @@ public struct Vector : IEquatable<Vector>,
 			FusedMultiplySubtract(x1, y2, y1 * x2));
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static float Distance(Vector v1, Vector v2)
 	{
 		return Sqrt(DistanceSquared(v1, v2));
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static float DistanceSquared(Vector v1, Vector v2)
 	{
 		var difference = v1 - v2;
-		return Dot(difference, difference);
+		return Dot(difference);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static float Dot(Vector v1, Vector v2)
 	{
-		var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-		var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
-
-		if (Sse41.IsSupported)
-		{
-			return Sse41.DotProduct(temp1, temp2, 127).ToScalar();
-		}
-
-		if (Sse3.IsSupported)
-		{
-			var result1 = Sse.And(Sse.Multiply(temp1, temp2), MathSharp.Vector.SingleConstants.MaskW);
-			var result2 = Sse3.HorizontalAdd(result1, result1);
-			return Sse3.HorizontalAdd(result2, result2).ToScalar();
-		}
-
-		if (Sse.IsSupported)
-		{
-			var result1 = Sse.Multiply(temp1, temp2);
-			var result2 = Sse.Shuffle(result1, result1, 153);
-			var result3 = Sse.AddScalar(Sse.AddScalar(result1, result2), Sse.Shuffle(result2, result2, 85));
-
-			return Sse.Shuffle(result3, result3, 0).ToScalar();
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return FusedMultiplyAdd(x1, x2, FusedMultiplyAdd(y1, y2, z1 * z2));
+		return Vector128.Dot(
+			Vector128.LoadUnsafe(ref v1.X),
+			Vector128.LoadUnsafe(ref v2.X));
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static float Dot(Vector v)
+	{
+		var vector = Vector128.LoadUnsafe(ref v.X);
+
+		return Vector128.Dot(vector, vector);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector FromAngle(float angle)
 	{
 		var (sin, cos) = MathF.SinCos(angle);
@@ -452,11 +495,94 @@ public struct Vector : IEquatable<Vector>,
 		return new Vector(cos, sin);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Lerp(Vector v1, Vector v2, float amt)
 	{
 		return FusedMultiplyAdd(v1, v2 - v1, new Vector(amt));
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Lerp(Vector v1, Vector v2, Vector amt)
+	{
+		return FusedMultiplyAdd(v1, v2 - v1, amt);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Abs(Vector v)
+	{
+		Vector128
+			.Abs(Vector128.LoadUnsafe(ref v.X))
+			.StoreUnsafe(ref v.X);
+
+		return v;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Min(Vector value1, Vector value2)
+	{
+		var result = Vector128.Min(
+			Vector128.LoadUnsafe(ref value1.X),
+			Vector128.LoadUnsafe(ref value2.X));
+
+		Vector128.StoreUnsafe(result, ref value1.X);
+
+		return value1;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Max(Vector value1, Vector value2)
+	{
+		var result = Vector128.Max(
+			Vector128.LoadUnsafe(ref value1.X),
+			Vector128.LoadUnsafe(ref value2.X));
+
+		Vector128.StoreUnsafe(result, ref value1.X);
+
+		return value1;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Clamp(Vector value1, Vector min, Vector max)
+	{
+		var result = Vector128.Min(
+			Vector128.Max(
+				Vector128.LoadUnsafe(ref value1.X),
+				Vector128.LoadUnsafe(ref min.X)),
+			Vector128.LoadUnsafe(ref max.X));
+
+		Vector128.StoreUnsafe(result, ref value1.X);
+
+		return value1;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector SquareRoot(Vector value)
+	{
+		Vector128
+			.Sqrt(Vector128.LoadUnsafe(ref value.X))
+			.StoreUnsafe(ref value.X);
+
+		return value;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	public static Vector Square(Vector value)
+	{
+		var temp = Vector128.LoadUnsafe(ref value.X);
+
+		Vector128
+			.Multiply(temp, temp)
+			.StoreUnsafe(ref value.X);
+
+		return value;
+	}
+
+	public static float Sum(Vector value)
+	{
+		return Vector128.Sum(Vector128.LoadUnsafe(ref value.X));
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Limit(Vector vector, float max)
 	{
 		return vector.MagnitudeSquared() > Sq(max)
@@ -464,6 +590,7 @@ public struct Vector : IEquatable<Vector>,
 			: vector;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Normalize(Vector vector)
 	{
 		var mag = vector.Magnitude();
@@ -476,11 +603,13 @@ public struct Vector : IEquatable<Vector>,
 		return vector / mag;
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Random2D()
 	{
 		return FromAngle(Random(PConstants.TWO_PI));
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Random3D()
 	{
 		var angle = Random(PConstants.TWO_PI);
@@ -494,17 +623,19 @@ public struct Vector : IEquatable<Vector>,
 		return new Vector(vx, vy, vz);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Rotate(Vector vector, float theta)
 	{
 		var (sin, cos) = MathF.SinCos(theta);
 		var (x, y) = vector;
 
-		var xResult = FusedMultiplySubtract(x, cos, y * sin);
-		var yResult = FusedMultiplyAdd(x, sin, y * cos);
+		var xResult = Math.FusedMultiplySubtract(x, cos, y * sin);
+		var yResult = Math.FusedMultiplyAdd(x, sin, y * cos);
 
 		return new Vector(xResult, yResult);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Reflect(Vector inDirection, Vector inNormal)
 	{
 		var factor = new Vector(2f * Dot(inDirection, inNormal));
@@ -512,91 +643,16 @@ public struct Vector : IEquatable<Vector>,
 		return FusedMultiplyAdd(factor, inDirection - factor, inNormal);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector Project(Vector vector, Vector onNormal)
 	{
-		var sqrMag = Dot(onNormal, onNormal);
+		var sqrMag = Dot(onNormal);
 		var dot = Dot(vector, onNormal);
 
 		return onNormal * dot / sqrMag;
 	}
 
-	public static Vector Min(Vector v1, Vector v2)
-	{
-		if (Sse.IsSupported)
-		{
-			var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-			var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
-
-			var result = Sse.Min(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-			var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
-
-			var result = AdvSimd.Min(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return new Vector(
-			MathF.Min(x1, x2),
-			MathF.Min(y1, y2),
-			MathF.Min(z1, z2));
-	}
-
-	public static Vector Max(Vector v1, Vector v2)
-	{
-		var temp1 = Vector128.Create(v1.X, v1.Y, v1.Z, 0);
-		var temp2 = Vector128.Create(v2.X, v2.Y, v2.Z, 0);
-
-		if (Sse.IsSupported)
-		{
-			var result = Sse.Max(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		if (AdvSimd.IsSupported)
-		{
-			var result = AdvSimd.Max(temp1, temp2);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x1, y1, z1) = v1;
-		var (x2, y2, z2) = v2;
-
-		return new Vector(
-			MathF.Max(x1, x2),
-			MathF.Max(y1, y2),
-			MathF.Max(z1, z2));
-	}
-
-	public static Vector Abs(Vector v)
-	{
-		if (AdvSimd.IsSupported)
-		{
-			var temp1 = Vector128.Create(v.X, v.Y, v.Z, 0);
-			var result = AdvSimd.Abs(temp1);
-
-			return Unsafe.As<Vector128<float>, Vector>(ref result);
-		}
-
-		var (x, y, z) = v;
-
-		return new Vector(
-			MathF.Abs(x),
-			MathF.Abs(y),
-			MathF.Abs(z));
-	}
-
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector SetMagnitude(Vector vector, float mag)
 	{
 		return Multiply(Normalize(vector), mag);
@@ -606,74 +662,88 @@ public struct Vector : IEquatable<Vector>,
 
 	#region Operators
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator *(Vector a, float scalar)
 	{
 		return Multiply(a, scalar);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator *(Vector a, Vector b)
 	{
 		return Multiply(a, b);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator /(Vector a, float scalar)
 	{
 		return Divide(a, scalar);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator /(Vector a, Vector b)
 	{
 		return Divide(a, b);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator +(Vector a, Vector b)
 	{
 		return Add(a, b);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator +(Vector a, float amt)
 	{
 		return Add(a, amt);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator -(Vector a, Vector b)
 	{
 		return Subtract(a, b);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static Vector operator -(Vector a, float amt)
 	{
 		return Subtract(a, amt);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static bool operator ==(Vector a, Vector b)
 	{
 		return a.Equals(b);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public static bool operator !=(Vector a, Vector b)
 	{
 		return !(a == b);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public bool Equals(Vector other)
 	{
-		var (x1, y1, z1) = other;
-
-		return X.Equals(x1) && Y.Equals(y1) && Z.Equals(z1);
+		return Vector128.EqualsAll(
+			Vector128.LoadUnsafe(ref X),
+			Vector128.LoadUnsafe(ref other.X));
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public override bool Equals(object? obj)
 	{
 		return obj is Vector v && Equals(v);
 	}
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public void Deconstruct(out float x, out float y)
 	{
 		x = X;
 		y = Y;
 	}
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public void Deconstruct(out float x, out float y, out float z)
 	{
 		x = X;
@@ -681,35 +751,10 @@ public struct Vector : IEquatable<Vector>,
 		z = Z;
 	}
 
-	public static implicit operator (float x, float y)(Vector vector)
-	{
-		return (vector.X, vector.Y);
-	}
-
-	public static implicit operator (float x, float y, float z)(Vector vector)
-	{
-		return (vector.X, vector.Y, vector.Z);
-	}
-
-	public static implicit operator Vector((float x, float y) data)
-	{
-		return new Vector(data.x, data.y, 0);
-	}
-
-	public static implicit operator Vector((float x, float y, float z) data)
-	{
-		return new Vector(data.x, data.y, data.z);
-	}
-
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
 	public override int GetHashCode()
 	{
-		var result = 1f;
-
-		result = FusedMultiplyAdd(31f, result, X);
-		result = FusedMultiplyAdd(31f, result, Y);
-		result = FusedMultiplyAdd(31f, result, Z);
-
-		return BitConverter.SingleToInt32Bits(result);
+		return HashCode.Combine(X, Y, Z);
 	}
 
 	/// <summary>Returns the string representation of the current instance using default formatting.</summary>
@@ -717,87 +762,26 @@ public struct Vector : IEquatable<Vector>,
 	/// <remarks>This method returns a string in which each element of the vector is formatted using the "G" (general) format string and the formatting conventions of the current thread culture. The "&lt;" and "&gt;" characters are used to begin and end the string, and the current culture's <see cref="System.Globalization.NumberFormatInfo.NumberGroupSeparator" /> property followed by a space is used to separate each element.</remarks>
 	public override string ToString()
 	{
-		return ToString("G");
+		return $"<{X:G}, {Y:G}, {Z:G}>";
 	}
 
-	/// <summary>Returns the string representation of the current instance using the specified format string to format individual elements.</summary>
-	/// <param name="format">A standard or custom numeric format string that defines the format of individual elements.</param>
-	/// <returns>The string representation of the current instance.</returns>
-	/// <remarks>This method returns a string in which each element of the vector is formatted using <paramref name="format" /> and the current culture's formatting conventions. The "&lt;" and "&gt;" characters are used to begin and end the string, and the current culture's <see cref="System.Globalization.NumberFormatInfo.NumberGroupSeparator" /> property followed by a space is used to separate each element.</remarks>
-	public string ToString(string? format)
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+	private static Vector FusedMultiplyAdd(Vector a, Vector b, Vector addend)
 	{
-		return ToString(format, CultureInfo.CurrentCulture);
-	}
+		if (Fma.IsSupported)
+		{
+			var result = Fma.MultiplyAdd(
+				Vector128.LoadUnsafe(ref a.X),
+				Vector128.LoadUnsafe(ref b.X),
+				Vector128.LoadUnsafe(ref addend.X));
 
-	/// <summary>Returns the string representation of the current instance using the specified format string to format individual elements and the specified format provider to define culture-specific formatting.</summary>
-	/// <param name="format">A standard or custom numeric format string that defines the format of individual elements.</param>
-	/// <param name="formatProvider">A format provider that supplies culture-specific formatting information.</param>
-	/// <returns>The string representation of the current instance.</returns>
-	/// <remarks>This method returns a string in which each element of the vector is formatted using <paramref name="format" /> and <paramref name="formatProvider" />. The "&lt;" and "&gt;" characters are used to begin and end the string, and the format provider's <see cref="System.Globalization.NumberFormatInfo.NumberGroupSeparator" /> property followed by a space is used to separate each element.</remarks>
-	public string ToString(string? format, IFormatProvider? formatProvider)
-	{
-		var separator = NumberFormatInfo.GetInstance(formatProvider).NumberGroupSeparator;
-		var handler = new DefaultInterpolatedStringHandler(6, 3, formatProvider, stackalloc char[256]);
+			result.StoreUnsafe(ref addend.X);
 
-		handler.AppendLiteral("<");
-		handler.AppendFormatted(X, format);
-		handler.AppendLiteral(separator);
-		handler.AppendLiteral(" ");
-		handler.AppendFormatted(Y, format);
-		handler.AppendLiteral(separator);
-		handler.AppendLiteral(" ");
-		handler.AppendFormatted(Z, format);
-		handler.AppendLiteral(">");
-		return handler.ToStringAndClear();
+			return addend;
+		}
+
+		return a * b + addend;
 	}
 
 	#endregion
-
-	public static Vector Parse(string s, IFormatProvider? provider)
-	{
-		return Parse(s.AsSpan(), provider);
-	}
-
-	public static bool TryParse(string? s, IFormatProvider? provider, out Vector result)
-	{
-		return TryParse(s.AsSpan(), provider, out result);
-	}
-
-	public static Vector Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
-	{
-		Span<float> data = stackalloc float[3];
-		var index = 0;
-
-		foreach (var stringNumber in s.Split(','))
-		{
-			if (index < data.Length)
-			{
-				data[index++] = Single.Parse(stringNumber);
-			}
-		}
-
-		return new Vector(data);
-	}
-
-	public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out Vector result)
-	{
-		Span<float> data = stackalloc float[3];
-		var index = 0;
-
-		foreach (var stringNumber in s.Split(','))
-		{
-			if (index < data.Length && Single.TryParse(stringNumber, provider, out var number))
-			{
-				data[index++] = number;
-			}
-			else
-			{
-				result = default;
-				return false;
-			}
-		}
-
-		result = new Vector(data);
-		return true;
-	}
 }

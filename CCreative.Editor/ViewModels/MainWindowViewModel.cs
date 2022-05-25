@@ -98,7 +98,7 @@ namespace CCreative.Editor.ViewModels
 		{
 			Initialize();
 
-			ConsoleEditor = new TextEditor()
+			ConsoleEditor = new TextEditor
 			{
 				IsReadOnly = true,
 				FontFamily = new FontFamily("Cascadia Code"),
@@ -163,7 +163,7 @@ namespace CCreative.Editor.ViewModels
 				var filePath = Path.Combine(Directory.GetCurrentDirectory(), "project.dll");
 
 				File.Delete(filePath);
-				Console.SetOut(new DocumentTextWriter(ConsoleDocument));
+				Console.SetOut(new DocumentTextWriter(ConsoleDocument, 0));
 
 #if DEBUG
 				var action = await compiler.Compile();
@@ -187,9 +187,9 @@ namespace CCreative.Editor.ViewModels
 						InitializeConsoleTimer();
 					}
 
-					process = new Process()
+					process = new Process
 					{
-						StartInfo = new ProcessStartInfo()
+						StartInfo = new ProcessStartInfo
 						{
 							Arguments = filePath,
 							FileName = "dotnet",

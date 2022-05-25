@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
@@ -46,54 +47,42 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 
 	public new void Add(T value)
 	{
-		for (var i = 0; i < Count; i++)
-		{
-			this[i] += value;
-		}
+		Math.Add((Span<T>)this, value);
 	}
 
 	public void Subtract(T value)
 	{
-		for (var i = 0; i < Count; i++)
-		{
-			this[i] -= value;
-		}
+		Math.Subtract((Span<T>)this, value);
 	}
 
 	public void Divide(T value)
 	{
-		for (var i = 0; i < Count; i++)
-		{
-			this[i] /= value;
-		}
+		Math.Divide((Span<T>)this, value);
 	}
 
 	public void Multiply(T value)
 	{
-		for (var i = 0; i < Count; i++)
-		{
-			this[i] *= value;
-		}
+		Math.Multiply((Span<T>)this, value);
 	}
 
 	public T Min()
 	{
-		return Math.Min((Span<T>)this);
+		return Math.Min<T>((Span<T>)this);
 	}
 
 	public T Max()
 	{
-		return Math.Max((Span<T>)this);
+		return Math.Max<T>((Span<T>)this);
 	}
 
 	public T Sum()
 	{
-		return Math.Sum((Span<T>)this);
+		return Math.Sum<T>((Span<T>)this);
 	}
 
 	public T Average()
 	{
-		return Sum() / T.Create(Count);
+		return Sum() / T.CreateChecked(Count);
 	}
 
 	public bool HasValue(T value)

@@ -6,28 +6,13 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
-using System.Threading.Tasks.Dataflow;
 
 // ReSharper disable CheckNamespace
 
 namespace CCreative;
 
-internal delegate TResult VectorDelegate<T, out TResult>(Span<Vector<T>> data) where T : struct;
-
-internal delegate void VectorDelegate<T>(Span<Vector<T>> data, T state) where T : struct;
-
-internal delegate TResult SpanDelegate<T, out TResult>(Span<T> data, T vectorResult) where T : struct;
-
-internal delegate void SpanDelegate<T>(Span<T> data) where T : struct;
-
 public static partial class Math
 {
-	private static int _degreeOfParallelism = 1; // BitOperations.Log2((uint)Environment.ProcessorCount);
-
-	private const int SIZE_RESTRAINT = 1024 * 64;
-
-	// private static readonly ConcurrentExclusiveSchedulerPair concurrentExclusiveScheduler = new(TaskScheduler.Default, Environment.ProcessorCount / 2); // BitOperations.Log2((uint)Environment.ProcessorCount));
-
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Min<T>(T num1, T num2) where T : INumber<T>
 	{
@@ -38,6 +23,24 @@ public static partial class Math
 	public static T Min<T>(T num1, T num2, T num3) where T : INumber<T>
 	{
 		return Min(Min(num1, num2), num3);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Min<T>(CollectionsMarshal.AsSpan(numbers));
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Min(ref MemoryMarshal.GetArrayDataReference(numbers), numbers.Length);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Min(ref MemoryMarshal.GetReference(numbers), numbers.Length);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,205 +55,271 @@ public static partial class Math
 		return Max(Max(num1, num2), num3);
 	}
 
-	public static T Min<T>(params T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		if (numbers.Length >= SIZE_RESTRAINT && _degreeOfParallelism > 1)
-		{
-			var result = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
-
-			var block = new ActionBlock<(T[] array, T[] temp, int index, int length)>(tuple =>
-			{
-				var (tempArray, temp, index, length) = tuple;
-				temp[index] = Min(tempArray.AsSpan(index * _degreeOfParallelism, length));
-			}, new ExecutionDataflowBlockOptions
-			{
-				EnsureOrdered = false,
-				MaxDegreeOfParallelism = _degreeOfParallelism,
-			});
-
-			for (var i = 0; i < _degreeOfParallelism; i++)
-			{
-				block.Post((numbers, result, i, numbers.Length / _degreeOfParallelism));
-			}
-
-			block.Complete();
-			block.Completion.Wait();
-
-			return Min(result.AsSpan());
-		}
-
-		return Min(numbers.AsSpan());
-	}
-
-	public static T Max<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		if (numbers.Length >= SIZE_RESTRAINT && _degreeOfParallelism > 1)
-		{
-			var result = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
-
-			var block = new ActionBlock<(T[] array, T[] temp, int index, int length)>(tuple =>
-			{
-				var (tempArray, temp, index, length) = tuple;
-				temp[index] = Max(tempArray.AsSpan(index * _degreeOfParallelism, length));
-			}, new ExecutionDataflowBlockOptions
-			{
-				EnsureOrdered = false,
-				MaxDegreeOfParallelism = _degreeOfParallelism,
-			});
-
-			for (var i = 0; i < _degreeOfParallelism; i++)
-			{
-				block.Post((numbers, result, i, numbers.Length / _degreeOfParallelism));
-			}
-
-			block.Complete();
-			block.Completion.Wait();
-
-			return Max(result.AsSpan());
-		}
-
-		return Max(numbers.AsSpan());
-	}
-
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Max<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 	{
-		return Max(CollectionsMarshal.AsSpan(numbers));
+		return Max(ref GetReference(numbers), numbers.Count);
 	}
 
-	public static T Sum<T>(T[] numbers) where T : unmanaged, INumber<T>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 	{
-		if (numbers.Length >= SIZE_RESTRAINT && _degreeOfParallelism > 1)
-		{
-			var result = GC.AllocateUninitializedArray<T>(_degreeOfParallelism);
+		return Max(ref GetReference(numbers), numbers.Length);
+	}
 
-			var block = new ActionBlock<(T[] array, T[] temp, int index, int length)>(tuple =>
-			{
-				var (tempArray, temp, index, length) = tuple;
-				temp[index] = Sum(tempArray.AsSpan(index * _degreeOfParallelism, length));
-			}, new ExecutionDataflowBlockOptions
-			{
-				EnsureOrdered = false,
-				MaxDegreeOfParallelism = _degreeOfParallelism,
-			});
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Max(ref GetReference(numbers), numbers.Length);
+	}
 
-			for (var i = 0; i < _degreeOfParallelism; i++)
-			{
-				block.Post((numbers, result, i, numbers.Length / _degreeOfParallelism));
-			}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Sum<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Sum(ref GetReference(numbers), numbers.Count);
+	}
 
-			block.Complete();
-			block.Completion.Wait();
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Sum<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Sum(ref GetReference(numbers), numbers.Length);
+	}
 
-			return Sum(result.AsSpan());
-		}
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Sum<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Sum(ref GetReference(numbers), numbers.Length);
+	}
 
-		return Sum(numbers.AsSpan());
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Average<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Average(ref GetReference(numbers), numbers.Count);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Average<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Average(ref GetReference(numbers), numbers.Length);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Average<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	{
+		return Average(ref GetReference(numbers), numbers.Length);
 	}
 
 	/// <summary>
 	/// Determines the smallest value in a sequence of numbers
 	/// </summary>
-	/// <param name="numbers">array of numbers to compare</param>
+	/// <param name="first">reference to the first element of the numbers to compare</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the minimum value</returns>
-	internal static T Min<T>(Span<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static T Min<T>(ref T first, int length) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 	{
-		return Aggregate(numbers, vectors =>
-		{
-			var result = vectors[0];
-			var min = T.MaxValue;
+		var index = 0;
+		var min = T.MaxValue;
 
-			for (var i = 1; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count * 2)
+		{
+			var result = Vector256.LoadUnsafe(ref first);
+
+			while ((index += Vector256<T>.Count) < length)
 			{
-				result = System.Numerics.Vector.Min(result, vectors[i]);
+				result = Vector256.Min(Vector256.LoadUnsafe(ref first), result);
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
 
-			for (var i = 0; i < Vector<T>.Count; i++)
+			for (var i = 0; i < Vector256<T>.Count; i++)
 			{
 				min = Min(min, result[i]);
 			}
+		}
 
-			return min;
-		}, (data, min) =>
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<T>.Count * 2)
 		{
-			foreach (var number in data)
+			var result = Vector128.LoadUnsafe(ref first);
+
+			while ((index += Vector128<T>.Count) < length)
 			{
-				min = Min(number, min);
+				result = Vector128.Min(Vector128.LoadUnsafe(ref first), result);
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
 			}
 
-			return min;
-		});
+			for (var i = 0; i < Vector128<T>.Count; i++)
+			{
+				min = Min(min, result[i]);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count * 2)
+		{
+			var result = Vector64.LoadUnsafe(ref first);
+
+			while ((index += Vector64<T>.Count) < length)
+			{
+				result = Vector64.Min(Vector64.LoadUnsafe(ref first), result);
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+			
+			for (var i = 0; i < Vector64<T>.Count; i++)
+			{
+				min = Min(min, result[i]);
+			}
+		}
+
+		for (; index < length; index++)
+		{
+			min = Min(first, min);
+			first = ref Unsafe.Add(ref first, 1);
+		}
+
+		return min;
 	}
 
 	/// <summary>
 	/// Determines the biggest value in a sequence of numbers
 	/// </summary>
-	/// <param name="numbers">array of numbers to compare</param>
+	/// <param name="first">reference to the first element of the numbers to compare</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the maximum value</returns>
-	public static T Max<T>(Span<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	public static T Max<T>(ref T first, int length) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 	{
-		return Aggregate(numbers, vectors =>
-		{
-			var result = vectors[0];
-			var max = T.MinValue;
+		var index = 0;
+		var max = T.MinValue;
 
-			for (var i = 1; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count * 2)
+		{
+			var result = Vector256.LoadUnsafe(ref first);
+
+			while ((index += Vector256<T>.Count) < length)
 			{
-				result = System.Numerics.Vector.Max(result, vectors[i]);
+				result = Vector256.Max(Vector256.LoadUnsafe(ref first), result);
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
 
-			for (var i = 0; i < Vector<T>.Count; i++)
+			for (var i = 0; i < Vector256<T>.Count; i++)
 			{
 				max = Max(max, result[i]);
 			}
+		}
 
-			return max;
-		}, (data, max) =>
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<T>.Count * 2)
 		{
-			foreach (var number in data)
+			var result = Vector128.LoadUnsafe(ref first);
+
+			while ((index += Vector128<T>.Count) < length)
 			{
-				max = Max(number, max);
+				result = Vector128.Max(Vector128.LoadUnsafe(ref first), result);
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
 			}
 
-			return max;
-		});
+			for (var i = 0; i < Vector128<T>.Count; i++)
+			{
+				max = Max(max, result[i]);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count * 2)
+		{
+			var result = Vector64.LoadUnsafe(ref first);
+
+			while ((index += Vector64<T>.Count) < length)
+			{
+				result = Vector64.Max(Vector64.LoadUnsafe(ref first), result);
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+
+			for (var i = 0; i < Vector64<T>.Count; i++)
+			{
+				max = Max(max, result[i]);
+			}
+		}
+
+		for (; index < length; index++)
+		{
+			max = Max(first, max);
+			first = ref Unsafe.Add(ref first, 1);
+		}
+
+		return max;
 	}
 
 	/// <summary>
 	/// Determines the sum of a sequence of numbers
 	/// </summary>
-	/// <param name="numbers">array of get the sum of</param>
+	/// <param name="first">reference to the first element of the numbers to sum</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the sum</returns>
-	internal static T Sum<T>(Span<T> numbers) where T : unmanaged, INumber<T>
+	public static T Sum<T>(ref T first, int length) where T : unmanaged, INumber<T>
 	{
-		return Aggregate(numbers, vectors =>
-		{
-			var vSum = Vector<T>.Zero;
+		var index = 0;
+		var sum = T.Zero;
 
-			for (var i = 1; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
+		{
+			var result = Vector256.LoadUnsafe(ref first);
+
+			while ((index += Vector256<T>.Count) < length)
 			{
-				vSum = System.Numerics.Vector.Add(vSum, vectors[i]);
+				Vector256.Add(Vector256.LoadUnsafe(ref first), result)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
 
-			return System.Numerics.Vector.Sum(vSum);
-		}, (data, sum) =>
+			sum += Vector256.Sum(result);
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
 		{
-			foreach (var number in data)
+			var result = Vector128.LoadUnsafe(ref first);
+
+			while ((index += Vector128<T>.Count) < length)
 			{
-				sum += number;
+				Vector128.Add(Vector128.LoadUnsafe(ref first), result)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
 			}
 
-			return sum;
-		});
+			sum += Vector128.Sum(result);
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
+		{
+			var result = Vector64.LoadUnsafe(ref first);
+
+			while ((index += Vector64<T>.Count) < length)
+			{
+				Vector64.Add(Vector64.LoadUnsafe(ref first), result)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+
+			sum += Vector64.Sum(result);
+		}
+
+		for (; index < length; index++)
+		{
+			sum += first;
+			first = ref Unsafe.Add(ref first, 1);
+		}
+
+		return sum;
 	}
 
 	/// <summary>
 	/// Determines the average value in a sequence of numbers
 	/// </summary>
-	/// <param name="numbers">array of numbers to compare</param>
+	/// <param name="first">reference to the first element of the numbers to get the average of</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the average value</returns>
-	public static T Average<T>(T[] numbers) where T : unmanaged, INumber<T>
+	public static T Average<T>(ref T first, int length) where T : unmanaged, INumber<T>
 	{
-		return Sum(numbers) / T.Create(numbers.Length);
+		return Sum(ref first, length) / T.CreateTruncating(length);
 	}
 
 	/// <summary>
@@ -258,17 +327,55 @@ public static partial class Math
 	/// </summary>
 	/// <param name="numbers">the numbers to add the number to</param>
 	/// <param name="number">the number to add to every element</param>
-	public static void Add<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+	public static void Add<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
 	{
-		Aggregate(numbers, (vectors, state) =>
-		{
-			var vValue = new Vector<T>(state);
+		ref var first = ref MemoryMarshal.GetReference(numbers);
+		var index = 0;
 
-			for (var i = 0; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector256.Create(number);
+
+			for (; index < numbers.Length; index += Vector256<T>.Count)
 			{
-				vectors[i] += vValue;
+				Vector256.Add(Vector256.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
-		}, number);
+		}
+
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector128.Create(number);
+
+			for (; index < numbers.Length; index += Vector128<T>.Count)
+			{
+				Vector128.Add(Vector128.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector64.Create(number);
+
+			for (; index < numbers.Length; index += Vector64<T>.Count)
+			{
+				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < numbers.Length; index++)
+		{
+			first += number;
+			first = ref Unsafe.Add(ref first, 1);
+		}
 	}
 
 	/// <summary>
@@ -276,17 +383,55 @@ public static partial class Math
 	/// </summary>
 	/// <param name="numbers">the numbers to subtract the number from from</param>
 	/// <param name="number"></param>
-	public static void Subtract<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+	public static void Subtract<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
 	{
-		Aggregate(numbers, (vectors, state) =>
-		{
-			var vValue = new Vector<T>(state);
+		ref var first = ref MemoryMarshal.GetReference(numbers);
+		var index = 0;
 
-			for (var i = 0; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector256.Create(number);
+
+			for (; index < numbers.Length; index += Vector256<T>.Count)
 			{
-				vectors[i] -= vValue;
+				Vector256.Subtract(Vector256.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
-		}, number);
+		}
+
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector128.Create(number);
+
+			for (; index < numbers.Length; index += Vector128<T>.Count)
+			{
+				Vector128.Subtract(Vector128.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector64.Create(number);
+
+			for (; index < numbers.Length; index += Vector64<T>.Count)
+			{
+				Vector64.Subtract(Vector64.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < numbers.Length; index++)
+		{
+			first -= number;
+			first = ref Unsafe.Add(ref first, 1);
+		}
 	}
 
 	/// <summary>
@@ -294,59 +439,306 @@ public static partial class Math
 	/// </summary>
 	/// <param name="numbers">the numbers to multiply the number with</param>
 	/// <param name="number">the number to multiply the numbers with</param>
-	public static void Multiply<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+	public static void Multiply<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
 	{
-		Aggregate(numbers, (vectors, state) =>
-		{
-			var vValue = new Vector<T>(state);
+		ref var first = ref MemoryMarshal.GetReference(numbers);
+		var index = 0;
 
-			for (var i = 0; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector256.Create(number);
+
+			for (; index < numbers.Length; index += Vector256<T>.Count)
 			{
-				vectors[i] *= vValue;
+				Vector256.Multiply(Vector256.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
-		}, number);
+		}
+
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector128.Create(number);
+
+			for (; index < numbers.Length; index += Vector128<T>.Count)
+			{
+				Vector128.Multiply(Vector128.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector64.Create(number);
+
+			for (; index < numbers.Length; index += Vector64<T>.Count)
+			{
+				Vector64.Multiply(Vector64.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < numbers.Length; index++)
+		{
+			first *= number;
+			first = ref Unsafe.Add(ref first, 1);
+		}
+	}
+
+	/// <summary>
+	/// Multiplies a number with the numbers
+	/// </summary>
+	/// <param name="numbers">the numbers to multiply the number with</param>
+	/// <param name="number">the number to multiply the numbers with</param>
+	public static void Divide<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
+	{
+		ref var first = ref MemoryMarshal.GetReference(numbers);
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector256.Create(number);
+
+			for (; index < numbers.Length; index += Vector256<T>.Count)
+			{
+				Vector256.Divide(Vector256.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			}
+		}
+
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector128.Create(number);
+
+			for (; index < numbers.Length; index += Vector128<T>.Count)
+			{
+				Vector128.Divide(Vector128.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated)
+		{
+			var scalarResult = Vector64.Create(number);
+
+			for (; index < numbers.Length; index += Vector64<T>.Count)
+			{
+				Vector64.Divide(Vector64.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < numbers.Length; index++)
+		{
+			first *= number;
+			first = ref Unsafe.Add(ref first, 1);
+		}
 	}
 
 	/// <summary>
 	/// Divide the numbers with the given number
 	/// </summary>
-	/// <param name="numbers">the numbers to divide the number with</param>
-	/// <param name="number">the number to divide the numbers with</param>
-	public static void Divide<T>(T[] numbers, T number) where T : unmanaged, INumber<T>
+	/// <param name="first">reference to the first element of the numbers to compare</param>
+	/// /// <param name="second">reference to the first element of the second numbers to compare</param>
+	/// <param name="length">the length of the numbers</param>
+	/// <returns>the dot product</returns>
+	public static T Dot<T>(ref T first, ref T second, int length) where T : unmanaged, INumber<T>
 	{
-		Aggregate(numbers, (vectors, state) =>
-		{
-			var vValue = new Vector<T>(state);
+		var index = 0;
+		var sum = T.Zero;
 
-			for (var i = 0; i < vectors.Length; i++)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector256<T>.Count)
 			{
-				vectors[i] /= vValue;
+				sum += Vector256.Dot(
+					Vector256.LoadUnsafe(ref first),
+					Vector256.LoadUnsafe(ref second));
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				second = ref Unsafe.Add(ref second, Vector256<T>.Count);
 			}
-		}, number);
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
+		{
+			for (; index < length; index += Vector128<T>.Count)
+			{
+				sum += Vector128.Dot(
+					Vector128.LoadUnsafe(ref first),
+					Vector128.LoadUnsafe(ref second));
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				second = ref Unsafe.Add(ref second, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
+		{
+			for (; index < length; index += Vector64<T>.Count)
+			{
+				sum += Vector64.Dot(
+					Vector64.LoadUnsafe(ref first),
+					Vector64.LoadUnsafe(ref second));
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				second = ref Unsafe.Add(ref second, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < length; index++)
+		{
+			sum += first * second;
+			
+			first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			second = ref Unsafe.Add(ref second, Vector64<T>.Count);
+		}
+
+		return sum;
+	}
+
+	/// <summary>
+	/// calculate the square root of the numbers
+	/// </summary>
+	/// <param name="first">reference to the first element of the numbers to get the square root of</param>
+	/// <param name="length">the length of the numbers</param>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static void Sqrt<T>(ref T first, int length) where T : unmanaged, IBinaryFloatingPointIeee754<T>
+	{
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector256<T>.Count)
+			{
+				Vector256.Sqrt(Vector256.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+				
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			}
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector128<T>.Count)
+			{
+				Vector128.Sqrt(Vector128.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
+		{
+			for (; index < length; index += Vector64<T>.Count)
+			{
+				Vector64.Sqrt(Vector64.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+				
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < length; index++)
+		{
+			first = Sqrt(first);
+			first = ref Unsafe.Add(ref first, 1);
+		}
+	}
+
+	/// <summary>
+	/// calculate the square of the numbers
+	/// </summary>
+	/// <param name="first">reference to the first element of the numbers to get the square root of</param>
+	/// <param name="length">the length of the numbers</param>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static void Sq<T>(ref T first, int length) where T : unmanaged, INumber<T>
+	{
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector256<T>.Count)
+			{
+				var vector = Vector256.LoadUnsafe(ref first);
+				
+				Vector256.Multiply(vector, vector)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			}
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector128<T>.Count)
+			{
+				var vector = Vector128.LoadUnsafe(ref first); 
+				
+				Vector128.Multiply(vector, vector)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
+		{
+			for (; index < length; index += Vector64<T>.Count)
+			{
+				var vector = Vector64.LoadUnsafe(ref first);
+				
+				Vector64.Multiply(vector, vector)
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+
+		for (; index < length; index++)
+		{
+			first = Sq(first);
+			first = ref Unsafe.Add(ref first, 1);
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static T Aggregate<T>(Span<T> numbers, VectorDelegate<T, T> vectorAction, SpanDelegate<T, T> spanAction) where T : unmanaged, INumber<T>
+	public static ref T GetReference<T>(Span<T> data)
 	{
-		var count = Vector<T>.Count;
-		var result = default(T);
-		var index = 0;
-
-		if (System.Numerics.Vector.IsHardwareAccelerated && numbers.Length >= count * 2)
-		{
-			var vectors = MemoryMarshal.Cast<T, Vector<T>>(numbers);
-
-			result = vectorAction(vectors);
-			index = count * vectors.Length;
-		}
-
-		if (index < numbers.Length - 1)
-		{
-			result = spanAction(numbers[index..], result);
-		}
-
-		return result;
+		return ref MemoryMarshal.GetReference(data);
 	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ref T GetReference<T>(ReadOnlySpan<T> data)
+	{
+		return ref MemoryMarshal.GetReference(data);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ref T GetReference<T>(T[] data)
+	{
+		return ref MemoryMarshal.GetArrayDataReference(data);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static ref T GetReference<T>(List<T>? data)
+	{
+		return ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(data));
+	}
+
+	#region Fused Multiply-Add
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T FusedMultiplyAdd<T>(T a, T b, T addend) where T :
@@ -393,14 +785,6 @@ public static partial class Math
 				return (T)(object)Fma.MultiplyAddScalar(add, left, right).ToScalar();
 			}
 		}
-		else if (typeof(T) == typeof(Vector) && Fma.IsSupported)
-		{
-			var left = Unsafe.As<T, Vector128<float>>(ref a);
-			var right = Unsafe.As<T, Vector128<float>>(ref b);
-			var add = Unsafe.As<T, Vector128<float>>(ref addend);
-
-			return (T)(object)Fma.MultiplyAdd(add, left, right);
-		}
 
 		return a * b + addend;
 	}
@@ -426,7 +810,7 @@ public static partial class Math
 			var right = Vector64.CreateScalarUnsafe(b);
 			var minus = Vector64.CreateScalarUnsafe(minuend);
 
-			return AdvSimd.FusedMultiplySubtract(minus, left, right).ToScalar();
+			return AdvSimd.FusedMultiplySubtractScalar(minus, left, right).ToScalar();
 		}
 
 		if (Fma.IsSupported)
@@ -435,7 +819,7 @@ public static partial class Math
 			var right = Vector128.CreateScalarUnsafe(b);
 			var minus = Vector128.CreateScalarUnsafe(minuend);
 
-			return Fma.MultiplySubtract(minus, left, right).ToScalar();
+			return Fma.MultiplySubtractScalar(minus, left, right).ToScalar();
 		}
 
 		return a * b - minuend;
@@ -477,7 +861,7 @@ public static partial class Math
 
 		if (typeof(T) == typeof(double))
 		{
-			return (T)(object)FusedMultiplySubtract((float)(object)a, (float)(object)b, (float)(object)minuend);
+			return (T)(object)FusedMultiplySubtract((double)(object)a, (double)(object)b, (double)(object)minuend);
 		}
 
 		if (typeof(T) == typeof(Vector))
@@ -495,20 +879,5 @@ public static partial class Math
 		return a * b - minuend;
 	}
 
-	private static unsafe void Aggregate<T>(Span<T> numbers, VectorDelegate<T> vectorAction, T state) where T : unmanaged, INumber<T>
-	{
-		var vectors = new Span<Vector<T>>(Unsafe.AsPointer(ref numbers.GetPinnableReference()), Ceil((float)numbers.Length / Vector<T>.Count));
-
-		vectorAction(vectors, state);
-	}
-
-	/// <summary>
-	/// Use this method to set the concurrency level of a few methods in the Math methods
-	/// </summary>
-	/// <remarks>Only Use this method if you know what you are doing!!!</remarks>
-	/// <param name="concurrencyLevel">the maximum concurrency level</param>
-	internal static void SetMaxConcurrencyLevel(int concurrencyLevel)
-	{
-		_degreeOfParallelism = Min(concurrencyLevel, Environment.ProcessorCount);
-	}
+	#endregion
 }

@@ -34,6 +34,7 @@ namespace CCreative.Compilers
 
 			var project = Solution.AddProject(name, assemblyName, "C#");
 			project = project.AddMetadataReferences(assemblies.Select(s => MetadataReference.CreateFromFile(s.Location)));
+			project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.ConsoleApplication, allowUnsafe: true));
 			var document = project.AddDocument("Usings", "global using static CCreative.Math; global using static CCreative.PApplet; global using CCreative;");
 
 			project = document.Project;
