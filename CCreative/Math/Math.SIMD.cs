@@ -28,7 +28,7 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Min<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
 	{
-		return Min<T>(CollectionsMarshal.AsSpan(numbers));
+		return Min(ref GetReference(numbers), numbers.Count);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,59 +55,59 @@ public static partial class Math
 		return Max(Max(num1, num2), num3);
 	}
 
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Max<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Max(ref GetReference(numbers), numbers.Count);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Max<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Max(ref GetReference(numbers), numbers.Length);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Max<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Max(ref GetReference(numbers), numbers.Length);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sum<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Sum(ref GetReference(numbers), numbers.Count);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sum<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Sum(ref GetReference(numbers), numbers.Length);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sum<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Sum(ref GetReference(numbers), numbers.Length);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Average<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Average(ref GetReference(numbers), numbers.Count);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Average<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Average(ref GetReference(numbers), numbers.Length);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Average<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
-	{
-		return Average(ref GetReference(numbers), numbers.Length);
-	}
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Max<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Max(ref GetReference(numbers), numbers.Count);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Max<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Max(ref GetReference(numbers), numbers.Length);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Max<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Max(ref GetReference(numbers), numbers.Length);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Sum<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Sum(ref GetReference(numbers), numbers.Count);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Sum<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Sum(ref GetReference(numbers), numbers.Length);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Sum<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Sum(ref GetReference(numbers), numbers.Length);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Average<T>(List<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Average(ref GetReference(numbers), numbers.Count);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Average<T>(T[] numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Average(ref GetReference(numbers), numbers.Length);
+	// }
+	//
+	// [MethodImpl(MethodImplOptions.AggressiveInlining)]
+	// public static T Average<T>(ReadOnlySpan<T> numbers) where T : unmanaged, INumber<T>, IMinMaxValue<T>
+	// {
+	// 	return Average(ref GetReference(numbers), numbers.Length);
+	// }
 
 	/// <summary>
 	/// Determines the smallest value in a sequence of numbers
@@ -127,8 +127,8 @@ public static partial class Math
 
 			while ((index += Vector256<T>.Count) < length)
 			{
-				result = Vector256.Min(Vector256.LoadUnsafe(ref first), result);
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				result = Vector256.Min(Vector256.LoadUnsafe(ref first), result);
 			}
 
 			for (var i = 0; i < Vector256<T>.Count; i++)
@@ -143,8 +143,8 @@ public static partial class Math
 
 			while ((index += Vector128<T>.Count) < length)
 			{
-				result = Vector128.Min(Vector128.LoadUnsafe(ref first), result);
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				result = Vector128.Min(Vector128.LoadUnsafe(ref first), result);
 			}
 
 			for (var i = 0; i < Vector128<T>.Count; i++)
@@ -159,8 +159,8 @@ public static partial class Math
 
 			while ((index += Vector64<T>.Count) < length)
 			{
-				result = Vector64.Min(Vector64.LoadUnsafe(ref first), result);
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				result = Vector64.Min(Vector64.LoadUnsafe(ref first), result);
 			}
 			
 			for (var i = 0; i < Vector64<T>.Count; i++)
@@ -169,10 +169,12 @@ public static partial class Math
 			}
 		}
 
-		for (; index < length; index++)
+		while (index < length)
 		{
 			min = Min(first, min);
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 
 		return min;
@@ -195,8 +197,8 @@ public static partial class Math
 
 			while ((index += Vector256<T>.Count) < length)
 			{
-				result = Vector256.Max(Vector256.LoadUnsafe(ref first), result);
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				result = Vector256.Max(Vector256.LoadUnsafe(ref first), result);
 			}
 
 			for (var i = 0; i < Vector256<T>.Count; i++)
@@ -211,8 +213,8 @@ public static partial class Math
 
 			while ((index += Vector128<T>.Count) < length)
 			{
-				result = Vector128.Max(Vector128.LoadUnsafe(ref first), result);
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				result = Vector128.Max(Vector128.LoadUnsafe(ref first), result);
 			}
 
 			for (var i = 0; i < Vector128<T>.Count; i++)
@@ -227,8 +229,8 @@ public static partial class Math
 
 			while ((index += Vector64<T>.Count) < length)
 			{
-				result = Vector64.Max(Vector64.LoadUnsafe(ref first), result);
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				result = Vector64.Max(Vector64.LoadUnsafe(ref first), result);
 			}
 
 			for (var i = 0; i < Vector64<T>.Count; i++)
@@ -237,10 +239,12 @@ public static partial class Math
 			}
 		}
 
-		for (; index < length; index++)
+		while (index < length)
 		{
 			max = Max(first, max);
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 
 		return max;
@@ -302,10 +306,12 @@ public static partial class Math
 			sum += Vector64.Sum(result);
 		}
 
-		for (; index < length; index++)
+		while (index < length)
 		{
 			sum += first;
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 
 		return sum;
@@ -325,18 +331,18 @@ public static partial class Math
 	/// <summary>
 	/// Adds a number to every element of the array
 	/// </summary>
-	/// <param name="numbers">the numbers to add the number to</param>
+	/// <param name="first">reference to the first element of the numbers to add the number to</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to add to every element</param>
-	public static void Add<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
+	public static void Add<T>(ref T first, int length, T number) where T : unmanaged, INumber<T>
 	{
-		ref var first = ref MemoryMarshal.GetReference(numbers);
 		var index = 0;
 
-		if (Vector256.IsHardwareAccelerated)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < numbers.Length; index += Vector256<T>.Count)
+			for (; index < length; index += Vector256<T>.Count)
 			{
 				Vector256.Add(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -345,11 +351,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector128.IsHardwareAccelerated)
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < numbers.Length; index += Vector128<T>.Count)
+			for (; index < length; index += Vector128<T>.Count)
 			{
 				Vector128.Add(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -358,11 +364,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector64.IsHardwareAccelerated)
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < numbers.Length; index += Vector64<T>.Count)
+			for (; index < length; index += Vector64<T>.Count)
 			{
 				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -371,28 +377,30 @@ public static partial class Math
 			}
 		}
 
-		for (; index < numbers.Length; index++)
+		while (index < length)
 		{
 			first += number;
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 	}
 
 	/// <summary>
 	/// Subtracts a number to the array
 	/// </summary>
-	/// <param name="numbers">the numbers to subtract the number from from</param>
+	/// <param name="first">reference to the first element of the numbers to subtract the number to</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <param name="number"></param>
-	public static void Subtract<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
+	public static void Subtract<T>(ref T first, int length, T number) where T : unmanaged, INumber<T>
 	{
-		ref var first = ref MemoryMarshal.GetReference(numbers);
 		var index = 0;
 
-		if (Vector256.IsHardwareAccelerated)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < numbers.Length; index += Vector256<T>.Count)
+			for (; index < length; index += Vector256<T>.Count)
 			{
 				Vector256.Subtract(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -401,11 +409,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector128.IsHardwareAccelerated)
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < numbers.Length; index += Vector128<T>.Count)
+			for (; index < length; index += Vector128<T>.Count)
 			{
 				Vector128.Subtract(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -414,11 +422,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector64.IsHardwareAccelerated)
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < numbers.Length; index += Vector64<T>.Count)
+			for (; index < length; index += Vector64<T>.Count)
 			{
 				Vector64.Subtract(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -426,29 +434,31 @@ public static partial class Math
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			}
 		}
-
-		for (; index < numbers.Length; index++)
+		
+		while (index < length)
 		{
 			first -= number;
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 	}
 
 	/// <summary>
 	/// Multiplies a number with the numbers
 	/// </summary>
-	/// <param name="numbers">the numbers to multiply the number with</param>
+	/// <param name="first">reference to the first element of the numbers to multiply the number to</param>
+	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to multiply the numbers with</param>
-	public static void Multiply<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
+	public static void Multiply<T>(ref T first, int length, T number) where T : unmanaged, INumber<T>
 	{
-		ref var first = ref MemoryMarshal.GetReference(numbers);
 		var index = 0;
 
-		if (Vector256.IsHardwareAccelerated)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < numbers.Length; index += Vector256<T>.Count)
+			for (; index < length; index += Vector256<T>.Count)
 			{
 				Vector256.Multiply(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -457,11 +467,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector128.IsHardwareAccelerated)
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < numbers.Length; index += Vector128<T>.Count)
+			for (; index < length; index += Vector128<T>.Count)
 			{
 				Vector128.Multiply(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -470,11 +480,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector64.IsHardwareAccelerated)
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < numbers.Length; index += Vector64<T>.Count)
+			for (; index < length; index += Vector64<T>.Count)
 			{
 				Vector64.Multiply(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -482,29 +492,31 @@ public static partial class Math
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			}
 		}
-
-		for (; index < numbers.Length; index++)
+		
+		while (index < length)
 		{
 			first *= number;
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 	}
 
 	/// <summary>
 	/// Multiplies a number with the numbers
 	/// </summary>
-	/// <param name="numbers">the numbers to multiply the number with</param>
-	/// <param name="number">the number to multiply the numbers with</param>
-	public static void Divide<T>(Span<T> numbers, T number) where T : unmanaged, INumber<T>
+	/// <param name="first">reference to the first element of the numbers to multiply the number to</param>
+	/// <param name="length">the length of the numbers</param>
+	/// <param name="number">the number to divide the numbers with</param>
+	public static void Divide<T>(ref T first, int length, T number) where T : unmanaged, INumber<T>
 	{
-		ref var first = ref MemoryMarshal.GetReference(numbers);
 		var index = 0;
 
-		if (Vector256.IsHardwareAccelerated)
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < numbers.Length; index += Vector256<T>.Count)
+			for (; index < length; index += Vector256<T>.Count)
 			{
 				Vector256.Divide(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -513,11 +525,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector128.IsHardwareAccelerated)
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < numbers.Length; index += Vector128<T>.Count)
+			for (; index < length; index += Vector128<T>.Count)
 			{
 				Vector128.Divide(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -526,11 +538,11 @@ public static partial class Math
 			}
 		}
 
-		if (Vector64.IsHardwareAccelerated)
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < numbers.Length; index += Vector64<T>.Count)
+			for (; index < length; index += Vector64<T>.Count)
 			{
 				Vector64.Divide(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -538,11 +550,13 @@ public static partial class Math
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			}
 		}
-
-		for (; index < numbers.Length; index++)
+		
+		while (index < length)
 		{
-			first *= number;
+			first /= number;
 			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
 		}
 	}
 
@@ -597,12 +611,14 @@ public static partial class Math
 			}
 		}
 
-		for (; index < length; index++)
+		while (index < length)
 		{
 			sum += first * second;
-			
+
 			first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			second = ref Unsafe.Add(ref second, Vector64<T>.Count);
+			
+			index++;
 		}
 
 		return sum;
@@ -650,11 +666,13 @@ public static partial class Math
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			}
 		}
-
-		for (; index < length; index++)
+		
+		while (index < length)
 		{
 			first = Sqrt(first);
+
 			first = ref Unsafe.Add(ref first, 1);
+			index++;
 		}
 	}
 
@@ -706,12 +724,231 @@ public static partial class Math
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			}
 		}
-
-		for (; index < length; index++)
+		
+		while (index < length)
 		{
 			first = Sq(first);
 			first = ref Unsafe.Add(ref first, 1);
+			
+			index++;
 		}
+	}
+
+	/// <summary>
+	/// calculate the absolute value of the numbers
+	/// </summary>
+	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
+	/// <param name="length">the length of the numbers</param>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static void Abs<T>(ref T first, int length) where T : unmanaged, INumber<T>
+	{
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector256<T>.Count)
+			{
+				Vector256.Abs(Vector256.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			}
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<T>.Count)
+		{
+			for (; index < length; index += Vector128<T>.Count)
+			{
+				Vector128.Abs(Vector128.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
+		{
+			for (; index < length; index += Vector64<T>.Count)
+			{
+				Vector64.Abs(Vector64.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+		}
+		
+		while (index < length)
+		{
+			first = Abs(first);
+			first = ref Unsafe.Add(ref first, 1);
+			
+			index++;
+		}
+	}
+
+	/// <summary>
+	/// calculate the absolute value of the numbers
+	/// </summary>
+	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
+	/// <param name="length">the length of the numbers</param>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static void Floor(ref float first, int length)
+	{
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<float>.Count)
+		{
+			for (; index < length; index += Vector256<float>.Count)
+			{
+				Vector256.Floor(Vector256.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<float>.Count);
+			}
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<float>.Count)
+		{
+			for (; index < length; index += Vector128<float>.Count)
+			{
+				Vector128.Floor(Vector128.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<float>.Count);
+			}
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<float>.Count)
+		{
+			for (; index < length; index += Vector64<float>.Count)
+			{
+				Vector64.Floor(Vector64.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<float>.Count);
+			}
+		}
+
+		while (index < length)
+		{
+			first = MathF.Floor(first);
+			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
+		}
+	}
+
+	/// <summary>
+	/// calculate the absolute value of the numbers
+	/// </summary>
+	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
+	/// <param name="length">the length of the numbers</param>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+	public static void Floor(ref double first, int length)
+	{
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<double>.Count)
+		{
+			for (; index < length; index += Vector256<double>.Count)
+			{
+				Vector256.Floor(Vector256.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<double>.Count);
+			}
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector256<double>.Count)
+		{
+			for (; index < length; index += Vector128<double>.Count)
+			{
+				Vector128.Floor(Vector128.LoadUnsafe(ref first))
+					.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<double>.Count);
+			}
+		}
+
+		while (index < length)
+		{
+			first = System.Math.Floor(first);
+			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
+		}
+	}
+
+	/// <summary>
+	/// calculate the absolute value of the numbers
+	/// </summary>
+	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
+	/// <param name="length">the length of the numbers</param>
+	/// <param name="number">the number to search</param>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
+	public static T Count<T>(ref T first, int length, T number) where T : struct, INumber<T>
+	{
+		var count = T.Zero;
+		var index = 0;
+
+		if (Vector256.IsHardwareAccelerated && length >= Vector256<T>.Count)
+		{
+			var scalarResult = Vector256.Create(number);
+			var result = Vector256<T>.Zero;
+
+			for (; index < length; index += Vector256<T>.Count)
+			{
+				result += Vector256.Equals(Vector256.LoadUnsafe(ref first), scalarResult);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			}
+
+			count = Abs(Vector256.Sum(result));
+		}
+
+		if (Vector128.IsHardwareAccelerated && length - index >= Vector128<T>.Count)
+		{
+			var scalarResult = Vector128.Create(number);
+			var result = Vector128<T>.Zero;
+
+			for (; index < length; index += Vector128<T>.Count)
+			{
+				result += Vector128.Equals(Vector128.LoadUnsafe(ref first), scalarResult);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			}
+
+			count = Abs(Vector128.Sum(result));
+		}
+
+		if (Vector64.IsHardwareAccelerated && length - index >= Vector64<T>.Count)
+		{
+			var scalarResult = Vector64.Create(number);
+			var result = Vector64<T>.Zero;
+
+			for (; index < length; index += Vector64<T>.Count)
+			{
+				result += Vector64.Equals(Vector64.LoadUnsafe(ref first), scalarResult);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+			}
+
+			count = Abs(Vector64.Sum(result));
+		}
+
+		while (index < length)
+		{
+			if (first == number)
+			{
+				count++;
+			}
+
+			first = ref Unsafe.Add(ref first, 1);
+
+			index++;
+		}
+
+		return count;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

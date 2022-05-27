@@ -1,10 +1,11 @@
-﻿using System.Runtime.Versioning;
+﻿using System.Numerics;
+using System.Runtime.Versioning;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
 using Math = CCreative.Math;
 
-[RequiresPreviewFeatures]
+[assembly: RequiresPreviewFeatures]
 public static class Program
 {
 	public static void Main(string[] args)
@@ -14,68 +15,76 @@ public static class Program
 }
 
 [MemoryDiagnoser]
-[DisassemblyDiagnoser]
+// [DisassemblyDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
-[RequiresPreviewFeatures]
 public class SIMDTest
 {
-	private static float[] numbers;
+	private static short[] numbers;
 
-	[Params(64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768)]
+	[Params(8, 64, 256, 1024, 4096, 16384)]
+	// [Params(0X7FFFFFC7)]
 	public long amount;
 
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
-		numbers = new float[amount];
+		numbers = new short[amount];
 
 		for (var i = 0; i < numbers.Length; i++)
 		{
-			numbers[i] = Math.Random(amount);
+			numbers[i] = (short)Math.RandomInt(5);
 		}
 	}
 
 	[Benchmark(Baseline = true)]
-	public float CCreative()
+	public int CCreative()
 	{
-		return Math.Sum(numbers);
+		return Math.Count<short>(ref Math.GetReference(numbers), numbers.Length, 3);
 	}
 
 	[Benchmark]
-	public float Base()
+	public int Base()
 	{
-		var sum = 0f;
+		var count = 0;
+
+		for (var i = 0; i < numbers.Length; i++)
+		{
+			if (numbers[i] == 3)
+			{
+				count++;
+			}
+		}
+
+		return count;
+	}
+
+	[Benchmark]
+	public int VectorT()
+	{
+		var count = 0;
 		var index = 0;
 
-		while (index + 8 < numbers.Length)
+		if (Vector.IsHardwareAccelerated && numbers.Length >= Vector<short>.Count)
 		{
-			sum += numbers[index + 7];
-			sum += numbers[index + 6];
-			sum += numbers[index + 5];
-			sum += numbers[index + 4];
-			sum += numbers[index + 3];
-			sum += numbers[index + 2];
-			sum += numbers[index + 1];
-			sum += numbers[index + 0];
+			var scalarResult = new Vector<short>(3);
+			var result = Vector<short>.Zero;
 
-			index += 8;
+			for (; index < numbers.Length; index += Vector<short>.Count)
+			{
+				result += Vector.Equals(new Vector<short>(numbers, index), scalarResult);
+			}
+
+			count = Math.Abs(Vector.Sum(result));
+		}
+		
+		for (; index < numbers.Length; index++)
+		{
+			if (numbers[index] == 3)
+			{
+				count++;
+			}
 		}
 
-		while (index + 4 < numbers.Length)
-		{
-			sum += numbers[index + 3];
-			sum += numbers[index + 2];
-			sum += numbers[index + 1];
-			sum += numbers[index + 0];
-
-			index += 4;
-		}
-
-		while (index < numbers.Length)
-		{
-			sum += numbers[index++];
-		}
-
-		return sum;
+		return count;
 	}
 }

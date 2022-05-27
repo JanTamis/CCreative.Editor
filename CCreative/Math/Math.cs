@@ -58,15 +58,8 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Constrain<T>(T value, T low, T high) where T : IComparisonOperators<T, T>
 	{
-		if (value < low)
-		{
-			return low;
-		}
-
-		if (value > high)
-		{
-			return high;
-		}
+		if (value < low) return low;
+		if (value > high) return high;
 
 		return value;
 	}
@@ -176,7 +169,7 @@ public static partial class Math
 	/// <param name="atm">number between 0.0 and 1.0</param>
 	/// <returns>the result of the calculation</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Lerp<T>(T start, T stop, T atm) where T : INumber<T>
+	public static T Lerp<T>(T start, T stop, T atm) where T : IFloatingPoint<T>
 	{
 		return FusedMultiplyAdd(atm, stop - start, start);
 	}
@@ -188,9 +181,21 @@ public static partial class Math
 	/// <param name="number">the specified number</param>
 	/// <returns>the square root of <paramref name="number"/></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sqrt<T>(T number) where T : IFloatingPointIeee754<T>
+	public static T Sqrt<T>(T number) where T : IRootFunctions<T>
 	{
 		return T.Sqrt(number);
+	}
+
+	/// <summary>
+	/// Calculates the cube root of the specified number
+	/// </summary>
+	/// <typeparam name="T">the type of the floating point number</typeparam>
+	/// <param name="number">the specified number</param>
+	/// <returns>the cube root of <paramref name="number"/></returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Cbrt<T>(T number) where T : IRootFunctions<T>
+	{
+		return T.Cbrt(number);
 	}
 
 	/// <summary>
@@ -201,7 +206,7 @@ public static partial class Math
 	/// <param name="exponent"></param>
 	/// <returns></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Pow<T>(T @base, T exponent) where T : IFloatingPointIeee754<T>
+	public static T Pow<T>(T @base, T exponent) where T : IPowerFunctions<T>
 	{
 		return T.Pow(@base, exponent);
 	}
@@ -241,7 +246,7 @@ public static partial class Math
 	/// <param name="stop">upper bound of the value's current range</param>
 	/// <returns>the normalized value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Norm<T>(T value, T start, T stop) where T : IFloatingPoint<T>
+	public static T Norm<T>(T value, T start, T stop) where T : IFloatingPointIeee754<T>
 	{
 		return (value - start) / (stop - start);
 	}
@@ -274,21 +279,20 @@ public static partial class Math
 	/// <param name="x">the number to calculate the inverse square root of</param>
 	/// <returns>1 / sqrt(x)</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T InverseSqrt<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T ReciprocalSqrtEstimate<T>(T x) where T : IFloatingPointIeee754<T>
 	{
-		if (typeof(float) == typeof(T))
-		{
-			var result = MathF.ReciprocalSqrtEstimate(Unsafe.As<T, float>(ref x));
-			return Unsafe.As<float, T>(ref result);
-		}
+		return T.ReciprocalSqrtEstimate(x);
+	}
 
-		if (typeof(double) == typeof(T))
-		{
-			var result = System.Math.ReciprocalSqrtEstimate(Unsafe.As<T, double>(ref x));
-			return Unsafe.As<double, T>(ref result);
-		}
-
-		return T.One / T.Sqrt(x);
+	/// <summary>
+	/// Calculates 1 / sqrt(x) of the given number
+	/// </summary>
+	/// <param name="x">the number to calculate the inverse square root of</param>
+	/// <returns>1 / sqrt(x)</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T ReciprocalEstimate<T>(T x) where T : IFloatingPointIeee754<T>
+	{
+		return T.ReciprocalEstimate(x);
 	}
 
 	/// <summary>
@@ -303,19 +307,19 @@ public static partial class Math
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Log<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Log<T>(T x) where T : ILogarithmicFunctions<T>
 	{
 		return T.Log(x);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sin<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Sin<T>(T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Sin(x);
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Cos<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Cos<T>(T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Cos(x);
 	}
@@ -333,31 +337,31 @@ public static partial class Math
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Tan<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Tan<T>(T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Tan(x);
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Asin<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Asin<T>(T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Asin(x);
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Acos<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Acos<T>(T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Acos(x);
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Atan<T>(T x) where T : IFloatingPointIeee754<T>
+	public static T Atan<T>(T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Atan(x);
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Atan2<T>(T y, T x) where T : IFloatingPointIeee754<T>
+	public static T Atan2<T>(T y, T x) where T : ITrigonometricFunctions<T>
 	{
 		return T.Atan2(y, x);
 	}
@@ -390,12 +394,12 @@ public static partial class Math
 		return (quotient, FusedMultiplySubtract(quotient, right, left));
 	}
 
-	public static T MinMagnitude<T>(T x, T y) where T : IFloatingPoint<T>
+	public static T MinMagnitude<T>(T x, T y) where T : INumber<T>
 	{
 		return T.MinMagnitude(x, y);
 	}
 
-	public static T MaxMagnitude<T>(T x, T y) where T : IFloatingPoint<T>
+	public static T MaxMagnitude<T>(T x, T y) where T : INumber<T>
 	{
 		return T.MaxMagnitude(x, y);
 	}
@@ -620,18 +624,18 @@ public static partial class Math
 			return 0;
 		}
 
-		return Random() * high;
+		var value = 0f;
 
 		// for some reason (rounding error?) Math.random() * 3
 		// can sometimes return '3' (once in ~30 million tries)
 		// so a check was added to avoid the inclusion of 'howbig'
 		// float value;
-		// do
-		// {
-		// 	value = Random() * high;
-		// } while (Abs(value - high) < float.Epsilon);
-		//
-		// return value;
+		do
+		{
+			value = Random() * high;
+		} while (Abs(value - high) < float.Epsilon);
+		
+		return value;
 	}
 
 	/// <summary>
@@ -1202,7 +1206,7 @@ public static partial class Math
 
 	/// <summary>
 	/// Converts a value to a <see cref="System.Boolean"/>
-	/// </summary>
+	/// </summary>						
 	/// <param name="value">the value to convert</param>
 	/// <returns>the converted value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1253,7 +1257,7 @@ public static partial class Math
 	/// <returns>the estimated time</returns>
 	public static TimeSpan EstimateTime(TimeSpan elapsedTime, float progress)
 	{
-		return MathF.ReciprocalEstimate(progress) * elapsedTime - elapsedTime;
+		return ReciprocalEstimate(progress) * elapsedTime - elapsedTime;
 	}
 
 	/// <summary>

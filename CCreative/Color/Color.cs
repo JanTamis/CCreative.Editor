@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -63,6 +64,7 @@ public struct Color
 		return Unsafe.As<Color, Int32>(ref this);
 	}
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public void Deconstruct(out byte a, out byte r, out byte g, out byte b)
 	{
 		a = A;
@@ -71,6 +73,7 @@ public struct Color
 		b = B;
 	}
 
+	[EditorBrowsable(EditorBrowsableState.Never)]
 	public void Deconstruct(out byte r, out byte g, out byte b)
 	{
 		r = R;

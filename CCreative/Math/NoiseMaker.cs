@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
 using System.Runtime.Versioning;
 using static CCreative.Math;
 
@@ -93,7 +94,7 @@ public static class NoiseMaker
 		129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228,
 		251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107,
 		49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254,
-		138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+		138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180,
 	};
 
 	//---------------------------------------------------------------------
@@ -183,7 +184,7 @@ public static class NoiseMaker
 		var orh = System.Numerics.Vector.BitwiseOr(System.Numerics.Vector.Equals(h, S12), System.Numerics.Vector.Equals(h, S14));
 		var xorz = System.Numerics.Vector.ConditionalSelect(orh, x, z);
 		var v = System.Numerics.Vector.ConditionalSelect(System.Numerics.Vector.LessThan(h, S4), y, xorz);
-
+		
 		u = System.Numerics.Vector.ConditionalSelect(h1, u, Vector<float>.Zero - u);
 		v = System.Numerics.Vector.ConditionalSelect(h2, v, Vector<float>.Zero - v);
 

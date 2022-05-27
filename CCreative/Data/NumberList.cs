@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -36,62 +36,62 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 	{
 		var rng = Random.Shared;
 
-		for (var n = Count; n > 1;)
+		for (var n = Count; n > 1; n--)
 		{
-			n--;
 			var k = rng.Next(n + 1);
-
+			
 			(this[k], this[n]) = (this[n], this[k]);
 		}
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public void Append(T item)
+	{
+		base.Add(item);
+	}
+
 	public new void Add(T value)
 	{
-		Math.Add((Span<T>)this, value);
+		Math.Add(ref Math.GetReference(this), Count, value);
 	}
 
 	public void Subtract(T value)
 	{
-		Math.Subtract((Span<T>)this, value);
+		Math.Subtract(ref Math.GetReference(this), Count, value);
 	}
 
 	public void Divide(T value)
 	{
-		Math.Divide((Span<T>)this, value);
+		Math.Divide(ref Math.GetReference(this), Count, value);
 	}
 
 	public void Multiply(T value)
 	{
-		Math.Multiply((Span<T>)this, value);
+		Math.Multiply(ref Math.GetReference(this), Count, value);
 	}
 
 	public T Min()
 	{
-		return Math.Min<T>((Span<T>)this);
+		return Math.Min(ref Math.GetReference(this), Count);
 	}
 
 	public T Max()
 	{
-		return Math.Max<T>((Span<T>)this);
+		return Math.Max(ref Math.GetReference(this), Count);
 	}
 
 	public T Sum()
 	{
-		return Math.Sum<T>((Span<T>)this);
+		return Math.Sum(ref Math.GetReference(this), Count);
 	}
 
 	public T Average()
 	{
-		return Sum() / T.CreateChecked(Count);
+		return Sum() / T.CreateSaturating(Count);
 	}
 
 	public bool HasValue(T value)
 	{
 		return Contains(value);
-	}
-
-	public static explicit operator Span<T>(NumberList<T> list)
-	{
-		return CollectionsMarshal.AsSpan(list);
 	}
 }
