@@ -33,7 +33,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Remove="CCreative.xml" />
         <None Remove="Kernels\filters.cl" />
         <None Remove="Shaders\shader.frag" />
         <None Remove="Shaders\shader.vert" />
