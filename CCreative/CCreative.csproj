@@ -40,7 +40,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="CCreative.xml" />
         <EmbeddedResource Include="Kernels\filters.cl" />
         <EmbeddedResource Include="Shaders\shader.frag" />
         <EmbeddedResource Include="Shaders\shader.vert" />
