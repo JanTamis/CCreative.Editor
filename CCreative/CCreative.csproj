@@ -24,12 +24,14 @@
         <NoWarn>1701;1702;0675;1591CA1822</NoWarn>
         <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
         <WarningLevel>5</WarningLevel>
+        <DebugType>embedded</DebugType>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <WarningLevel>5</WarningLevel>
         <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
         <Optimize>true</Optimize>
+        <DebugType>embedded</DebugType>
     </PropertyGroup>
 
     <ItemGroup>

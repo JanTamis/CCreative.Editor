@@ -1272,7 +1272,7 @@ public static partial class Math
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumber<TNumber> where TOther : INumber<TOther>
+	internal static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumber<TNumber> where TOther : INumber<TOther>
 	{
 		return TOther.CreateChecked(number);
 	}

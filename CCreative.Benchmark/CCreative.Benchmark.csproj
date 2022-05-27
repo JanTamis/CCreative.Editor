@@ -14,7 +14,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.13.1.1780" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.13.1.1796" />
         <PackageReference Include="HPCsharp" Version="3.16.1" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0-1.final" />
         <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />

@@ -256,6 +256,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to sum</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the sum</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveInlining)]
 	public static T Sum<T>(ref T first, int length) where T : unmanaged, INumber<T>
 	{
 		var index = 0;
@@ -886,7 +887,7 @@ public static partial class Math
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to search</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-	public static T Count<T>(ref T first, int length, T number) where T : struct, INumber<T>
+	public static int Count<T>(ref T first, int length, T number) where T : struct, INumber<T>
 	{
 		var count = T.Zero;
 		var index = 0;
@@ -948,7 +949,7 @@ public static partial class Math
 			index++;
 		}
 
-		return count;
+		return ConvertNumber<T, int>(count);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

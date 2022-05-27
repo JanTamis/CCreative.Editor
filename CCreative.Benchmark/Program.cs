@@ -4,6 +4,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
 using Math = CCreative.Math;
+using CCreative;
 
 [assembly: RequiresPreviewFeatures]
 public static class Program
@@ -19,7 +20,7 @@ public static class Program
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 public class SIMDTest
 {
-	private static short[] numbers;
+	private static float[] numbers;
 
 	[Params(8, 64, 256, 1024, 4096, 16384)]
 	// [Params(0X7FFFFFC7)]
@@ -28,7 +29,7 @@ public class SIMDTest
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
-		numbers = new short[amount];
+		numbers = new float[amount];
 
 		for (var i = 0; i < numbers.Length; i++)
 		{
@@ -37,54 +38,53 @@ public class SIMDTest
 	}
 
 	[Benchmark(Baseline = true)]
-	public int CCreative()
+	public float Ccreative()
 	{
-		return Math.Count<short>(ref Math.GetReference(numbers), numbers.Length, 3);
+		return numbers.Sum();
 	}
 
 	[Benchmark]
-	public int Base()
+	public float Base()
 	{
-		var count = 0;
+		float count = 0;
 
 		for (var i = 0; i < numbers.Length; i++)
 		{
-			if (numbers[i] == 3)
-			{
-				count++;
-			}
+			count += numbers[i];
 		}
 
 		return count;
 	}
 
 	[Benchmark]
-	public int VectorT()
+	public float VectorT()
 	{
-		var count = 0;
+		float count = 0;
 		var index = 0;
 
-		if (Vector.IsHardwareAccelerated && numbers.Length >= Vector<short>.Count)
+		if (System.Numerics.Vector.IsHardwareAccelerated && numbers.Length >= Vector<float>.Count)
 		{
-			var scalarResult = new Vector<short>(3);
-			var result = Vector<short>.Zero;
+			var result = Vector<float>.Zero;
 
-			for (; index < numbers.Length; index += Vector<short>.Count)
+			for (; index < numbers.Length; index += Vector<float>.Count)
 			{
-				result += Vector.Equals(new Vector<short>(numbers, index), scalarResult);
+				result += new Vector<float>(numbers, index);
 			}
 
-			count = Math.Abs(Vector.Sum(result));
+			count += System.Numerics.Vector.Sum(result);
 		}
 		
 		for (; index < numbers.Length; index++)
 		{
-			if (numbers[index] == 3)
-			{
-				count++;
-			}
+				count+= numbers[index];
 		}
 
 		return count;
+	}
+
+	[Benchmark]
+	public float Linq()
+	{
+		return Enumerable.Sum(numbers.AsEnumerable());
 	}
 }
