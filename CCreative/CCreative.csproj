@@ -45,7 +45,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Cloo.clSharp" Version="1.0.1" />
         <PackageReference Include="DecimalMath.DecimalEx" Version="1.0.2" />
         <PackageReference Include="LibTessDotNet" Version="1.1.15" />
         <PackageReference Include="MathSharp" Version="2.0.0-pre" />
