@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Runtime.Versioning;
+﻿using System.Runtime.Versioning;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
@@ -33,58 +32,22 @@ public class SIMDTest
 
 		for (var i = 0; i < numbers.Length; i++)
 		{
-			numbers[i] = (short)Math.RandomInt(5);
+			numbers[i] = Math.RandomInt(int.MaxValue);
 		}
 	}
 
 	[Benchmark(Baseline = true)]
-	public float Ccreative()
+	public void Ccreative()
 	{
-		return numbers.Sum();
+		numbers.Multiply(5);
 	}
 
 	[Benchmark]
-	public float Base()
+	public void Base()
 	{
-		float count = 0;
-
 		for (var i = 0; i < numbers.Length; i++)
 		{
-			count += numbers[i];
+			numbers[i] *= 5;
 		}
-
-		return count;
-	}
-
-	[Benchmark]
-	public float VectorT()
-	{
-		float count = 0;
-		var index = 0;
-
-		if (System.Numerics.Vector.IsHardwareAccelerated && numbers.Length >= Vector<float>.Count)
-		{
-			var result = Vector<float>.Zero;
-
-			for (; index < numbers.Length; index += Vector<float>.Count)
-			{
-				result += new Vector<float>(numbers, index);
-			}
-
-			count += System.Numerics.Vector.Sum(result);
-		}
-		
-		for (; index < numbers.Length; index++)
-		{
-				count+= numbers[index];
-		}
-
-		return count;
-	}
-
-	[Benchmark]
-	public float Linq()
-	{
-		return Enumerable.Sum(numbers.AsEnumerable());
 	}
 }

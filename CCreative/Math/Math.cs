@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using CCreative.Helpers;
 
@@ -624,7 +625,7 @@ public static partial class Math
 			return 0;
 		}
 
-		var value = 0f;
+		float value;
 
 		// for some reason (rounding error?) Math.random() * 3
 		// can sometimes return '3' (once in ~30 million tries)
@@ -864,10 +865,34 @@ public static partial class Math
 		return Int(T.Sign(number));
 	}
 
-	/// <summary> Returns the fibonacci of the given number. </summary>
-	/// <param name="number"> The number. </param>
-	/// <returns> A float. </returns>
-	public static T Fibonacci<T>(T number) where T : INumber<T>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(T num1, T num2) where T : INumber<T>
+	{
+		return T.Min(num1, num2);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(T num1, T num2, T num3) where T : INumber<T>
+	{
+		return Min(Min(num1, num2), num3);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(T num1, T num2) where T : INumber<T>
+	{
+		return T.Max(num1, num2);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(T num1, T num2, T num3) where T : INumber<T>
+	{
+		return Max(Max(num1, num2), num3);
+	}
+
+	/// <summary> Returns the fibonacci of the given number </summary>
+	/// <param name="number"> the number to get the fibonacci of </param>
+	/// <returns> fibonacci of the given number  </returns>
+	public static T Fibonacci<T>(T number) where T : IBinaryInteger<T>
 	{
 		var a = T.Zero;
 		var b = T.One;
@@ -1272,7 +1297,7 @@ public static partial class Math
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumber<TNumber> where TOther : INumber<TOther>
+	private static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumber<TNumber> where TOther : INumber<TOther>
 	{
 		return TOther.CreateChecked(number);
 	}
