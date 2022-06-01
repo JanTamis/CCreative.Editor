@@ -37,17 +37,21 @@ public class SIMDTest
 	}
 
 	[Benchmark(Baseline = true)]
-	public void Ccreative()
+	public float Ccreative()
 	{
-		numbers.Multiply(5);
+		return numbers.Min();
 	}
 
 	[Benchmark]
-	public void Base()
+	public float Base()
 	{
+		var value = float.MaxValue;
+
 		for (var i = 0; i < numbers.Length; i++)
 		{
-			numbers[i] *= 5;
+			value = Math.Min(value, numbers[i]);
 		}
+
+		return value;
 	}
 }

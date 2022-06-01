@@ -42,6 +42,6 @@ public class Test : IProgram
 		
 		Title(FrameRate);
 		
-		Filter(BLUR, 20);
+		// Filter(BLUR, 20);
 	}
 }

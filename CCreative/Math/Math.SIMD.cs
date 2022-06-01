@@ -20,7 +20,7 @@ public static partial class Math
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the minimum value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static T Min<T>(ref T first, int length) where T : struct, INumber<T>, IMinMaxValue<T>
+	internal static T Min<T>(ref T first, int length) where T : struct, INumber<T>, IMinMaxValue<T>
 	{
 		var index = 0;
 		var min = T.MaxValue;
@@ -36,9 +36,7 @@ public static partial class Math
 			}
 
 			for (var i = 0; i < Vector256<T>.Count; i++)
-			{
 				min = Min(min, result[i]);
-			}
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count * 2)
@@ -52,9 +50,7 @@ public static partial class Math
 			}
 
 			for (var i = 0; i < Vector128<T>.Count; i++)
-			{
 				min = Min(min, result[i]);
-			}
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count * 2)
@@ -68,16 +64,14 @@ public static partial class Math
 			}
 
 			for (var i = 0; i < Vector64<T>.Count; i++)
-			{
 				min = Min(min, result[i]);
-			}
 		}
 
 		while (index < length)
 		{
 			min = Min(first, min);
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 
@@ -90,7 +84,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to compare</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the maximum value</returns>
-	public static T Max<T>(ref T first, int length) where T : struct, INumber<T>, IMinMaxValue<T>
+	internal static T Max<T>(ref T first, int length) where T : struct, INumber<T>, IMinMaxValue<T>
 	{
 		var index = 0;
 		var max = T.MinValue;
@@ -106,9 +100,7 @@ public static partial class Math
 			}
 
 			for (var i = 0; i < Vector256<T>.Count; i++)
-			{
 				max = Max(max, result[i]);
-			}
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count * 2)
@@ -122,9 +114,7 @@ public static partial class Math
 			}
 
 			for (var i = 0; i < Vector128<T>.Count; i++)
-			{
 				max = Max(max, result[i]);
-			}
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count * 2)
@@ -138,16 +128,14 @@ public static partial class Math
 			}
 
 			for (var i = 0; i < Vector64<T>.Count; i++)
-			{
 				max = Max(max, result[i]);
-			}
 		}
 
 		while (index < length)
 		{
 			max = Max(first, max);
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 
@@ -161,7 +149,7 @@ public static partial class Math
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the sum</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveInlining)]
-	public static T Sum<T>(ref T first, int length) where T : struct, INumber<T>
+	internal static T Sum<T>(ref T first, int length) where T : struct, INumber<T>
 	{
 		var index = 0;
 		var sum = T.Zero;
@@ -214,8 +202,8 @@ public static partial class Math
 		while (index < length)
 		{
 			sum += first;
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 
@@ -228,7 +216,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the average of</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the average value</returns>
-	public static T Average<T>(ref T first, int length) where T : struct, INumber<T>
+	internal static T Average<T>(ref T first, int length) where T : struct, INumber<T>
 	{
 		return Sum(ref first, length) / T.CreateTruncating(length);
 	}
@@ -239,7 +227,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to add the number to</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to add to every element</param>
-	public static void Add<T>(ref T first, int length, T number) where T : struct, IAdditionOperators<T, T, T>
+	internal static void Add<T>(ref T first, int length, T number) where T : struct, IAdditionOperators<T, T, T>
 	{
 		var index = 0;
 
@@ -247,12 +235,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				Vector256.Add(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
@@ -260,12 +249,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				Vector128.Add(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
@@ -273,20 +263,19 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
-				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
-
+				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult).StoreUnsafe(ref first);
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first += number;
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 	}
@@ -297,7 +286,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to subtract the number to</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number"></param>
-	public static void Subtract<T>(ref T first, int length, T number) where T : struct, ISubtractionOperators<T, T, T>
+	internal static void Subtract<T>(ref T first, int length, T number) where T : struct, ISubtractionOperators<T, T, T>
 	{
 		var index = 0;
 
@@ -305,12 +294,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				Vector256.Subtract(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
@@ -318,12 +308,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				Vector128.Subtract(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
@@ -331,20 +322,21 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				Vector64.Subtract(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first -= number;
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 	}
@@ -355,7 +347,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to multiply the number to</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to multiply the numbers with</param>
-	public static void Multiply<T>(ref T first, int length, T number) where T : struct, IMultiplyOperators<T, T, T>
+	internal static void Multiply<T>(ref T first, int length, T number) where T : struct, IMultiplyOperators<T, T, T>
 	{
 		var index = 0;
 
@@ -363,12 +355,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				Vector256.Multiply(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
@@ -376,12 +369,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				Vector128.Multiply(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
@@ -389,20 +383,21 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				Vector64.Multiply(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first *= number;
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 	}
@@ -413,7 +408,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to multiply the number to</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to divide the numbers with</param>
-	public static void Divide<T>(ref T first, int length, T number) where T : struct, IDivisionOperators<T, T, T>
+	internal static void Divide<T>(ref T first, int length, T number) where T : struct, IDivisionOperators<T, T, T>
 	{
 		var index = 0;
 
@@ -421,12 +416,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				Vector256.Divide(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
@@ -434,12 +430,13 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				Vector128.Divide(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
@@ -447,20 +444,21 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				Vector64.Divide(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first /= number;
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
 			index++;
 		}
 	}
@@ -472,14 +470,14 @@ public static partial class Math
 	/// /// <param name="second">reference to the first element of the second numbers to compare</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>the dot product</returns>
-	public static T Dot<T>(ref T first, ref T second, int length) where T : struct, INumber<T>
+	internal static T Dot<T>(ref T first, ref T second, int length) where T : struct, INumber<T>
 	{
 		var index = 0;
 		var sum = T.Zero;
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				sum += Vector256.Dot(
 					Vector256.LoadUnsafe(ref first),
@@ -487,32 +485,31 @@ public static partial class Math
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 				second = ref Unsafe.Add(ref second, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
 		{
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
-				sum += Vector128.Dot(
-					Vector128.LoadUnsafe(ref first),
-					Vector128.LoadUnsafe(ref second));
+				sum += Vector128.Dot(Vector128.LoadUnsafe(ref first), Vector128.LoadUnsafe(ref second));
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
 				second = ref Unsafe.Add(ref second, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
-				sum += Vector64.Dot(
-					Vector64.LoadUnsafe(ref first),
-					Vector64.LoadUnsafe(ref second));
+				sum += Vector64.Dot(Vector64.LoadUnsafe(ref first), Vector64.LoadUnsafe(ref second));
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 				second = ref Unsafe.Add(ref second, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
@@ -522,7 +519,6 @@ public static partial class Math
 
 			first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			second = ref Unsafe.Add(ref second, Vector64<T>.Count);
-
 			index++;
 		}
 
@@ -535,40 +531,43 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the square root of</param>
 	/// <param name="length">the length of the numbers</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static void Sqrt<T>(ref T first, int length) where T : struct, IRootFunctions<T>
+	internal static void Sqrt<T>(ref T first, int length) where T : struct, IRootFunctions<T>
 	{
 		var index = 0;
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				Vector256.Sqrt(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
 		{
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				Vector128.Sqrt(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				Vector64.Sqrt(Vector64.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
@@ -587,13 +586,13 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the square root of</param>
 	/// <param name="length">the length of the numbers</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static void Sq<T>(ref T first, int length) where T : struct, IMultiplyOperators<T, T, T>
+	internal static void Sq<T>(ref T first, int length) where T : struct, IMultiplyOperators<T, T, T>
 	{
 		var index = 0;
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				var vector = Vector256.LoadUnsafe(ref first);
 
@@ -601,12 +600,13 @@ public static partial class Math
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector256<T>.Count)
 		{
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				var vector = Vector128.LoadUnsafe(ref first);
 
@@ -614,12 +614,13 @@ public static partial class Math
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				var vector = Vector64.LoadUnsafe(ref first);
 
@@ -627,14 +628,15 @@ public static partial class Math
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first = Sq(first);
-			first = ref Unsafe.Add(ref first, 1);
 
+			first = ref Unsafe.Add(ref first, 1);
 			index++;
 		}
 	}
@@ -645,48 +647,51 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
 	/// <param name="length">the length of the numbers</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static void Abs<T>(ref T first, int length) where T : struct, INumber<T>
+	internal static void Abs<T>(ref T first, int length) where T : struct, INumber<T>
 	{
 		var index = 0;
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				Vector256.Abs(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector256<T>.Count)
 		{
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				Vector128.Abs(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				Vector64.Abs(Vector64.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first = Abs(first);
-			first = ref Unsafe.Add(ref first, 1);
 
+			first = ref Unsafe.Add(ref first, 1);
 			index++;
 		}
 	}
@@ -697,48 +702,51 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
 	/// <param name="length">the length of the numbers</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static void Floor(ref float first, int length)
+	internal static void Floor(ref float first, int length)
 	{
 		var index = 0;
 
 		if (Vector256IsSupported<float>() && length >= Vector256<float>.Count)
 		{
-			for (; index < length; index += Vector256<float>.Count)
+			while (index < length)
 			{
 				Vector256.Floor(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector256<float>.Count);
+				index += Vector256<float>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<float>() && length - index >= Vector256<float>.Count)
+		if (Vector128IsSupported<float>() && length - index >= Vector128<float>.Count)
 		{
-			for (; index < length; index += Vector128<float>.Count)
+			while (index < length)
 			{
 				Vector128.Floor(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector128<float>.Count);
+				index += Vector128<float>.Count;
 			}
 		}
 
 		if (Vector64IsSupported<float>() && length - index >= Vector64<float>.Count)
 		{
-			for (; index < length; index += Vector64<float>.Count)
+			while (index < length)
 			{
 				Vector64.Floor(Vector64.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
 				first = ref Unsafe.Add(ref first, Vector64<float>.Count);
+				index += Vector64<float>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first = MathF.Floor(first);
-			first = ref Unsafe.Add(ref first, 1);
 
+			first = ref Unsafe.Add(ref first, 1);
 			index++;
 		}
 	}
@@ -749,37 +757,39 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
 	/// <param name="length">the length of the numbers</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static void Floor(ref double first, int length)
+	internal static void Floor(ref double first, int length)
 	{
 		var index = 0;
 
 		if (Vector256IsSupported<double>() && length >= Vector256<double>.Count)
 		{
-			for (; index < length; index += Vector256<double>.Count)
+			while (index < length)
 			{
 				Vector256.Floor(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
-				first = ref Unsafe.Add(ref first, Vector256<double>.Count);
+				first = ref Unsafe.Add(ref first, Vector256<float>.Count);
+				index += Vector256<float>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<double>() && length - index >= Vector256<double>.Count)
+		if (Vector128IsSupported<double>() && length - index >= Vector128<double>.Count)
 		{
-			for (; index < length; index += Vector128<double>.Count)
+			while (index < length)
 			{
 				Vector128.Floor(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
 
-				first = ref Unsafe.Add(ref first, Vector128<double>.Count);
+				first = ref Unsafe.Add(ref first, Vector128<float>.Count);
+				index += Vector128<float>.Count;
 			}
 		}
 
 		while (index < length)
 		{
 			first = System.Math.Floor(first);
-			first = ref Unsafe.Add(ref first, 1);
 
+			first = ref Unsafe.Add(ref first, 1);
 			index++;
 		}
 	}
@@ -791,7 +801,7 @@ public static partial class Math
 	/// <param name="length">the length of the sequence</param>
 	/// <param name="number">the number to search</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-	public static int Count<T>(ref T first, int length, T number) where T : struct, INumber<T>
+	internal static int Count<T>(ref T first, int length, T number) where T : struct, INumber<T>
 	{
 		var count = T.Zero;
 		var index = 0;
@@ -801,11 +811,12 @@ public static partial class Math
 			var scalarResult = Vector256.Create(number);
 			var result = Vector256<T>.Zero;
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				result += Vector256.Equals(Vector256.LoadUnsafe(ref first), scalarResult);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 
 			count = Abs(Vector256.Sum(result));
@@ -816,11 +827,12 @@ public static partial class Math
 			var scalarResult = Vector128.Create(number);
 			var result = Vector128<T>.Zero;
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				result += Vector128.Equals(Vector128.LoadUnsafe(ref first), scalarResult);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector128<T>.Count;
 			}
 
 			count = Abs(Vector128.Sum(result));
@@ -831,11 +843,12 @@ public static partial class Math
 			var scalarResult = Vector64.Create(number);
 			var result = Vector64<T>.Zero;
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				result += Vector64.Equals(Vector64.LoadUnsafe(ref first), scalarResult);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 
 			count = Abs(Vector64.Sum(result));
@@ -849,7 +862,6 @@ public static partial class Math
 			}
 
 			first = ref Unsafe.Add(ref first, 1);
-
 			index++;
 		}
 
@@ -863,7 +875,7 @@ public static partial class Math
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to search</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-	public static bool Contains<T>(ref T first, int length, T number) where T : struct, IEqualityOperators<T, T>
+	internal static bool Contains<T>(ref T first, int length, T number) where T : struct, IEqualityOperators<T, T>
 	{
 		var index = 0;
 
@@ -871,7 +883,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				if (Vector256.EqualsAny(Vector256.LoadUnsafe(ref first), scalarResult))
 				{
@@ -879,6 +891,7 @@ public static partial class Math
 				}
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 		}
 
@@ -886,7 +899,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				if (Vector128.EqualsAny(Vector128.LoadUnsafe(ref first), scalarResult))
 				{
@@ -894,6 +907,7 @@ public static partial class Math
 				}
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector128<T>.Count;
 			}
 		}
 
@@ -901,7 +915,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				if (Vector64.EqualsAny(Vector64.LoadUnsafe(ref first), scalarResult))
 				{
@@ -909,6 +923,7 @@ public static partial class Math
 				}
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 		}
 
@@ -920,7 +935,6 @@ public static partial class Math
 			}
 
 			first = ref Unsafe.Add(ref first, 1);
-
 			index++;
 		}
 
@@ -933,7 +947,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
 	/// <param name="length">the length of the numbers</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	public static T StandardDeviation<T>(ref T first, int length) where T : struct, INumber<T>, IRootFunctions<T>
+	internal static T StandardDeviation<T>(ref T first, int length) where T : struct, INumber<T>, IRootFunctions<T>
 	{
 		var index = 0;
 
@@ -945,7 +959,7 @@ public static partial class Math
 			var resultVector = Vector256<T>.Zero;
 			var averageVector = Vector256.Create(average);
 
-			for (; index < length; index += Vector256<T>.Count)
+			while (index < length)
 			{
 				var vector = Vector256.LoadUnsafe(ref first);
 
@@ -955,6 +969,7 @@ public static partial class Math
 				resultVector = Vector256.Add(resultVector, vector);
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
 			}
 
 			sum += Vector256.Sum(resultVector);
@@ -965,7 +980,7 @@ public static partial class Math
 			var resultVector = Vector128<T>.Zero;
 			var averageVector = Vector128.Create(average);
 
-			for (; index < length; index += Vector128<T>.Count)
+			while (index < length)
 			{
 				var vector = Vector128.LoadUnsafe(ref first);
 
@@ -975,6 +990,7 @@ public static partial class Math
 				resultVector = Vector128.Add(resultVector, vector);
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
 			}
 
 			sum += Vector128.Sum(resultVector);
@@ -985,7 +1001,7 @@ public static partial class Math
 			var resultVector = Vector64<T>.Zero;
 			var averageVector = Vector64.Create(average);
 
-			for (; index < length; index += Vector64<T>.Count)
+			while (index < length)
 			{
 				var vector = Vector64.LoadUnsafe(ref first);
 
@@ -995,6 +1011,7 @@ public static partial class Math
 				resultVector = Vector64.Add(resultVector, vector);
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
 			}
 
 			sum += Vector64.Sum(resultVector);
@@ -1005,7 +1022,6 @@ public static partial class Math
 			sum += Sq(first - average);
 
 			first = ref Unsafe.Add(ref first, 1);
-
 			index++;
 		}
 

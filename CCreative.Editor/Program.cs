@@ -2,8 +2,6 @@ using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.ReactiveUI;
 
-[assembly: RequiresPreviewFeatures]
-
 namespace CCreative.Editor
 {
 	class Program

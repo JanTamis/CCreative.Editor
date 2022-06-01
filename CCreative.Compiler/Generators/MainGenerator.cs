@@ -14,6 +14,7 @@ public class MainGenerator : ISourceGenerator
 	public async void Execute(GeneratorExecutionContext context)
 	{
 		var name = String.Empty;
+
 		foreach (var tree in context.Compilation.SyntaxTrees)
 		{
 			var root = await tree.GetRootAsync();
