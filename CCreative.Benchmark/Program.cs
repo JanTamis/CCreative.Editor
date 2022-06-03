@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
+﻿using System.Runtime.Versioning;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
@@ -17,56 +15,64 @@ public static class Program
 }
 
 [MemoryDiagnoser]
-// [DisassemblyDiagnoser]
+[DisassemblyDiagnoser(exportHtml: true, printSource: true)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 public class SIMDTest
 {
-	private static byte[] numbers;
-	private static byte _toFind;
+	private static int[] numbers;
+	private static int _toFind;
 
 	[Params(8, 64, 256, 1024, 4096, 16384)]
-	// [Params(0X7FFFFFC7)]
+	// [Params(0X7FFFFFC7 / 2)]
 	public long amount;
 
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
-		numbers = new Byte[amount];
+		numbers = new int[amount];
 
-		// for (var i = 0; i < numbers.Length; i++)
-		// {
-		// 	numbers[i] = Math.RandomBoolean();
-		// }
-		
-		Math.RandomBytes(numbers);
+		for (var i = 0; i < numbers.Length; i++)
+		{
+			numbers[i] = Math.RandomInt();
+		}
 
 		_toFind = Math.RandomByte();
 	}
 
 	[Benchmark(Baseline = true)]
-	public bool Ccreative()
+	public int Ccreative()
 	{
-		return numbers.Contains(_toFind);
+		return numbers.Sum();
 	}
 
 	[Benchmark]
-	public bool Base()
+	public int Base()
 	{
-		ref var first = ref MemoryMarshal.GetArrayDataReference(numbers);
+		//ref var first = ref MemoryMarshal.GetArrayDataReference(numbers);
 
-		var index = 0;
+		//var index = 0;
+		//var count = 0;
 
-		while (index < numbers.Length)
+		//while (index < numbers.Length)
+		//{
+		//	if (first.Equals(_toFind))
+		//	{
+		//		count += first;
+		//	}
+
+		//	first = ref Unsafe.Add(ref first, 1);
+		//	index++;
+		//}
+
+		//return count;
+
+		var result = 0;
+
+		foreach (var number in numbers)
 		{
-			if (first.Equals(_toFind))
-			{
-				return true;
-			}
-
-			first = ref Unsafe.Add(ref first, 1);
-			index++;
+			result += number;
 		}
 
-		return false;
+		return result;
 	}
 }

@@ -148,7 +148,7 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to sum</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the sum</returns>
-	[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveInlining)]
+	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static T Sum<T>(ref T first, int length) where T : struct, INumber<T>
 	{
 		var index = 0;
@@ -166,7 +166,6 @@ public static partial class Math
 
 			sum += Vector256.Sum(result);
 		}
-
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
 		{
 			var result = Vector128.LoadUnsafe(ref first);
@@ -179,7 +178,6 @@ public static partial class Math
 
 			sum += Vector128.Sum(result);
 		}
-
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
 			var result = Vector64.LoadUnsafe(ref first);
@@ -1026,6 +1024,58 @@ public static partial class Math
 		}
 
 		return Sqrt(sum / ConvertNumber<int, T>(length));
+	}
+
+	internal static void Fill<T>(ref T first, int length, T number) where T : struct, INumber<T>
+	{
+		var index = 0;
+
+		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		{
+			var scalarResult = Vector256.Create(number);
+
+			while ((uint)index < (uint)length)
+			{
+				scalarResult.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count;
+			}
+		}
+
+		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		{
+			var scalarResult = Vector128.Create(number);
+
+			while ((uint)index < (uint)length)
+			{
+				scalarResult.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				index += Vector128<T>.Count;
+			}
+		}
+
+		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		{
+			var scalarResult = Vector64.Create(number);
+
+			while ((uint)index < (uint)length)
+			{
+				scalarResult.StoreUnsafe(ref first);
+
+				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				index += Vector64<T>.Count;
+			}
+		}
+
+		while ((uint)index < (uint)length)
+		{
+			first = number;
+
+			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			index++;
+		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
