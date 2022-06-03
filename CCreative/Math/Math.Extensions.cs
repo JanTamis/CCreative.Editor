@@ -1,4 +1,6 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace CCreative;
 
@@ -14,13 +16,66 @@ public static partial class Math
 		return Sum(numbers) / ConvertNumber<int, T>(numbers.Length);
 	}
 
-	public static int Count<T>(this T[] numbers, T number) where T : struct, INumber<T>
+	public static int Count<T>(this T[] numbers, T number) where T : struct, IEquatable<T>
 	{
-		return Count(ref GetReference(numbers), numbers.Length, number);
+		if (Unsafe.SizeOf<byte>() == sizeof(byte))
+		{
+			return Count(ref Unsafe.As<T, byte>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, byte>(ref number));
+		}
+
+		if (Unsafe.SizeOf<T>() == sizeof(ushort))
+		{
+			return Count(ref Unsafe.As<T, ushort>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ushort>(ref number));
+		}
+
+		if (Unsafe.SizeOf<T>() == sizeof(uint))
+		{
+			return Count(ref Unsafe.As<T, uint>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, uint>(ref number));
+		}
+
+		if (Unsafe.SizeOf<T>() == sizeof(ulong))
+		{
+			return Count(ref Unsafe.As<T, ulong>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ulong>(ref number));
+		}
+
+		var index = 0;
+		var count = 0;
+		
+		ref var first = ref GetReference(numbers);
+
+		while (index < numbers.Length)
+		{
+			if (first.Equals(number))
+			{
+				count++;
+			}
+
+			first = ref Unsafe.Add(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			index++;
+		}
+
+		return count;
 	}
 
-	public static bool Contains<T>(this T[] numbers, T number) where T : struct, IEqualityOperators<T, T>
+	public static bool Contains<T>(this T[] numbers, T number) where T : struct, IEquatable<T>
 	{
+		if (Unsafe.SizeOf<byte>() == sizeof(byte))
+		{
+			return Contains(ref Unsafe.As<T, byte>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, byte>(ref number));
+		}
+		if (Unsafe.SizeOf<T>() == sizeof(ushort))
+		{
+			return Contains(ref Unsafe.As<T, ushort>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ushort>(ref number));
+		}
+		if (Unsafe.SizeOf<T>() == sizeof(uint))
+		{
+			return Contains(ref Unsafe.As<T, uint>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, uint>(ref number));
+		}
+		if (Unsafe.SizeOf<T>() == sizeof(ulong))
+		{
+			return Contains(ref Unsafe.As<T, ulong>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ulong>(ref number));
+		}
+		
 		return Contains(ref GetReference(numbers), numbers.Length, number);
 	}
 
