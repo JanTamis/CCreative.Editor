@@ -1,32 +1,33 @@
 using System;
 using System.ComponentModel;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace CCreative;
 
 [StructLayout(LayoutKind.Sequential)]
-public struct Color
+public struct Color : IEqualityOperators<Color, Color>
 {
 	/// <summary>
 	/// the blue component of the color
 	/// </summary>
-	public byte B { get; init; }
+	public byte B;
 
 	/// <summary>
 	/// the green component of the color
 	/// </summary>
-	public byte G { get; init; }
+	public byte G;
 
 	/// <summary>
 	/// the red component of the color
 	/// </summary>
-	public byte R { get; init; }
+	public byte R;
 
 	/// <summary>
 	/// the alpha component of the color
 	/// </summary>
-	public byte A { get; init; }
+	public byte A;
 
 	public Color(byte a, byte r, byte g, byte b)
 	{
@@ -57,11 +58,23 @@ public struct Color
 		});
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public bool Equals(Color other)
+	{
+		return GetHashCode() == other.GetHashCode();
+	}
+
 	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public override int GetHashCode()
 	{
 		return Unsafe.As<Color, Int32>(ref this);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public override bool Equals(object? obj)
+	{
+		return obj is Color clr && clr.Equals(this);
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]
@@ -79,5 +92,17 @@ public struct Color
 		r = R;
 		g = G;
 		b = B;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool operator ==(Color left, Color right)
+	{
+		return left.Equals(right);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool operator !=(Color left, Color right)
+	{
+		return !(left == right);
 	}
 }

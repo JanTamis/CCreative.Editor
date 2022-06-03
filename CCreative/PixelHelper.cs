@@ -27,7 +27,7 @@ internal static class PixelHelper
 			// 0.59 * 256 = 151
 			// 0.11 * 256 =  28
 			var lum = (77 * ((col >> 16) & 0xff) + 151 * ((col >> 8) & 0xff) + 28 * (col & 0xff)) >> 8;
-			pixels[i] = (int)((col & ALPHA_MASK) | (lum << 16) | (lum << 8) | lum);
+			pixels[i] = (int)((col & ALPHA_MASK) | (uint)(lum << 16) | (uint)(lum << 8) | (uint)lum);
 		}
 	}
 
@@ -41,7 +41,7 @@ internal static class PixelHelper
 
 			var max = Max((col & RED_MASK) >> 16, (col & GREEN_MASK) >> 8, col & BLUE_MASK);
 
-			pixels[i] = (int)((col & ALPHA_MASK) | (max < thresh
+			pixels[i] = (int)((col & ALPHA_MASK) | (uint)(max < thresh
 				? 0x000000
 				: 0xffffff));
 		}
@@ -83,7 +83,7 @@ internal static class PixelHelper
 			rlevel = ((rlevel * levels) >> 8) * 255 / levels;
 			glevel = ((glevel * levels) >> 8) * 255 / levels;
 			blevel = ((blevel * levels) >> 8) * 255 / levels;
-			pixels[i] = (int)((0xff000000 & col) | (rlevel << 16) | (glevel << 8) | blevel);
+			pixels[i] = (int)((0xff000000 & col) | (uint)(rlevel << 16) | (uint)(glevel << 8) | (uint)blevel);
 		}
 	}
 
@@ -160,7 +160,6 @@ internal static class PixelHelper
 				if (lumDown < currLum)
 				{
 					result = colDown;
-					currLum = lumDown;
 				}
 
 				outgoing[index++] = result;
@@ -282,22 +281,22 @@ internal static class PixelHelper
 
 	public static void Jitter(Span<int> pixels, int pixelWidth, int pixelHeight, int degree)
 	{
-		var Half = (short)(degree / 2);
+		var half = (short)(degree / 2);
 		var temp = pool.Rent(pixels.Length);
 
 		for (var i = 0; i < pixels.Length; i++)
 		{
-			var X = i % pixelWidth;
-			var Y = i / pixelHeight;
+			var x = i % pixelWidth;
+			var y = i / pixelHeight;
 
-			var XVal = X + (RandomInt(degree) - Half);
-			var YVal = Y + (RandomInt(degree) - Half);
+			var xVal = x + (RandomInt(degree) - half);
+			var yVal = y + (RandomInt(degree) - half);
 
-			if (XVal > 0 && XVal < pixelWidth && YVal > 0 && YVal < pixelHeight)
-			{
-				var Val = YVal * pixelWidth + XVal;
+			if (xVal > 0 && xVal < pixelWidth && yVal > 0 && yVal < pixelHeight)
+			{	
+				var val = yVal * pixelWidth + xVal;
 
-				temp[i] = pixels[Val];
+				temp[i] = pixels[val];
 			}
 		}
 

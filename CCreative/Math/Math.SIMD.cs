@@ -67,7 +67,7 @@ public static partial class Math
 				min = Min(min, result[i]);
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			min = Min(first, min);
 
@@ -131,7 +131,7 @@ public static partial class Math
 				max = Max(max, result[i]);
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			max = Max(first, max);
 
@@ -160,9 +160,7 @@ public static partial class Math
 
 			while ((index += Vector256<T>.Count) < length)
 			{
-				Vector256.Add(Vector256.LoadUnsafe(ref first), result)
-					.StoreUnsafe(ref first);
-
+				result += Vector256.LoadUnsafe(ref Unsafe.Add(ref first, Vector256<T>.Count));
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
 			}
 
@@ -175,9 +173,7 @@ public static partial class Math
 
 			while ((index += Vector128<T>.Count) < length)
 			{
-				Vector128.Add(Vector128.LoadUnsafe(ref first), result)
-					.StoreUnsafe(ref first);
-
+				result += Vector128.LoadUnsafe(ref Unsafe.Add(ref first, Vector128<T>.Count));
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
 			}
 
@@ -190,16 +186,14 @@ public static partial class Math
 
 			while ((index += Vector64<T>.Count) < length)
 			{
-				Vector64.Add(Vector64.LoadUnsafe(ref first), result)
-					.StoreUnsafe(ref first);
-
+				result += Vector64.LoadUnsafe(ref Unsafe.Add(ref first, Vector64<T>.Count));
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 			}
 
 			sum += Vector64.Sum(result);
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			sum += first;
 
@@ -235,7 +229,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Add(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -249,7 +243,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Add(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -263,15 +257,17 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
-				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult).StoreUnsafe(ref first);
+				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult)
+					.StoreUnsafe(ref first);
+				
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 				index += Vector64<T>.Count;
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first += number;
 
@@ -294,7 +290,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Subtract(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -308,7 +304,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Subtract(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -322,7 +318,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector64.Subtract(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -332,7 +328,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first -= number;
 
@@ -355,7 +351,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Multiply(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -369,7 +365,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Multiply(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -383,7 +379,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector64.Multiply(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -393,7 +389,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first *= number;
 
@@ -416,7 +412,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Divide(Vector256.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -430,7 +426,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Divide(Vector128.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -444,7 +440,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector64.Divide(Vector64.LoadUnsafe(ref first), scalarResult)
 					.StoreUnsafe(ref first);
@@ -454,7 +450,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first /= number;
 
@@ -477,10 +473,10 @@ public static partial class Math
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				sum += Vector256.Dot(
-					Vector256.LoadUnsafe(ref first),
+					Vector256.LoadUnsafe(ref first), 
 					Vector256.LoadUnsafe(ref second));
 
 				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
@@ -491,9 +487,11 @@ public static partial class Math
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
-				sum += Vector128.Dot(Vector128.LoadUnsafe(ref first), Vector128.LoadUnsafe(ref second));
+				sum += Vector128.Dot(
+					Vector128.LoadUnsafe(ref first), 
+					Vector128.LoadUnsafe(ref second));
 
 				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
 				second = ref Unsafe.Add(ref second, Vector128<T>.Count);
@@ -503,9 +501,11 @@ public static partial class Math
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
-				sum += Vector64.Dot(Vector64.LoadUnsafe(ref first), Vector64.LoadUnsafe(ref second));
+				sum += Vector64.Dot(
+					Vector64.LoadUnsafe(ref first), 
+					Vector64.LoadUnsafe(ref second));
 
 				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
 				second = ref Unsafe.Add(ref second, Vector64<T>.Count);
@@ -513,7 +513,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			sum += first * second;
 
@@ -537,7 +537,7 @@ public static partial class Math
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Sqrt(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -549,7 +549,7 @@ public static partial class Math
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Sqrt(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -561,7 +561,7 @@ public static partial class Math
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector64.Sqrt(Vector64.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -571,7 +571,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first = Sqrt(first);
 
@@ -592,7 +592,7 @@ public static partial class Math
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				var vector = Vector256.LoadUnsafe(ref first);
 
@@ -606,7 +606,7 @@ public static partial class Math
 
 		if (Vector128IsSupported<T>() && length - index >= Vector256<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				var vector = Vector128.LoadUnsafe(ref first);
 
@@ -620,7 +620,7 @@ public static partial class Math
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				var vector = Vector64.LoadUnsafe(ref first);
 
@@ -632,7 +632,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first = Sq(first);
 
@@ -653,7 +653,7 @@ public static partial class Math
 
 		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Abs(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -665,7 +665,7 @@ public static partial class Math
 
 		if (Vector128IsSupported<T>() && length - index >= Vector256<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Abs(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -677,7 +677,7 @@ public static partial class Math
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector64.Abs(Vector64.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -687,7 +687,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first = Abs(first);
 
@@ -708,7 +708,7 @@ public static partial class Math
 
 		if (Vector256IsSupported<float>() && length >= Vector256<float>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Floor(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -720,7 +720,7 @@ public static partial class Math
 
 		if (Vector128IsSupported<float>() && length - index >= Vector128<float>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Floor(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -732,7 +732,7 @@ public static partial class Math
 
 		if (Vector64IsSupported<float>() && length - index >= Vector64<float>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector64.Floor(Vector64.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -742,7 +742,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first = MathF.Floor(first);
 
@@ -763,7 +763,7 @@ public static partial class Math
 
 		if (Vector256IsSupported<double>() && length >= Vector256<double>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector256.Floor(Vector256.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -775,7 +775,7 @@ public static partial class Math
 
 		if (Vector128IsSupported<double>() && length - index >= Vector128<double>.Count)
 		{
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				Vector128.Floor(Vector128.LoadUnsafe(ref first))
 					.StoreUnsafe(ref first);
@@ -785,7 +785,7 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			first = System.Math.Floor(first);
 
@@ -811,7 +811,7 @@ public static partial class Math
 			var scalarResult = Vector256.Create(number);
 			var result = Vector256<T>.Zero;
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				result += Vector256.Equals(Vector256.LoadUnsafe(ref first), scalarResult);
 
@@ -819,7 +819,7 @@ public static partial class Math
 				index += Vector256<T>.Count;
 			}
 
-			count = Abs(Vector256.Sum(result));
+			count = -Vector256.Sum(result);
 		}
 
 		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
@@ -827,7 +827,7 @@ public static partial class Math
 			var scalarResult = Vector128.Create(number);
 			var result = Vector128<T>.Zero;
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				result += Vector128.Equals(Vector128.LoadUnsafe(ref first), scalarResult);
 
@@ -835,7 +835,7 @@ public static partial class Math
 				index += Vector128<T>.Count;
 			}
 
-			count = Abs(Vector128.Sum(result));
+			count = -Vector128.Sum(result);
 		}
 
 		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
@@ -843,7 +843,7 @@ public static partial class Math
 			var scalarResult = Vector64.Create(number);
 			var result = Vector64<T>.Zero;
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				result += Vector64.Equals(Vector64.LoadUnsafe(ref first), scalarResult);
 
@@ -851,10 +851,10 @@ public static partial class Math
 				index += Vector64<T>.Count;
 			}
 
-			count = Abs(Vector64.Sum(result));
+			count = -Vector64.Sum(result);
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			if (first == number)
 			{
@@ -875,7 +875,7 @@ public static partial class Math
 	/// <param name="length">the length of the numbers</param>
 	/// <param name="number">the number to search</param>
 	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-	internal static bool Contains<T>(ref T first, int length, T number) where T : struct, IEqualityOperators<T, T>
+	internal static bool Contains<T>(ref T first, int length, T number) where T : struct, IEquatable<T>
 	{
 		var index = 0;
 
@@ -883,7 +883,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector256.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				if (Vector256.EqualsAny(Vector256.LoadUnsafe(ref first), scalarResult))
 				{
@@ -899,7 +899,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector128.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				if (Vector128.EqualsAny(Vector128.LoadUnsafe(ref first), scalarResult))
 				{
@@ -915,7 +915,7 @@ public static partial class Math
 		{
 			var scalarResult = Vector64.Create(number);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				if (Vector64.EqualsAny(Vector64.LoadUnsafe(ref first), scalarResult))
 				{
@@ -927,9 +927,9 @@ public static partial class Math
 			}
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
-			if (first == number)
+			if (first.Equals(number))
 			{
 				return true;
 			}
@@ -959,7 +959,7 @@ public static partial class Math
 			var resultVector = Vector256<T>.Zero;
 			var averageVector = Vector256.Create(average);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				var vector = Vector256.LoadUnsafe(ref first);
 
@@ -980,7 +980,7 @@ public static partial class Math
 			var resultVector = Vector128<T>.Zero;
 			var averageVector = Vector128.Create(average);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				var vector = Vector128.LoadUnsafe(ref first);
 
@@ -1001,7 +1001,7 @@ public static partial class Math
 			var resultVector = Vector64<T>.Zero;
 			var averageVector = Vector64.Create(average);
 
-			while (index < length)
+			while ((uint)index < (uint)length)
 			{
 				var vector = Vector64.LoadUnsafe(ref first);
 
@@ -1017,7 +1017,7 @@ public static partial class Math
 			sum += Vector64.Sum(resultVector);
 		}
 
-		while (index < length)
+		while ((uint)index < (uint)length)
 		{
 			sum += Sq(first - average);
 
