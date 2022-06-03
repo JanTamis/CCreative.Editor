@@ -113,9 +113,4 @@ public static partial class Math
 	{
 		Divide(ref GetReference(numbers), numbers.Length, number);
 	}
-
-	public static void Fill<T>(this T[] numbers, T number) where T : struct
-	{
-		Fill(ref GetReference(numbers), numbers.Length, number);
-	}
 }

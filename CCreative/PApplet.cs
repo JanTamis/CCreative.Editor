@@ -1,23 +1,18 @@
-﻿using System;
-using CCreative.Rendering;
-using System.Collections;
+﻿using CCreative.Rendering;
+using Silk.NET.Maths;
+using Silk.NET.Windowing;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Silk.NET.Maths;
-using Silk.NET.Windowing;
-using SixLabors.Fonts;
 
 #pragma warning disable CS1591
 
@@ -568,7 +563,7 @@ public static partial class PApplet
 	{
 		return String.Join(separator, strings);
 	}
-	
+
 	public static bool IsMatch(string input, [StringSyntax(StringSyntaxAttribute.Regex)] string pattern)
 	{
 		return Regex.IsMatch(input, pattern);
@@ -867,8 +862,8 @@ public static partial class PApplet
 		// return new PFont(font);
 		return null;
 	}
-	
-	
+
+
 
 	public static PFont LoadFont(string filename)
 	{

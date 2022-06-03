@@ -4,6 +4,8 @@ using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
 using Math = CCreative.Math;
 using CCreative;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 [assembly: RequiresPreviewFeatures]
 public static class Program
@@ -11,6 +13,8 @@ public static class Program
 	public static void Main(string[] args)
 	{
 		BenchmarkRunner.Run<SIMDTest>();
+
+		Console.WriteLine(Math.Measure(() => true).TotalNanoseconds);
 	}
 }
 
@@ -24,7 +28,7 @@ public class SIMDTest
 
 	[Params(8, 64, 256, 1024, 4096, 16384)]
 	// [Params(0X7FFFFFC7 / 2)]
-	public long amount;
+	public long amount = 256;
 
 	[GlobalSetup]
 	public void GlobalSetup()
@@ -36,43 +40,31 @@ public class SIMDTest
 			numbers[i] = Math.RandomInt();
 		}
 
-		_toFind = Math.RandomByte();
+		_toFind = Math.RandomInt();
 	}
 
 	[Benchmark(Baseline = true)]
 	public int Ccreative()
 	{
-		return numbers.Sum();
+		return numbers.Min();
 	}
 
 	[Benchmark]
 	public int Base()
 	{
-		//ref var first = ref MemoryMarshal.GetArrayDataReference(numbers);
+		ref var first = ref MemoryMarshal.GetArrayDataReference(numbers);
 
-		//var index = 0;
-		//var count = 0;
+		var index = 0;
+		var min = Int32.MaxValue;
 
-		//while (index < numbers.Length)
-		//{
-		//	if (first.Equals(_toFind))
-		//	{
-		//		count += first;
-		//	}
-
-		//	first = ref Unsafe.Add(ref first, 1);
-		//	index++;
-		//}
-
-		//return count;
-
-		var result = 0;
-
-		foreach (var number in numbers)
+		while (index < numbers.Length)
 		{
-			result += number;
+			min = Math.Min(min, first);
+
+			first = ref Unsafe.Add(ref first, 1);
+			index++;
 		}
 
-		return result;
+		return min;
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
@@ -563,6 +564,90 @@ public static partial class Math
 	public static T Radians<T>(T degrees) where T : IFloatingPointIeee754<T>
 	{
 		return degrees * (T.Pi / T.CreateChecked(180));
+	}
+
+	/// <summary>
+	/// Measures the time it takes to execute <paramref name="action"/>
+	/// </summary>
+	/// <param name="action">the action to measure</param>
+	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
+	/// <returns>the time it took to execute the action</returns>
+	/// <remarks>note: the method will be called multiple times</remarks>
+	public static TimeSpan Measure(Action? action, bool useWarmup = false)
+	{
+		for (int i = 0; useWarmup && i < 10; i++)
+		{
+			action?.Invoke();
+		}
+
+		var startingTimeStamp = Stopwatch.GetTimestamp();
+
+		action?.Invoke();
+
+		return Stopwatch.GetElapsedTime(startingTimeStamp);
+	}
+
+	/// <summary>
+	/// Measures the time it takes to execute <paramref name="action"/>
+	/// </summary>
+	/// <param name="action">the action to measure</param>
+	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
+	/// <returns>the time it took to execute the action</returns>
+	/// <remarks>note: the method will be called multiple times</remarks>
+	public static TimeSpan Measure<T>(Action<T>? action, T parameter, bool useWarmup = false)
+	{
+		for (int i = 0; useWarmup && i < 10; i++)
+		{
+			action?.Invoke(parameter);
+		}
+
+		var startingTimeStamp = Stopwatch.GetTimestamp();
+
+		action?.Invoke(parameter);
+
+		return Stopwatch.GetElapsedTime(startingTimeStamp);
+	}
+
+	/// <summary>
+	/// Measures the time it takes to execute <paramref name="action"/>
+	/// </summary>
+	/// <param name="action">the action to measure</param>
+	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
+	/// <returns>the time it took to execute the action</returns>
+	/// <remarks>note: the method will be called multiple times</remarks>
+	public static TimeSpan Measure<TResult>(Func<TResult>? action, bool useWarmup = false)
+	{
+		for (int i = 0; useWarmup && i < 20; i++)
+		{
+			action?.Invoke();
+		}
+
+		var startingTimeStamp = Stopwatch.GetTimestamp();
+
+		action?.Invoke();
+
+		return Stopwatch.GetElapsedTime(startingTimeStamp);
+	}
+
+	/// <summary>
+	/// Measures the time it takes to execute <paramref name="action"/>
+	/// </summary>
+	/// <param name="action">the action to measure</param>
+	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
+	/// <returns>the time it took to execute the action</returns>
+	/// <remarks>note: the method will be called multiple times</remarks>
+	public static TimeSpan Measure<T, TResult>(Func<T, TResult>? action, T parameter, bool useWarmup = false)
+	{
+		for (int i = 0; useWarmup && i < 10; i++)
+		{
+			action?.Invoke(parameter);
+		}
+
+		var startingTimeStamp = Stopwatch.GetTimestamp();
+
+		action?.Invoke(parameter);
+
+		return Stopwatch.GetElapsedTime(startingTimeStamp);
 	}
 
 	#region Algorithms
