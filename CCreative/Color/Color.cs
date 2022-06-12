@@ -61,7 +61,7 @@ public struct Color : IEqualityOperators<Color, Color>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Equals(Color other)
 	{
-		return GetHashCode() == other.GetHashCode();
+		return GetHashCode().Equals(other.GetHashCode());
 	}
 
 	/// <inheritdoc />

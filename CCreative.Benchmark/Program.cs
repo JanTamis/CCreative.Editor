@@ -2,69 +2,56 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
-using Math = CCreative.Math;
 using CCreative;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 
 [assembly: RequiresPreviewFeatures]
 public static class Program
 {
-	public static void Main(string[] args)
+	public static void Main()
 	{
-		BenchmarkRunner.Run<SIMDTest>();
-
-		Console.WriteLine(Math.Measure(() => true).TotalNanoseconds);
+		BenchmarkRunner.Run<SimdTest>();
 	}
 }
 
-[MemoryDiagnoser]
-[DisassemblyDiagnoser(exportHtml: true, printSource: true)]
+// [MemoryDiagnoser]
+[ShortRunJob]
+// [DisassemblyDiagnoser(exportHtml: true, printSource: true)]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
-public class SIMDTest
+public class SimdTest
 {
-	private static int[] numbers;
-	private static int _toFind;
+	private static float[] numbers;
 
 	[Params(8, 64, 256, 1024, 4096, 16384)]
-	// [Params(0X7FFFFFC7 / 2)]
-	public long amount = 256;
+	// [Params(0X7FFFFFC7)]
+	public int amount;
 
 	[GlobalSetup]
 	public void GlobalSetup()
 	{
-		numbers = new int[amount];
+		numbers = new float[amount];
 
 		for (var i = 0; i < numbers.Length; i++)
 		{
-			numbers[i] = Math.RandomInt();
+			numbers[i] = i;
 		}
-
-		_toFind = Math.RandomInt();
+	}
+	
+	[Benchmark]
+	public float Base()
+	{
+		float result = 0;
+		
+		for (var i = 0; i < numbers.Length; i++)
+		{
+			result += numbers[i];
+		}
+		
+		return result;
 	}
 
 	[Benchmark(Baseline = true)]
-	public int Ccreative()
+	public float CCreative()
 	{
-		return numbers.Min();
-	}
-
-	[Benchmark]
-	public int Base()
-	{
-		ref var first = ref MemoryMarshal.GetArrayDataReference(numbers);
-
-		var index = 0;
-		var min = Int32.MaxValue;
-
-		while (index < numbers.Length)
-		{
-			min = Math.Min(min, first);
-
-			first = ref Unsafe.Add(ref first, 1);
-			index++;
-		}
-
-		return min;
+		return numbers.Sum();
 	}
 }

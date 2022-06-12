@@ -575,7 +575,7 @@ public static partial class Math
 	/// <remarks>note: the method will be called multiple times</remarks>
 	public static TimeSpan Measure(Action? action, bool useWarmup = false)
 	{
-		for (int i = 0; useWarmup && i < 10; i++)
+		for (var i = 0; useWarmup && i < 20; i++)
 		{
 			action?.Invoke();
 		}
@@ -591,12 +591,13 @@ public static partial class Math
 	/// Measures the time it takes to execute <paramref name="action"/>
 	/// </summary>
 	/// <param name="action">the action to measure</param>
+	/// <param name="parameter">the parameter for <paramref name="action"/></param>
 	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
 	/// <returns>the time it took to execute the action</returns>
 	/// <remarks>note: the method will be called multiple times</remarks>
 	public static TimeSpan Measure<T>(Action<T>? action, T parameter, bool useWarmup = false)
 	{
-		for (int i = 0; useWarmup && i < 10; i++)
+		for (var i = 0; useWarmup && i < 20; i++)
 		{
 			action?.Invoke(parameter);
 		}
@@ -617,7 +618,7 @@ public static partial class Math
 	/// <remarks>note: the method will be called multiple times</remarks>
 	public static TimeSpan Measure<TResult>(Func<TResult>? action, bool useWarmup = false)
 	{
-		for (int i = 0; useWarmup && i < 20; i++)
+		for (var i = 0; useWarmup && i < 20; i++)
 		{
 			action?.Invoke();
 		}
@@ -633,12 +634,13 @@ public static partial class Math
 	/// Measures the time it takes to execute <paramref name="action"/>
 	/// </summary>
 	/// <param name="action">the action to measure</param>
+	/// <param name="parameter">the parameter for <paramref name="action"/></param>
 	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
 	/// <returns>the time it took to execute the action</returns>
 	/// <remarks>note: the method will be called multiple times</remarks>
 	public static TimeSpan Measure<T, TResult>(Func<T, TResult>? action, T parameter, bool useWarmup = false)
 	{
-		for (int i = 0; useWarmup && i < 10; i++)
+		for (var i = 0; useWarmup && i < 20; i++)
 		{
 			action?.Invoke(parameter);
 		}
@@ -820,6 +822,21 @@ public static partial class Math
 	public static void RandomBytes(Span<byte> buffer)
 	{
 		Rng.NextBytes(buffer);
+	}
+
+	public static short RandomShort()
+	{
+		return (short)Rng.Next(0, short.MaxValue);
+	}
+
+	public static short RandomShort(short upperBound)
+	{
+		return (short)Rng.Next(0, upperBound);
+	}
+	
+	public static short RandomShort(short lowerBound, short upperBound)
+	{
+		return (short)Rng.Next(lowerBound, upperBound);
 	}
 
 	/// <summary> Returns a random number fitting a Gaussian, or normal, distribution. There is theoretically no minimum or maximum value that randomGaussian() might return.  </summary>
@@ -1316,7 +1333,7 @@ public static partial class Math
 
 	/// <summary>
 	/// Converts a value to a <see cref="System.Boolean"/>
-	/// </summary>						
+	/// </summary>
 	/// <param name="value">the value to convert</param>
 	/// <returns>the converted value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1345,7 +1362,7 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool TryParse<T>(ReadOnlySpan<char> text, out T result) where T : ISpanParsable<T>
 	{
-		return T.TryParse(text, null, out result);
+		return T.TryParse(text, CultureInfo.InvariantCulture, out result);
 	}
 
 	/// <summary>

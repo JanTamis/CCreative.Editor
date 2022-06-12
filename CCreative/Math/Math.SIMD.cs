@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -23,56 +22,110 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static T Min<T>(ref T first, int length) where T : struct, INumber<T>, IMinMaxValue<T>
 	{
-		var index = 0;
+		nint index = 0;
 		var min = T.MaxValue;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count * 2)
+		
+		if (Vector256IsSupported<T>())
 		{
-			var result = Vector256.LoadUnsafe(ref first);
+			var resultVector = Vector256.Create(T.MaxValue);
 
-			while ((index += Vector256<T>.Count) < length)
+			while (length >= Vector256<T>.Count * 4)
 			{
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
-				result = Vector256.Min(Vector256.LoadUnsafe(ref first), result);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				var vector3 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count * 2));
+				var vector4 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count * 3));
+				
+				resultVector = Vector256.Min(vector1, resultVector);
+				resultVector = Vector256.Min(vector2, resultVector);
+				resultVector = Vector256.Min(vector3, resultVector);
+				resultVector = Vector256.Min(vector4, resultVector);
+
+				index += Vector256<T>.Count * 4;
+				length -= Vector256<T>.Count * 4;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				resultVector = Vector256.Min(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 
 			for (var i = 0; i < Vector256<T>.Count; i++)
-				min = Min(min, result[i]);
+				min = Min(min, resultVector.GetElement(i));
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count * 2)
+		if (Vector128IsSupported<T>())
 		{
-			var result = Vector128.LoadUnsafe(ref first);
+			var resultVector = Vector128.Create(T.MaxValue);
 
-			while ((index += Vector128<T>.Count) < length)
+			while (length >= Vector128<T>.Count * 4)
 			{
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
-				result = Vector128.Min(Vector128.LoadUnsafe(ref first), result);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+				var vector3 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count * 2));
+				var vector4 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count * 3));
+
+				resultVector = Vector128.Min(vector1, resultVector);
+				resultVector = Vector128.Min(vector2, resultVector);
+				resultVector = Vector128.Min(vector3, resultVector);
+				resultVector = Vector128.Min(vector4, resultVector);
+
+				index += Vector128<T>.Count * 4;
+				length -= Vector128<T>.Count * 4;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				resultVector = Vector128.Min(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 
 			for (var i = 0; i < Vector128<T>.Count; i++)
-				min = Min(min, result[i]);
+				min = Min(min, resultVector.GetElement(i));
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count * 2)
+		if (Vector64IsSupported<T>())
 		{
-			var result = Vector64.LoadUnsafe(ref first);
+			var resultVector = Vector64.Create(T.MaxValue);
 
-			while ((index += Vector64<T>.Count) < length)
+			while (length >= Vector64<T>.Count * 4)
 			{
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-				result = Vector64.Min(Vector64.LoadUnsafe(ref first), result);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+				var vector3 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count * 2));
+				var vector4 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count * 3));
+
+				resultVector = Vector64.Min(vector1, resultVector);
+				resultVector = Vector64.Min(vector2, resultVector);
+				resultVector = Vector64.Min(vector3, resultVector);
+				resultVector = Vector64.Min(vector4, resultVector);
+
+				index += Vector64<T>.Count * 4;
+				length -= Vector64<T>.Count * 4;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				resultVector = Vector64.Min(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 
 			for (var i = 0; i < Vector64<T>.Count; i++)
-				min = Min(min, result[i]);
+				min = Min(min, resultVector.GetElement(i));
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			min = Min(first, min);
+			min = Min(Unsafe.Add(ref first, index), min);
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			length--;
 			index++;
 		}
 
@@ -87,56 +140,110 @@ public static partial class Math
 	/// <returns>returns the maximum value</returns>
 	internal static T Max<T>(ref T first, int length) where T : struct, INumber<T>, IMinMaxValue<T>
 	{
-		var index = 0;
+		nint index = 0;
 		var max = T.MinValue;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count * 2)
+		
+		if (Vector256IsSupported<T>())
 		{
-			var result = Vector256.LoadUnsafe(ref first);
+			var resultVector = Vector256.Create(T.MaxValue);
 
-			while ((index += Vector256<T>.Count) < length)
+			while (length >= Vector256<T>.Count * 4)
 			{
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
-				result = Vector256.Max(Vector256.LoadUnsafe(ref first), result);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				var vector3 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count * 2));
+				var vector4 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count * 3));
+				
+				resultVector = Vector256.Max(vector1, resultVector);
+				resultVector = Vector256.Max(vector2, resultVector);
+				resultVector = Vector256.Max(vector3, resultVector);
+				resultVector = Vector256.Max(vector4, resultVector);
+
+				index += Vector256<T>.Count * 4;
+				length -= Vector256<T>.Count * 4;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				resultVector = Vector256.Max(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 
 			for (var i = 0; i < Vector256<T>.Count; i++)
-				max = Max(max, result[i]);
+				max = Max(max, resultVector.GetElement(i));
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count * 2)
+		if (Vector128IsSupported<T>())
 		{
-			var result = Vector128.LoadUnsafe(ref first);
+			var resultVector = Vector128.Create(T.MaxValue);
 
-			while ((index += Vector128<T>.Count) < length)
+			while (length >= Vector128<T>.Count * 4)
 			{
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
-				result = Vector128.Max(Vector128.LoadUnsafe(ref first), result);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+				var vector3 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count * 2));
+				var vector4 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count * 3));
+
+				resultVector = Vector128.Max(vector1, resultVector);
+				resultVector = Vector128.Max(vector2, resultVector);
+				resultVector = Vector128.Max(vector3, resultVector);
+				resultVector = Vector128.Max(vector4, resultVector);
+
+				index += Vector128<T>.Count * 4;
+				length -= Vector128<T>.Count * 4;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				resultVector = Vector128.Max(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 
 			for (var i = 0; i < Vector128<T>.Count; i++)
-				max = Max(max, result[i]);
+				max = Max(max, resultVector.GetElement(i));
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count * 2)
+		if (Vector64IsSupported<T>())
 		{
-			var result = Vector64.LoadUnsafe(ref first);
+			var resultVector = Vector64.Create(T.MaxValue);
 
-			while ((index += Vector64<T>.Count) < length)
+			while (length >= Vector64<T>.Count * 4)
 			{
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-				result = Vector64.Max(Vector64.LoadUnsafe(ref first), result);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+				var vector3 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count * 2));
+				var vector4 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count * 3));
+
+				resultVector = Vector64.Max(vector1, resultVector);
+				resultVector = Vector64.Max(vector2, resultVector);
+				resultVector = Vector64.Max(vector3, resultVector);
+				resultVector = Vector64.Max(vector4, resultVector);
+
+				index += Vector64<T>.Count * 2;
+				length -= Vector64<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				resultVector = Vector64.Max(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 
 			for (var i = 0; i < Vector64<T>.Count; i++)
-				max = Max(max, result[i]);
+				max = Max(max, resultVector.GetElement(i));
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			max = Max(first, max);
+			max = Max(Unsafe.Add(ref first, index), max);
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			length--;
 			index++;
 		}
 
@@ -149,58 +256,122 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to sum</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the sum</returns>
-	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static T Sum<T>(ref T first, int length) where T : struct, INumber<T>
+	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
+	internal static unsafe T Sum<T>(ref T first, int length) where T : unmanaged, INumberBase<T>
 	{
-		var index = 0;
-		var sum = T.Zero;
+		nint index = 0;
+		var pointer = (T*)Unsafe.AsPointer(ref first);
 
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		if (Vector256.IsHardwareAccelerated)
 		{
-			var result = Vector256.LoadUnsafe(ref first);
-
-			while ((index += Vector256<T>.Count) < length)
+			var resultVector = Vector256<T>.Zero;
+			
+			while (length >= Vector256<T>.Count * 4)
 			{
-				result += Vector256.LoadUnsafe(ref Unsafe.Add(ref first, Vector256<T>.Count));
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				var vector3 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count * 2));
+				var vector4 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count * 3));
+
+				resultVector += vector1;
+				resultVector += vector2;
+				resultVector += vector3;
+				resultVector += vector4;
+
+				index += Vector256<T>.Count * 4;
+				length -= Vector256<T>.Count * 4;
 			}
 
-			sum += Vector256.Sum(result);
-		}
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
-		{
-			var result = Vector128.LoadUnsafe(ref first);
-
-			while ((index += Vector128<T>.Count) < length)
+			while (length > Vector256<T>.Count)
 			{
-				result += Vector128.LoadUnsafe(ref Unsafe.Add(ref first, Vector128<T>.Count));
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				resultVector += Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 
-			sum += Vector128.Sum(result);
-		}
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
-		{
-			var result = Vector64.LoadUnsafe(ref first);
+			resultVector += Vector256.LoadAligned(pointer + index);
 
-			while ((index += Vector64<T>.Count) < length)
+			return Vector256.Sum(resultVector);
+		}
+
+		if (Vector128.IsHardwareAccelerated)
+		{
+			var resultVector = Vector128<T>.Zero;
+		
+			while (length >= Vector128<T>.Count * 4)
 			{
-				result += Vector64.LoadUnsafe(ref Unsafe.Add(ref first, Vector64<T>.Count));
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+				var vector3 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count * 2));
+				var vector4 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count * 3));
+		
+				resultVector += vector1;
+				resultVector += vector2;
+				resultVector += vector3;
+				resultVector += vector4;
+		
+				index += Vector128<T>.Count * 4;
+				length -= Vector128<T>.Count * 4;
 			}
-
-			sum += Vector64.Sum(result);
+		
+			while (length > Vector128<T>.Count)
+			{
+				resultVector += Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+		
+				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
+			}
+		
+			resultVector += Vector128.LoadAligned(pointer + index);
+			
+			return Vector128.Sum(resultVector);
+		}
+		
+		if (Vector64.IsHardwareAccelerated)
+		{
+			var resultVector = Vector64<T>.Zero;
+		
+			while (length >= Vector64<T>.Count * 4)
+			{
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+				var vector3 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count * 2));
+				var vector4 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count * 3));
+		
+				resultVector += vector1;
+				resultVector += vector2;
+				resultVector += vector3;
+				resultVector += vector4;
+		
+				index += Vector64<T>.Count * 4;
+				length -= Vector64<T>.Count * 4;
+			}
+		
+			while (length > Vector64<T>.Count)
+			{
+				resultVector += Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+		
+				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
+			}
+		
+			resultVector += Vector64.LoadAligned(pointer + index);
+		
+			return Vector64.Sum(resultVector);
 		}
 
-		while ((uint)index < (uint)length)
-		{
-			sum += first;
+		var result = T.Zero;
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+		while (length > 0)
+		{
+			result += Unsafe.Add(ref first, index);
+
+			length--;
 			index++;
 		}
 
-		return sum;
+		return result;
 	}
 
 	/// <summary>
@@ -209,9 +380,9 @@ public static partial class Math
 	/// <param name="first">reference to the first element of the numbers to get the average of</param>
 	/// <param name="length">the length of the numbers</param>
 	/// <returns>returns the average value</returns>
-	internal static T Average<T>(ref T first, int length) where T : struct, INumber<T>
+	internal static T Average<T>(ref T first, int length) where T : unmanaged, INumber<T> 
 	{
-		return Sum(ref first, length) / T.CreateTruncating(length);
+		return Sum(ref first, length) / ConvertNumber<int, T>(length);
 	}
 
 	/// <summary>
@@ -222,55 +393,100 @@ public static partial class Math
 	/// <param name="number">the number to add to every element</param>
 	internal static void Add<T>(ref T first, int length, T number) where T : struct, IAdditionOperators<T, T, T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			var scalarResult = Vector256.Create(number);
+			var resultVector = Vector256.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				Vector256.Add(Vector256.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
-
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
-				index += Vector256<T>.Count;
-			}
-		}
-
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
-		{
-			var scalarResult = Vector128.Create(number);
-
-			while ((uint)index < (uint)length)
-			{
-				Vector128.Add(Vector128.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
-
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
-				index += Vector128<T>.Count;
-			}
-		}
-
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
-		{
-			var scalarResult = Vector64.Create(number);
-
-			while ((uint)index < (uint)length)
-			{
-				Vector64.Add(Vector64.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 				
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-				index += Vector64<T>.Count;
+				var resultVector1 = Vector256.Add(vector1, resultVector);
+				var resultVector2 = Vector256.Add(vector2, resultVector);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				Vector256.Add(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		if (Vector128IsSupported<T>())
 		{
-			first += number;
+			var resultVector = Vector128.Create(number);
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			while (length >= Vector128<T>.Count * 2)
+			{
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				var resultVector1 = Vector128.Add(vector1, resultVector);
+				var resultVector2 = Vector128.Add(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				Vector128.Add(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
+			}
+		}
+
+		if (Vector64IsSupported<T>())
+		{
+			var resultVector = Vector64.Create(number);
+
+			while (length >= Vector64<T>.Count * 2)
+			{
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				var resultVector1 = Vector64.Add(vector1, resultVector);
+				var resultVector2 = Vector64.Add(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				Vector64.Add(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
+			}
+		}
+
+		while (length > 0)
+		{
+			Unsafe.Add(ref first, index) += number;
+
+			length--;
 			index++;
 		}
 	}
@@ -283,55 +499,100 @@ public static partial class Math
 	/// <param name="number"></param>
 	internal static void Subtract<T>(ref T first, int length, T number) where T : struct, ISubtractionOperators<T, T, T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			var scalarResult = Vector256.Create(number);
+			var resultVector = Vector256.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				Vector256.Subtract(Vector256.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				var resultVector1 = Vector256.Subtract(vector1, resultVector);
+				var resultVector2 = Vector256.Subtract(vector2, resultVector);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				Vector256.Subtract(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			var scalarResult = Vector128.Create(number);
+			var resultVector = Vector128.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				Vector128.Subtract(Vector128.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				var resultVector1 = Vector128.Subtract(vector1, resultVector);
+				var resultVector2 = Vector128.Subtract(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				Vector128.Subtract(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			var scalarResult = Vector64.Create(number);
+			var resultVector = Vector64.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				Vector64.Subtract(Vector64.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				var resultVector1 = Vector64.Subtract(vector1, resultVector);
+				var resultVector2 = Vector64.Subtract(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				Vector64.Subtract(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first -= number;
+			Unsafe.Add(ref first, index) -= number;
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			length--;
 			index++;
 		}
 	}
@@ -344,55 +605,100 @@ public static partial class Math
 	/// <param name="number">the number to multiply the numbers with</param>
 	internal static void Multiply<T>(ref T first, int length, T number) where T : struct, IMultiplyOperators<T, T, T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			var scalarResult = Vector256.Create(number);
+			var resultVector = Vector256.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				Vector256.Multiply(Vector256.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				var resultVector1 = Vector256.Multiply(vector1, resultVector);
+				var resultVector2 = Vector256.Multiply(vector2, resultVector);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
-				index += Vector128<T>.Count;
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				Vector256.Multiply(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			var scalarResult = Vector128.Create(number);
+			var resultVector = Vector128.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				Vector128.Multiply(Vector128.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				var resultVector1 = Vector128.Multiply(vector1, resultVector);
+				var resultVector2 = Vector128.Multiply(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				Vector128.Multiply(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			var scalarResult = Vector64.Create(number);
+			var resultVector = Vector64.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				Vector64.Multiply(Vector64.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				var resultVector1 = Vector64.Multiply(vector1, resultVector);
+				var resultVector2 = Vector64.Multiply(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				Vector64.Multiply(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first *= number;
+			Unsafe.Add(ref first, index) *= number;
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			length--;
 			index++;
 		}
 	}
@@ -405,123 +711,102 @@ public static partial class Math
 	/// <param name="number">the number to divide the numbers with</param>
 	internal static void Divide<T>(ref T first, int length, T number) where T : struct, IDivisionOperators<T, T, T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			var scalarResult = Vector256.Create(number);
+			var resultVector = Vector256.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				Vector256.Divide(Vector256.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				var resultVector1 = Vector256.Divide(vector1, resultVector);
+				var resultVector2 = Vector256.Divide(vector2, resultVector);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				Vector256.Divide(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			var scalarResult = Vector128.Create(number);
+			var resultVector = Vector128.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				Vector128.Divide(Vector128.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				var resultVector1 = Vector128.Divide(vector1, resultVector);
+				var resultVector2 = Vector128.Divide(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				Vector128.Divide(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			var scalarResult = Vector64.Create(number);
+			var resultVector = Vector64.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				Vector64.Divide(Vector64.LoadUnsafe(ref first), scalarResult)
-					.StoreUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				var resultVector1 = Vector64.Divide(vector1, resultVector);
+				var resultVector2 = Vector64.Divide(vector2, resultVector);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				Vector64.Divide(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first /= number;
+			Unsafe.Add(ref first, index) /= number;
 
-			first = ref Unsafe.AddByteOffset(ref first, (IntPtr)Unsafe.SizeOf<T>());
+			length--;
 			index++;
 		}
-	}
-
-	/// <summary>
-	/// Divide the numbers with the given number
-	/// </summary>
-	/// <param name="first">reference to the first element of the numbers to compare</param>
-	/// /// <param name="second">reference to the first element of the second numbers to compare</param>
-	/// <param name="length">the length of the numbers</param>
-	/// <returns>the dot product</returns>
-	internal static T Dot<T>(ref T first, ref T second, int length) where T : struct, INumber<T>
-	{
-		var index = 0;
-		var sum = T.Zero;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
-		{
-			while ((uint)index < (uint)length)
-			{
-				sum += Vector256.Dot(
-					Vector256.LoadUnsafe(ref first), 
-					Vector256.LoadUnsafe(ref second));
-
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
-				second = ref Unsafe.Add(ref second, Vector256<T>.Count);
-				index += Vector256<T>.Count;
-			}
-		}
-
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
-		{
-			while ((uint)index < (uint)length)
-			{
-				sum += Vector128.Dot(
-					Vector128.LoadUnsafe(ref first), 
-					Vector128.LoadUnsafe(ref second));
-
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
-				second = ref Unsafe.Add(ref second, Vector128<T>.Count);
-				index += Vector128<T>.Count;
-			}
-		}
-
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
-		{
-			while ((uint)index < (uint)length)
-			{
-				sum += Vector64.Dot(
-					Vector64.LoadUnsafe(ref first), 
-					Vector64.LoadUnsafe(ref second));
-
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-				second = ref Unsafe.Add(ref second, Vector64<T>.Count);
-				index += Vector64<T>.Count;
-			}
-		}
-
-		while ((uint)index < (uint)length)
-		{
-			sum += first * second;
-
-			first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-			second = ref Unsafe.Add(ref second, Vector64<T>.Count);
-			index++;
-		}
-
-		return sum;
 	}
 
 	/// <summary>
@@ -532,49 +817,94 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void Sqrt<T>(ref T first, int length) where T : struct, IRootFunctions<T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				Vector256.Sqrt(Vector256.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				var resultVector1 = Vector256.Sqrt(vector1);
+				var resultVector2 = Vector256.Sqrt(vector2);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				Vector256.Sqrt(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				Vector128.Sqrt(Vector128.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				var resultVector1 = Vector128.Sqrt(vector1);
+				var resultVector2 = Vector128.Sqrt(vector2);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				Vector128.Sqrt(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				Vector64.Sqrt(Vector64.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				var resultVector1 = Vector64.Sqrt(vector1);
+				var resultVector2 = Vector64.Sqrt(vector2);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				Vector64.Sqrt(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first = Sqrt(first);
+			Unsafe.Add(ref first, index) = Sqrt(Unsafe.Add(ref first, index));
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 	}
@@ -587,55 +917,100 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void Sq<T>(ref T first, int length) where T : struct, IMultiplyOperators<T, T, T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				var vector = Vector256.LoadUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				var resultVector1 = Vector256.Multiply(vector1, vector1);
+				var resultVector2 = Vector256.Multiply(vector2, vector2);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 
-				Vector256.Multiply(vector, vector)
-					.StoreUnsafe(ref first);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+			while (length >= Vector256<T>.Count)
+			{
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				
+				Vector256.Multiply(vector1, vector1)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector256<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				var vector = Vector128.LoadUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				Vector128.Multiply(vector, vector)
-					.StoreUnsafe(ref first);
+				var resultVector1 = Vector128.Multiply(vector1, vector1);
+				var resultVector2 = Vector128.Multiply(vector2, vector2);
 
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+
+				Vector128.Multiply(vector1, vector1)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				var vector = Vector64.LoadUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
 
-				Vector64.Multiply(vector, vector)
-					.StoreUnsafe(ref first);
+				var resultVector1 = Vector64.Multiply(vector1, vector1);
+				var resultVector2 = Vector64.Multiply(vector2, vector2);
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+
+				index += Vector64<T>.Count * 2;
+				length -= Vector64<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+
+				Vector64.Multiply(vector1, vector1)
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first = Sq(first);
+			Unsafe.Add(ref first, index) = Sq(Unsafe.Add(ref first, index));
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 	}
@@ -648,49 +1023,94 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void Abs<T>(ref T first, int length) where T : struct, INumber<T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				Vector256.Abs(Vector256.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				var resultVector1 = Vector256.Abs(vector1);
+				var resultVector2 = Vector256.Abs(vector2);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				Vector256.Abs(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector256<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				Vector128.Abs(Vector128.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
+				var resultVector1 = Vector128.Abs(vector1);
+				var resultVector2 = Vector128.Abs(vector2);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				Vector128.Abs(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				Vector64.Abs(Vector64.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				var resultVector1 = Vector64.Abs(vector1);
+				var resultVector2 = Vector64.Abs(vector2);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+
+				index += Vector64<T>.Count * 2;
+				length -= Vector64<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				Vector64.Abs(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first = Abs(first);
+			Unsafe.Add(ref first, index) = Abs(Unsafe.Add(ref first, index));
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 	}
@@ -703,49 +1123,94 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void Floor(ref float first, int length)
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<float>() && length >= Vector256<float>.Count)
+		nint index = 0;
+		
+		if (Vector256.IsHardwareAccelerated)
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<float>.Count * 2)
 			{
-				Vector256.Floor(Vector256.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<float>.Count));
+				
+				var resultVector1 = Vector256.Floor(vector1);
+				var resultVector2 = Vector256.Floor(vector2);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<float>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<float>.Count);
+				index += Vector256<float>.Count * 2;
+				length -= Vector256<float>.Count * 2;
+			}
+
+			while (length >= Vector256<float>.Count)
+			{
+				Vector256.Floor(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector256<float>.Count;
+				length -= Vector256<float>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<float>() && length - index >= Vector128<float>.Count)
+		if (Vector128.IsHardwareAccelerated)
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<float>.Count * 2)
 			{
-				Vector128.Floor(Vector128.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<float>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<float>.Count);
+				var resultVector1 = Vector128.Floor(vector1);
+				var resultVector2 = Vector128.Floor(vector2);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<float>.Count));
+
+				index += Vector128<float>.Count * 2;
+				length -= Vector128<float>.Count * 2;
+			}
+
+			while (length >= Vector128<float>.Count)
+			{
+				Vector128.Floor(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector128<float>.Count;
+				length -= Vector128<float>.Count;
 			}
 		}
 
-		if (Vector64IsSupported<float>() && length - index >= Vector64<float>.Count)
+		if (Vector64.IsHardwareAccelerated)
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<float>.Count * 2)
 			{
-				Vector64.Floor(Vector64.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<float>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<float>.Count);
+				var resultVector1 = Vector64.Floor(vector1);
+				var resultVector2 = Vector64.Floor(vector2);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<float>.Count));
+
+				index += Vector64<float>.Count * 2;
+				length -= Vector64<float>.Count * 2;
+			}
+
+			while (length >= Vector64<float>.Count)
+			{
+				Vector64.Floor(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
 				index += Vector64<float>.Count;
+				length -= Vector64<float>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first = MathF.Floor(first);
+			Unsafe.Add(ref first, index) = MathF.Floor(Unsafe.Add(ref first, index));
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 	}
@@ -758,37 +1223,67 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
 	internal static void Floor(ref double first, int length)
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<double>() && length >= Vector256<double>.Count)
+		nint index = 0;
+		
+		if (Vector256.IsHardwareAccelerated)
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<double>.Count * 2)
 			{
-				Vector256.Floor(Vector256.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<double>.Count));
+				
+				var resultVector1 = Vector256.Floor(vector1);
+				var resultVector2 = Vector256.Floor(vector2);
+				
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<double>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<float>.Count);
-				index += Vector256<float>.Count;
+				index += Vector256<double>.Count * 2;
+				length -= Vector256<double>.Count * 2;
+			}
+
+			while (length >= Vector256<double>.Count)
+			{
+				Vector256.Floor(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector256<double>.Count;
+				length -= Vector256<double>.Count;
 			}
 		}
 
-		if (Vector128IsSupported<double>() && length - index >= Vector128<double>.Count)
+		if (Vector128.IsHardwareAccelerated)
 		{
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<double>.Count * 2)
 			{
-				Vector128.Floor(Vector128.LoadUnsafe(ref first))
-					.StoreUnsafe(ref first);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<double>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector128<float>.Count);
-				index += Vector128<float>.Count;
+				var resultVector1 = Vector128.Floor(vector1);
+				var resultVector2 = Vector128.Floor(vector2);
+
+				resultVector1.StoreUnsafe(ref Unsafe.Add(ref first, index));
+				resultVector2.StoreUnsafe(ref Unsafe.Add(ref first, index + Vector256<double>.Count));
+
+				index += Vector128<double>.Count * 2;
+				length -= Vector128<double>.Count * 2;
+			}
+
+			while (length >= Vector128<double>.Count)
+			{
+				Vector128.Floor(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)))
+					.StoreUnsafe(ref Unsafe.Add(ref first, index));
+
+				index += Vector128<double>.Count;
+				length -= Vector128<double>.Count;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			first = System.Math.Floor(first);
+			Unsafe.Add(ref first, index) = System.Math.Floor(Unsafe.Add(ref first, index));
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 	}
@@ -802,69 +1297,105 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
 	internal static int Count<T>(ref T first, int length, T number) where T : struct, INumber<T>
 	{
-		var count = T.Zero;
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		var result = T.Zero;
+		
+		if (Vector256IsSupported<T>())
 		{
-			var scalarResult = Vector256.Create(number);
-			var result = Vector256<T>.Zero;
+			var resultVector = Vector256<T>.Zero;
+			var numberVector = Vector256.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				result += Vector256.Equals(Vector256.LoadUnsafe(ref first), scalarResult);
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				resultVector += Vector256.Equals(vector1, numberVector);
+				resultVector += Vector256.Equals(vector2, numberVector);
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				resultVector = Vector256.Add(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
 			}
 
-			count = -Vector256.Sum(result);
+			result += Vector256.Sum(resultVector);
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			var scalarResult = Vector128.Create(number);
-			var result = Vector128<T>.Zero;
+			var resultVector = Vector128<T>.Zero;
+			var numberVector = Vector128.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				result += Vector128.Equals(Vector128.LoadUnsafe(ref first), scalarResult);
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				resultVector += Vector128.Equals(vector1, numberVector);
+				resultVector += Vector128.Equals(vector2, numberVector);
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				resultVector = Vector128.Add(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
 
-			count = -Vector128.Sum(result);
+			result += Vector128.Sum(resultVector);
 		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
+		if (Vector64IsSupported<T>())
 		{
-			var scalarResult = Vector64.Create(number);
-			var result = Vector64<T>.Zero;
+			var resultVector = Vector64<T>.Zero;
+			var numberVector = Vector64.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector64<T>.Count * 2)
 			{
-				result += Vector64.Equals(Vector64.LoadUnsafe(ref first), scalarResult);
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
+				resultVector += Vector64.Equals(vector1, numberVector);
+				resultVector += Vector64.Equals(vector2, numberVector);
+
+				index += Vector64<T>.Count * 2;
+				length -= Vector64<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				resultVector = Vector64.Add(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
 				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
 			}
 
-			count = -Vector64.Sum(result);
+			result += Vector64.Sum(resultVector);
 		}
 
-		while ((uint)index < (uint)length)
+		while (length > 0)
 		{
-			if (first == number)
+			if (Unsafe.Add(ref first, index) == number)
 			{
-				count++;
+				result++;
 			}
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 
-		return ConvertNumber<T, int>(count);
+		return ConvertNumber<T, int>(result);
 	}
 
 	/// <summary>
@@ -876,155 +1407,113 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
 	internal static bool Contains<T>(ref T first, int length, T number) where T : struct, IEquatable<T>
 	{
-		var index = 0;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
+		nint index = 0;
+		
+		if (Vector256IsSupported<T>())
 		{
-			var scalarResult = Vector256.Create(number);
+			var resultVector = Vector256<T>.Zero;
+			var numberVector = Vector256.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector256<T>.Count * 2)
 			{
-				if (Vector256.EqualsAny(Vector256.LoadUnsafe(ref first), scalarResult))
-				{
-					return true;
-				}
+				var vector1 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector256<T>.Count));
+				
+				resultVector += Vector256.Equals(vector1, numberVector);
+				resultVector += Vector256.Equals(vector2, numberVector);
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				index += Vector256<T>.Count * 2;
+				length -= Vector256<T>.Count * 2;
+			}
+
+			while (length >= Vector256<T>.Count)
+			{
+				resultVector = Vector256.Add(Vector256.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
 				index += Vector256<T>.Count;
+				length -= Vector256<T>.Count;
+			}
+
+			if (resultVector != Vector256<T>.Zero)
+			{
+				return true;
 			}
 		}
 
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
+		if (Vector128IsSupported<T>())
 		{
-			var scalarResult = Vector128.Create(number);
+			var resultVector = Vector128<T>.Zero;
+			var numberVector = Vector128.Create(number);
 
-			while ((uint)index < (uint)length)
+			while (length >= Vector128<T>.Count * 2)
 			{
-				if (Vector128.EqualsAny(Vector128.LoadUnsafe(ref first), scalarResult))
-				{
-					return true;
-				}
+				var vector1 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector128<T>.Count));
 
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
+				resultVector += Vector128.Equals(vector1, numberVector);
+				resultVector += Vector128.Equals(vector2, numberVector);
+
+				index += Vector128<T>.Count * 2;
+				length -= Vector128<T>.Count * 2;
+			}
+
+			while (length >= Vector128<T>.Count)
+			{
+				resultVector = Vector128.Add(Vector128.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
 				index += Vector128<T>.Count;
+				length -= Vector128<T>.Count;
 			}
-		}
 
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
-		{
-			var scalarResult = Vector64.Create(number);
-
-			while ((uint)index < (uint)length)
+			if (resultVector != Vector128<T>.Zero)
 			{
-				if (Vector64.EqualsAny(Vector64.LoadUnsafe(ref first), scalarResult))
-				{
-					return true;
-				}
-
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-				index += Vector64<T>.Count;
+				return true;
 			}
 		}
 
-		while ((uint)index < (uint)length)
+		if (Vector64IsSupported<T>())
 		{
-			if (first.Equals(number))
+			var resultVector = Vector64<T>.Zero;
+			var numberVector = Vector64.Create(number);
+
+			while (length >= Vector64<T>.Count * 2)
+			{
+				var vector1 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index));
+				var vector2 = Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index + Vector64<T>.Count));
+
+				resultVector += Vector64.Equals(vector1, numberVector);
+				resultVector += Vector64.Equals(vector2, numberVector);
+
+				index += Vector64<T>.Count * 2;
+				length -= Vector64<T>.Count * 2;
+			}
+
+			while (length >= Vector64<T>.Count)
+			{
+				resultVector = Vector64.Add(Vector64.LoadUnsafe(ref Unsafe.Add(ref first, index)), resultVector);
+
+				index += Vector64<T>.Count;
+				length -= Vector64<T>.Count;
+			}
+
+			if (resultVector != Vector64<T>.Zero)
+			{
+				return true;
+			}
+		}
+
+		while (length > 0)
+		{
+			if (Unsafe.Add(ref first, index).Equals(number))
 			{
 				return true;
 			}
 
-			first = ref Unsafe.Add(ref first, 1);
+			length--;
 			index++;
 		}
 
 		return false;
-	}
-
-	/// <summary>
-	/// calculate the absolute value of the numbers
-	/// </summary>
-	/// <param name="first">reference to the first element of the numbers to get the absolute value of</param>
-	/// <param name="length">the length of the numbers</param>
-	[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-	internal static T StandardDeviation<T>(ref T first, int length) where T : struct, INumber<T>, IRootFunctions<T>
-	{
-		var index = 0;
-
-		var average = Average(ref first, length);
-		var sum = T.Zero;
-
-		if (Vector256IsSupported<T>() && length >= Vector256<T>.Count)
-		{
-			var resultVector = Vector256<T>.Zero;
-			var averageVector = Vector256.Create(average);
-
-			while ((uint)index < (uint)length)
-			{
-				var vector = Vector256.LoadUnsafe(ref first);
-
-				vector = Vector256.Subtract(vector, averageVector);
-				vector = Vector256.Multiply(vector, vector);
-
-				resultVector = Vector256.Add(resultVector, vector);
-
-				first = ref Unsafe.Add(ref first, Vector256<T>.Count);
-				index += Vector256<T>.Count;
-			}
-
-			sum += Vector256.Sum(resultVector);
-		}
-
-		if (Vector128IsSupported<T>() && length - index >= Vector128<T>.Count)
-		{
-			var resultVector = Vector128<T>.Zero;
-			var averageVector = Vector128.Create(average);
-
-			while ((uint)index < (uint)length)
-			{
-				var vector = Vector128.LoadUnsafe(ref first);
-
-				vector = Vector128.Subtract(vector, averageVector);
-				vector = Vector128.Multiply(vector, vector);
-
-				resultVector = Vector128.Add(resultVector, vector);
-
-				first = ref Unsafe.Add(ref first, Vector128<T>.Count);
-				index += Vector128<T>.Count;
-			}
-
-			sum += Vector128.Sum(resultVector);
-		}
-
-		if (Vector64IsSupported<T>() && length - index >= Vector64<T>.Count)
-		{
-			var resultVector = Vector64<T>.Zero;
-			var averageVector = Vector64.Create(average);
-
-			while ((uint)index < (uint)length)
-			{
-				var vector = Vector64.LoadUnsafe(ref first);
-
-				vector = Vector64.Subtract(vector, averageVector);
-				vector = Vector64.Multiply(vector, vector);
-
-				resultVector = Vector64.Add(resultVector, vector);
-
-				first = ref Unsafe.Add(ref first, Vector64<T>.Count);
-				index += Vector64<T>.Count;
-			}
-
-			sum += Vector64.Sum(resultVector);
-		}
-
-		while ((uint)index < (uint)length)
-		{
-			sum += Sq(first - average);
-
-			first = ref Unsafe.Add(ref first, 1);
-			index++;
-		}
-
-		return Sqrt(sum / ConvertNumber<int, T>(length));
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
