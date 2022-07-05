@@ -1,8 +1,9 @@
-﻿using System.Runtime.Versioning;
+﻿using System.Numerics;
+using System.Runtime.Versioning;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using BenchmarkDotNet.Running;
-using CCreative;
+using Vector = CCreative.Vector;
 
 [assembly: RequiresPreviewFeatures]
 public static class Program
@@ -10,48 +11,36 @@ public static class Program
 	public static void Main()
 	{
 		BenchmarkRunner.Run<SimdTest>();
+		//Vector.Add(new Vector(1, 2, 3), new Vector(4, 5, 6), out var result);
+		
+		//Console.WriteLine(result);
 	}
 }
 
 // [MemoryDiagnoser]
-[ShortRunJob]
 // [DisassemblyDiagnoser(exportHtml: true, printSource: true)]
+// [ShortRunJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 public class SimdTest
 {
-	private static float[] numbers;
+	private Vector3 v31 = new Vector3(1, 2, 3);
+	private Vector3 v32 = new Vector3(4, 5, 6);
 
-	[Params(8, 64, 256, 1024, 4096, 16384)]
-	// [Params(0X7FFFFFC7)]
-	public int amount;
+	private Vector v1 = new Vector(1, 2, 3);
+	private Vector v2 = new Vector(4, 5, 6);
 
-	[GlobalSetup]
-	public void GlobalSetup()
-	{
-		numbers = new float[amount];
+	private Vector result;
+	private Vector3 result3;
 
-		for (var i = 0; i < numbers.Length; i++)
-		{
-			numbers[i] = i;
-		}
-	}
-	
 	[Benchmark]
-	public float Base()
+	public void CCreative()
 	{
-		float result = 0;
-		
-		for (var i = 0; i < numbers.Length; i++)
-		{
-			result += numbers[i];
-		}
-		
-		return result;
+		Vector.Add(v1, v2, out result);
 	}
 
 	[Benchmark(Baseline = true)]
-	public float CCreative()
+	public void Microsoft()
 	{
-		return numbers.Sum();
+		result3 = v31 + v32;
 	}
 }

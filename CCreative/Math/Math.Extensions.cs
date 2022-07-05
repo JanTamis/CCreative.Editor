@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using SixLabors.ImageSharp.Processing;
 
 namespace CCreative;
 
@@ -19,119 +20,75 @@ public static partial class Math
 
 	public static int Count<T>(this T[] numbers, T number) where T : IEquatable<T>
 	{
-		if (Unsafe.SizeOf<T>() == sizeof(byte))
-		{
-			return Count(ref Unsafe.As<T, byte>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, byte>(ref number));
-		}
+		ArgumentNullException.ThrowIfNull(numbers);
 
-		if (Unsafe.SizeOf<T>() == sizeof(ushort))
-		{
-			return Count(ref Unsafe.As<T, ushort>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ushort>(ref number));
-		}
+		var length = numbers!.Length;
+		ref var pointer = ref GetReference(numbers);
 
-		if (Unsafe.SizeOf<T>() == sizeof(uint))
+		return Unsafe.SizeOf<T>() switch
 		{
-			return Count(ref Unsafe.As<T, uint>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, uint>(ref number));
-		}
+			sizeof(byte) => Count(ref Unsafe.As<T, byte>(ref pointer), length, Unsafe.As<T, byte>(ref number)),
+			sizeof(short) => Count(ref Unsafe.As<T, short>(ref pointer), length, Unsafe.As<T, short>(ref number)),
+			sizeof(int) => Count(ref Unsafe.As<T, int>(ref pointer), length, Unsafe.As<T, int>(ref number)),
+			sizeof(long) => Count(ref Unsafe.As<T, long>(ref pointer), length, Unsafe.As<T, long>(ref number)),
+			_ => SoftwareFallback(ref pointer),
+		};
 
-		if (Unsafe.SizeOf<T>() == sizeof(ulong))
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		int SoftwareFallback(ref T pointer)
 		{
-			return Count(ref Unsafe.As<T, ulong>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ulong>(ref number));
-		}
+			var index = 0;
+			var count = 0;
 
-		var index = 0;
-		var count = 0;
-		
-		ref var first = ref GetReference(numbers);
-
-		while (index < numbers.Length)
-		{
-			if (first.Equals(number))
+			while (index < length)
 			{
-				count++;
+				if (pointer.Equals(number))
+				{
+					count++;
+				}
+
+				pointer = ref Unsafe.Add(ref pointer, (IntPtr)Unsafe.SizeOf<T>());
+				index++;
 			}
 
-			first = ref Unsafe.Add(ref first, (IntPtr)Unsafe.SizeOf<T>());
-			index++;
+			return count;
 		}
-
-		return count;
 	}
 
 	public static bool Contains<T>(this T[] numbers, T number) where T : IEquatable<T>
 	{
-		if (Unsafe.SizeOf<T>() == sizeof(byte))
+		ArgumentNullException.ThrowIfNull(numbers);
+
+		var length = numbers!.Length;
+		ref var pointer = ref GetReference(numbers);
+
+		return Unsafe.SizeOf<T>() switch
 		{
-			return Contains(ref Unsafe.As<T, byte>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, byte>(ref number));
-		}
-		
-		if (Unsafe.SizeOf<T>() == sizeof(ushort))
+			sizeof(byte) => Contains(ref Unsafe.As<T, byte>(ref pointer), length, Unsafe.As<T, byte>(ref number)),
+			sizeof(short) => Contains(ref Unsafe.As<T, short>(ref pointer), length, Unsafe.As<T, short>(ref number)),
+			sizeof(int) => Contains(ref Unsafe.As<T, int>(ref pointer), length, Unsafe.As<T, int>(ref number)),
+			sizeof(long) => Contains(ref Unsafe.As<T, long>(ref pointer), length, Unsafe.As<T, long>(ref number)),
+			_ => SoftwareFallback(ref pointer),
+		};
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		bool SoftwareFallback(ref T pointer)
 		{
-			return Contains(ref Unsafe.As<T, ushort>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ushort>(ref number));
+			var index = 0;
+
+			while (length > 0)
+			{
+				if (number.Equals(Unsafe.Add(ref pointer, index)))
+				{
+					return true;
+				}
+
+				index += 1;
+				length--;
+			}
+
+			return false;
 		}
-		
-		if (Unsafe.SizeOf<T>() == sizeof(uint))
-		{
-			return Contains(ref Unsafe.As<T, uint>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, uint>(ref number));
-		}
-		
-		if (Unsafe.SizeOf<T>() == sizeof(ulong))
-		{
-			return Contains(ref Unsafe.As<T, ulong>(ref GetReference(numbers)), numbers.Length, Unsafe.As<T, ulong>(ref number));
-		}
-
-		var length = numbers.Length;
-		var index = 0;
-		ref var first = ref GetReference(numbers);
-
-		while (length >= 8)
-		{
-			if (number.Equals(Unsafe.Add(ref first, index)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 1)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 2)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 3)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 4)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 5)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 6)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 7)))
-				return true;
-
-			length -= 8;
-			index += 8;
-		}
-
-		while (length >= 4)
-		{
-			if (number.Equals(Unsafe.Add(ref first, index)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 1)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 2)))
-				return true;
-			if (number.Equals(Unsafe.Add(ref first, index + 3)))
-				return true;
-
-			length -= 4;
-			index += 4;
-		}
-
-		while (length > 0)
-		{
-			if (number.Equals(Unsafe.Add(ref first, index)))
-				return true;
-
-			index += 1;
-			length--;
-		}
-
-		return false;
 	}
 
 	public static T Min<T>(this T[] numbers) where T : struct, INumber<T>, IMinMaxValue<T>

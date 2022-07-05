@@ -377,7 +377,7 @@ public static partial class PApplet
 		});
 	}
 
-	public static T? FromJSON<T>(string json)
+	public static T? FromJSON<T>([StringSyntax(StringSyntaxAttribute.Json)]string json)
 	{
 		return JsonSerializer.Deserialize<T>(json);
 	}
@@ -862,8 +862,6 @@ public static partial class PApplet
 		// return new PFont(font);
 		return null;
 	}
-
-
 
 	public static PFont LoadFont(string filename)
 	{

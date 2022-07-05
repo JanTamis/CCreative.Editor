@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using CCreative.Helpers;
 
@@ -60,8 +59,15 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Constrain<T>(T value, T low, T high) where T : IComparisonOperators<T, T>
 	{
-		if (value < low) return low;
-		if (value > high) return high;
+		if (value < low)
+		{
+			return low;
+		}
+
+		if (value > high)
+		{
+			return high;
+		}
 
 		return value;
 	}
@@ -86,9 +92,11 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Dist(params Vector[] points)
 	{
+		ArgumentNullException.ThrowIfNull(points);
+		
 		var d = 0f;
 
-		for (var i = 0; i < points.Length - 1; i++)
+		for (var i = 0; i < points!.Length - 1; i++)
 		{
 			var current = points[i];
 			var next = points[i + 1];
@@ -237,7 +245,8 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Map<T>(T value, T start1, T stop1, T start2, T stop2) where T : INumber<T>
 	{
-		return FusedMultiplyAdd((value - start1) / (stop1 - start1), stop2 - start2, start2);
+		return (value - start1) / (stop1 - start1) * (stop2 - start2) + start2;
+		// return FusedMultiplyAdd((value - start1) / (stop1 - start1), stop2 - start2, start2);
 	}
 
 	/// <summary>
@@ -248,7 +257,7 @@ public static partial class Math
 	/// <param name="stop">upper bound of the value's current range</param>
 	/// <returns>the normalized value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Norm<T>(T value, T start, T stop) where T : IFloatingPointIeee754<T>
+	public static T Norm<T>(T value, T start, T stop) where T : IFloatingPoint<T>
 	{
 		return (value - start) / (stop - start);
 	}
@@ -297,33 +306,40 @@ public static partial class Math
 		return T.ReciprocalEstimate(x);
 	}
 
-	/// <summary>
-	/// Calculates the log2 of <see cref="x"/>
-	/// </summary>
-	/// <param name="x">number to find the log2 of</param>
-	/// <returns>returns the log2 of <see cref="x"/></returns>
+	/// <summary>Computes the log2 of a value.</summary>
+	/// <param name="value">The value whose log2 is to be computed.</param>
+	/// <returns>The log2 of <paramref name="value" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Log2<T>(T x) where T : IBinaryNumber<T>
+	public static TSelf Log2<TSelf>(TSelf x) where TSelf : IBinaryNumber<TSelf>
 	{
-		return T.Log2(x);
+		return TSelf.Log2(x);
 	}
 
+	/// <summary>Computes the natural (<c>base-E</c>) logarithm of a value.</summary>
+	/// <param name="x">The value whose natural logarithm is to be computed.</param>
+	/// <returns><c>log<sub>e</sub>(<paramref name="x" />)</c></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Log<T>(T x) where T : ILogarithmicFunctions<T>
+	public static TSelf Log<TSelf>(TSelf x) where TSelf : ILogarithmicFunctions<TSelf>
 	{
-		return T.Log(x);
+		return TSelf.Log(x);
 	}
 
+	/// <summary>Computes the sine of a value.</summary>
+	/// <param name="x">The value, in radians, whose sine is to be computed.</param>
+	/// <returns>The sine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sin<T>(T x) where T : ITrigonometricFunctions<T>
+	public static TSelf Sin<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
 	{
-		return T.Sin(x);
+		return TSelf.Sin(x);
 	}
-	
+
+	/// <summary>Computes the cosine of a value.</summary>
+	/// <param name="x">The value, in radians, whose cosine is to be computed.</param>
+	/// <returns>The cosine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Cos<T>(T x) where T : ITrigonometricFunctions<T>
+	public static TSelf Cos<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
 	{
-		return T.Cos(x);
+		return TSelf.Cos(x);
 	}
 	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -337,41 +353,61 @@ public static partial class Math
 	{
 		return System.Math.SinCos(x);
 	}
-	
+
+	/// <summary>Computes the tangent of a value.</summary>
+	/// <param name="x">The value, in radians, whose tangent is to be computed.</param>
+	/// <returns>The tangent of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Tan<T>(T x) where T : ITrigonometricFunctions<T>
+	public static TSelf Tan<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
 	{
-		return T.Tan(x);
-	}
-	
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Asin<T>(T x) where T : ITrigonometricFunctions<T>
-	{
-		return T.Asin(x);
-	}
-	
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Acos<T>(T x) where T : ITrigonometricFunctions<T>
-	{
-		return T.Acos(x);
-	}
-	
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Atan<T>(T x) where T : ITrigonometricFunctions<T>
-	{
-		return T.Atan(x);
-	}
-	
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Atan2<T>(T y, T x) where T : ITrigonometricFunctions<T>
-	{
-		return T.Atan2(y, x);
+		return TSelf.Tan(x);
 	}
 
+	/// <summary>Computes the arc-sine of a value.</summary>
+	/// <param name="x">The value, in radians, whose arc-sine is to be computed.</param>
+	/// <returns>The arc-sine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Abs<T>(T x) where T : INumber<T>
+	public static TSelf Asin<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
 	{
-		return T.Abs(x);
+		return TSelf.Asin(x);
+	}
+
+	/// <summary>Computes the arc-cosine of a value.</summary>
+	/// <param name="x">The value, in radians, whose arc-cosine is to be computed.</param>
+	/// <returns>The arc-cosine of <paramref name="x" />.</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static TSelf Acos<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	{
+		return TSelf.Acos(x);
+	}
+
+	/// <summary>Computes the arc-tangent of a value.</summary>
+	/// <param name="x">The value, in radians, whose arc-tangent is to be computed.</param>
+	/// <returns>The arc-tangent of <paramref name="x" />.</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static TSelf Atan<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	{
+		return TSelf.Atan(x);
+	}
+
+	/// <summary>Computes the arc-tangent of the quotient of two values.</summary>
+	/// <param name="y">The y-coordinate of a point.</param>
+	/// <param name="x">The x-coordinate of a point.</param>
+	/// <returns>The arc-tangent of <paramref name="y" /> divided-by <paramref name="x" />.</returns>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static TSelf Atan2<TSelf>(TSelf y, TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	{
+		return TSelf.Atan2(y, x);
+	}
+
+	/// <summary>Computes the absolute of a value.</summary>
+	/// <param name="value">The value for which to get its absolute.</param>
+	/// <returns>The absolute of <paramref name="value" />.</returns>
+	/// <exception cref="OverflowException">The absolute of <paramref name="value" /> is not representable by <typeparamref name="TSelf" />.</exception>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static TSelf Abs<TSelf>(TSelf value) where TSelf : INumber<TSelf>
+	{
+		return TSelf.Abs(value);
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -381,7 +417,7 @@ public static partial class Math
 
 		if (number > fact)
 		{
-			for (var k = T.CreateChecked(2); k <= number; k++)
+			for (var k = T.One + T.One; k <= number; k++)
 			{
 				fact *= k;
 			}
@@ -396,19 +432,33 @@ public static partial class Math
 		return (quotient, FusedMultiplySubtract(quotient, right, left));
 	}
 
-	public static T MinMagnitude<T>(T x, T y) where T : INumber<T>
+	/// <summary>Compares two values to compute which is lesser.</summary>
+	/// <param name="x">The value to compare with <paramref name="y" />.</param>
+	/// <param name="y">The value to compare with <paramref name="x" />.</param>
+	/// <returns><paramref name="x" /> if it is less than <paramref name="y" />; otherwise, <paramref name="y" />.</returns>
+	/// <remarks>For <see cref="IFloatingPointIeee754{TSelf}" /> this method matches the IEEE 754:2019 <c>minimumMagnitude</c> function. This requires NaN inputs to be propagated back to the caller and for <c>-0.0</c> to be treated as less than <c>+0.0</c>.</remarks>
+	public static TSelf MinMagnitude<TSelf>(TSelf x, TSelf y) where TSelf : INumber<TSelf>
 	{
-		return T.MinMagnitude(x, y);
+		return TSelf.MinMagnitude(x, y);
 	}
 
-	public static T MaxMagnitude<T>(T x, T y) where T : INumber<T>
+	/// <summary>Compares two values to compute which is greater.</summary>
+	/// <param name="x">The value to compare with <paramref name="y" />.</param>
+	/// <param name="y">The value to compare with <paramref name="x" />.</param>
+	/// <returns><paramref name="x" /> if it is greater than <paramref name="y" />; otherwise, <paramref name="y" />.</returns>
+	/// <remarks>For <see cref="IFloatingPointIeee754{TSelf}" /> this method matches the IEEE 754:2019 <c>maximumMagnitude</c> function. This requires NaN inputs to be propagated back to the caller and for <c>-0.0</c> to be treated as less than <c>+0.0</c>.</remarks>
+	public static TSelf MaxMagnitude<TSelf>(TSelf x, TSelf y) where TSelf : INumber<TSelf>
 	{
-		return T.MaxMagnitude(x, y);
+		return TSelf.MaxMagnitude(x, y);
 	}
 
-	public static TFloat ScaleB<TFloat>(TFloat x, int n) where TFloat : IFloatingPointIeee754<TFloat>
+	/// <summary>Computes the product of a value and its base-radix raised to the specified power.</summary>
+	/// <param name="x">The value which base-radix raised to the power of <paramref name="n" /> multiplies.</param>
+	/// <param name="n">The value to which base-radix is raised before multiplying <paramref name="x" />.</param>
+	/// <returns>The product of <paramref name="x" /> and base-radix raised to the power of <paramref name="n" />.</returns>
+	public static TSelf ScaleB<TSelf>(TSelf x, int n) where TSelf : IFloatingPointIeee754<TSelf>
 	{
-		return TFloat.ScaleB(x, n);
+		return TSelf.ScaleB(x, n);
 	}
 
 	#endregion
@@ -566,92 +616,6 @@ public static partial class Math
 		return degrees * (T.Pi / T.CreateChecked(180));
 	}
 
-	/// <summary>
-	/// Measures the time it takes to execute <paramref name="action"/>
-	/// </summary>
-	/// <param name="action">the action to measure</param>
-	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
-	/// <returns>the time it took to execute the action</returns>
-	/// <remarks>note: the method will be called multiple times</remarks>
-	public static TimeSpan Measure(Action? action, bool useWarmup = false)
-	{
-		for (var i = 0; useWarmup && i < 20; i++)
-		{
-			action?.Invoke();
-		}
-
-		var startingTimeStamp = Stopwatch.GetTimestamp();
-
-		action?.Invoke();
-
-		return Stopwatch.GetElapsedTime(startingTimeStamp);
-	}
-
-	/// <summary>
-	/// Measures the time it takes to execute <paramref name="action"/>
-	/// </summary>
-	/// <param name="action">the action to measure</param>
-	/// <param name="parameter">the parameter for <paramref name="action"/></param>
-	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
-	/// <returns>the time it took to execute the action</returns>
-	/// <remarks>note: the method will be called multiple times</remarks>
-	public static TimeSpan Measure<T>(Action<T>? action, T parameter, bool useWarmup = false)
-	{
-		for (var i = 0; useWarmup && i < 20; i++)
-		{
-			action?.Invoke(parameter);
-		}
-
-		var startingTimeStamp = Stopwatch.GetTimestamp();
-
-		action?.Invoke(parameter);
-
-		return Stopwatch.GetElapsedTime(startingTimeStamp);
-	}
-
-	/// <summary>
-	/// Measures the time it takes to execute <paramref name="action"/>
-	/// </summary>
-	/// <param name="action">the action to measure</param>
-	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
-	/// <returns>the time it took to execute the action</returns>
-	/// <remarks>note: the method will be called multiple times</remarks>
-	public static TimeSpan Measure<TResult>(Func<TResult>? action, bool useWarmup = false)
-	{
-		for (var i = 0; useWarmup && i < 20; i++)
-		{
-			action?.Invoke();
-		}
-
-		var startingTimeStamp = Stopwatch.GetTimestamp();
-
-		action?.Invoke();
-
-		return Stopwatch.GetElapsedTime(startingTimeStamp);
-	}
-
-	/// <summary>
-	/// Measures the time it takes to execute <paramref name="action"/>
-	/// </summary>
-	/// <param name="action">the action to measure</param>
-	/// <param name="parameter">the parameter for <paramref name="action"/></param>
-	/// <param name="useWarmup">use warmup to get a better accurate result (<paramref name="action"/> will be called multiple times)</param>
-	/// <returns>the time it took to execute the action</returns>
-	/// <remarks>note: the method will be called multiple times</remarks>
-	public static TimeSpan Measure<T, TResult>(Func<T, TResult>? action, T parameter, bool useWarmup = false)
-	{
-		for (var i = 0; useWarmup && i < 20; i++)
-		{
-			action?.Invoke(parameter);
-		}
-
-		var startingTimeStamp = Stopwatch.GetTimestamp();
-
-		action?.Invoke(parameter);
-
-		return Stopwatch.GetElapsedTime(startingTimeStamp);
-	}
-
 	#region Algorithms
 
 	/// <summary>
@@ -755,6 +719,8 @@ public static partial class Math
 	/// <returns>a random item from the list, if the list is empty de default value will be return</returns>
 	public static T? Random<T>(IEnumerable<T?> enumerable)
 	{
+		ArgumentNullException.ThrowIfNull(enumerable);
+
 		// https://stackoverflow.com/a/648240/6448711
 
 		if (enumerable is IList<T> list)
@@ -951,7 +917,7 @@ public static partial class Math
 			var a = RandomInt();
 			var b = RandomInt();
 			//The high bits of 0.9999999999999999999999999999m are 542101086.
-			var c = RandomInt(542101087);
+			var c = RandomInt(542_101_087);
 			sample = new Decimal(a, b, c, false, 28);
 		} while (sample >= 1m);
 
@@ -1030,6 +996,8 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static void Shuffle<T>(IList<T> list)
 	{
+		ArgumentNullException.ThrowIfNull(list);
+
 		for (var i = 0; i < list.Count; i++)
 		{
 			var j = RandomInt(i, list.Count);
@@ -1105,6 +1073,11 @@ public static partial class Math
 	/// <returns>the index of <paramref name="value"/></returns>
 	public static int InterpolationSearch<T>(IList<T> values, T value) where T : struct, INumber<T>, IConvertible
 	{
+		if (values == null)
+		{
+			throw new ArgumentNullException(nameof(values));
+		}
+
 		var lo = 0;
 		var hi = values.Count - 1;
 
@@ -1245,11 +1218,11 @@ public static partial class Math
 	/// <summary> Converts an int or a byte to a String containing the equivalent hexadecimal notation </summary>
 	/// <param name="value"> The value to convert to a hex value </param>
 	/// <returns> Returns the hex value </returns>
-	public static string Hex<T>(T value) where T : IBinaryInteger<T>, IConvertible
+	public static string Hex<T>(T value) where T : IBinaryInteger<T>
 	{
 		const string characters = "0123456789ABCDEF";
 
-		var buffer = new ValueStringBuilder(stackalloc char[256]);
+		using var buffer = new ValueStringBuilder(stackalloc char[256]);
 		var baseNumber = T.CreateChecked(characters.Length);
 
 		while (value > T.Zero)
@@ -1275,7 +1248,7 @@ public static partial class Math
 	/// <param name="value"> String to convert to an integer </param>
 	/// <returns> Returns a integer from a hexadecimal number </returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T UnHex<T>(ReadOnlySpan<char> value) where T : INumber<T>
+	public static T UnHex<T>(ReadOnlySpan<char> value) where T : INumberBase<T>
 	{
 		const string characters = "0123456789ABCDEF";
 
@@ -1284,7 +1257,7 @@ public static partial class Math
 
 		for (var i = value.Length - 1; i >= 0; i--)
 		{
-			var index = characters.IndexOf(char.ToUpper(value[i]));
+			var index = characters.IndexOf(char.ToUpper(value[i], CultureInfo.InvariantCulture));
 
 			if (index is -1)
 			{
@@ -1315,7 +1288,7 @@ public static partial class Math
 	/// <param name="value">the value to convert</param>
 	/// <returns>the converted value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int Int<T>(T value) where T : INumber<T>
+	public static int Int<T>(T value) where T : INumberBase<T>
 	{
 		return ConvertNumber<T, Int32>(value);
 	}
@@ -1399,7 +1372,7 @@ public static partial class Math
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	private static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumber<TNumber> where TOther : INumber<TOther>
+	private static TOther ConvertNumber<TNumber, TOther>(TNumber number) where TNumber : INumberBase<TNumber> where TOther : INumberBase<TOther>
 	{
 		return TOther.CreateChecked(number);
 	}

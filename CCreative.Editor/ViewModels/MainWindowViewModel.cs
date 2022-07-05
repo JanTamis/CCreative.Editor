@@ -116,7 +116,7 @@ namespace CCreative.Editor.ViewModels
 		{
 			IsRunning = true;
 
-			Task.Run(() => { compiler = new Compiler("Test", "Test", typeof(Vector).Assembly, typeof(object).Assembly, Assembly.Load("System.Runtime")); }).Wait();
+			Task.Run(() => { compiler = new Compiler("Test", "Test", typeof(Vector).Assembly, typeof(object).Assembly, Assembly.Load("System.Runtime"), Assembly.Load("System.Collections")); }).Wait();
 
 			IsRunning = false;
 			AddTab("Tab 1");

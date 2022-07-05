@@ -64,17 +64,17 @@ public struct Color : IEqualityOperators<Color, Color>
 		return GetHashCode().Equals(other.GetHashCode());
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public override bool Equals(object? obj)
+	{
+		return obj is Color clr && clr.Equals(this);
+	}
+
 	/// <inheritdoc />
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public override int GetHashCode()
 	{
 		return Unsafe.As<Color, Int32>(ref this);
-	}
-
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public override bool Equals(object? obj)
-	{
-		return obj is Color clr && clr.Equals(this);
 	}
 
 	[EditorBrowsable(EditorBrowsableState.Never)]

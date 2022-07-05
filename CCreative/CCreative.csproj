@@ -14,6 +14,7 @@
         <LangVersion>preview</LangVersion>
         <Nullable>enable</Nullable>
         <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+        <PublishTrimmed>true</PublishTrimmed>
 
         <PlatformTarget>AnyCPU</PlatformTarget>
         <DebugType>pdbonly</DebugType>
@@ -22,7 +23,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <NoWarn>1701;1702;0675;1591CA1822</NoWarn>
-        <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
+        <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>     
         <WarningLevel>5</WarningLevel>
         <DebugType>embedded</DebugType>
     </PropertyGroup>
@@ -32,6 +33,7 @@
         <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
         <Optimize>true</Optimize>
         <DebugType>embedded</DebugType>
+        <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
 
     <ItemGroup>
