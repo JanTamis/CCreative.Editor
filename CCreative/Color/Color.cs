@@ -3,11 +3,12 @@ using System.ComponentModel;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace CCreative;
 
 [StructLayout(LayoutKind.Sequential)]
-public struct Color : IEqualityOperators<Color, Color>
+public struct Color : IEqualityOperators<Color, Color, bool>
 {
 	/// <summary>
 	/// the blue component of the color
@@ -61,7 +62,7 @@ public struct Color : IEqualityOperators<Color, Color>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public bool Equals(Color other)
 	{
-		return GetHashCode().Equals(other.GetHashCode());
+		return GetHashCode() == other.GetHashCode();
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]

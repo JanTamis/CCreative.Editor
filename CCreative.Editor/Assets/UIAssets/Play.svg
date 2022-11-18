@@ -1,20 +1,27 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<svg width="48px" height="48px" viewBox="0 0 48 48" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <path d="M0 0L48 0L48 48L0 48L0 0Z" id="path_1" />
-    <clipPath id="mask_1">
-      <use xlink:href="#path_1" />
-    </clipPath>
-  </defs>
-  <g id="icons8_play">
-    <path d="M0 0L48 0L48 48L0 48L0 0Z" id="Background" fill="none" fill-rule="evenodd" stroke="none" />
-    <g clip-path="url(#mask_1)">
-      <path d="M3.449 0L0 1.72L0 18.561L29 18.561L29.989 16.853L3.449 0Z" transform="translate(10 5.439)" id="Polygon" fill="#0883D9" fill-rule="evenodd" stroke="none" />
-      <path d="M4 2L0 2C0 0.895 0.895 0 2 0C3.105 0 4 0.895 4 2L4 2Z" transform="translate(37 22)" id="Shape" fill="#0883D9" fill-rule="evenodd" stroke="none" />
-      <path d="M0 2.159C0 0.966617 0.966617 0 2.159 0C3.35138 0 4.318 0.966617 4.318 2.159C4.318 3.35138 3.35138 4.318 2.159 4.318C0.966617 4.318 0 3.35138 0 2.159Z" transform="translate(10 5)" id="Circle" fill="#0883D9" fill-rule="evenodd" stroke="none" />
-      <path d="M3.449 18.561L0 16.841L0 0L29 0L29.989 1.708L3.449 18.561Z" transform="translate(10 24)" id="Polygon" fill="#0370C8" fill-rule="evenodd" stroke="none" />
-      <path d="M4 0L0 0C0 1.105 0.895 2 2 2C3.105 2 4 1.105 4 0L4 0Z" transform="translate(37 24)" id="Shape" fill="#0370C8" fill-rule="evenodd" stroke="none" />
-      <path d="M0 2.159C0 0.966617 0.966617 0 2.159 0C3.35138 0 4.318 0.966617 4.318 2.159C4.318 3.35138 3.35138 4.318 2.159 4.318C0.966617 4.318 0 3.35138 0 2.159Z" transform="translate(10 38.682)" id="Circle" fill="#0370C8" fill-rule="evenodd" stroke="none" />
+<svg width="48px" height="48px" viewBox="0 0 48 48" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <path d="M0 0L48 0L48 48L0 48L0 0Z" id="path_1"/>
+        <clipPath id="mask_1">
+            <use xlink:href="#path_1"/>
+        </clipPath>
+    </defs>
+    <g id="icons8_play">
+        <path d="M0 0L48 0L48 48L0 48L0 0Z" id="Background" fill="none" fill-rule="evenodd" stroke="none"/>
+        <g clip-path="url(#mask_1)">
+            <path d="M3.449 0L0 1.72L0 18.561L29 18.561L29.989 16.853L3.449 0Z" transform="translate(10 5.439)"
+                  id="Polygon" fill="#0883D9" fill-rule="evenodd" stroke="none"/>
+            <path d="M4 2L0 2C0 0.895 0.895 0 2 0C3.105 0 4 0.895 4 2L4 2Z" transform="translate(37 22)" id="Shape"
+                  fill="#0883D9" fill-rule="evenodd" stroke="none"/>
+            <path d="M0 2.159C0 0.966617 0.966617 0 2.159 0C3.35138 0 4.318 0.966617 4.318 2.159C4.318 3.35138 3.35138 4.318 2.159 4.318C0.966617 4.318 0 3.35138 0 2.159Z"
+                  transform="translate(10 5)" id="Circle" fill="#0883D9" fill-rule="evenodd" stroke="none"/>
+            <path d="M3.449 18.561L0 16.841L0 0L29 0L29.989 1.708L3.449 18.561Z" transform="translate(10 24)"
+                  id="Polygon" fill="#0370C8" fill-rule="evenodd" stroke="none"/>
+            <path d="M4 0L0 0C0 1.105 0.895 2 2 2C3.105 2 4 1.105 4 0L4 0Z" transform="translate(37 24)" id="Shape"
+                  fill="#0370C8" fill-rule="evenodd" stroke="none"/>
+            <path d="M0 2.159C0 0.966617 0.966617 0 2.159 0C3.35138 0 4.318 0.966617 4.318 2.159C4.318 3.35138 3.35138 4.318 2.159 4.318C0.966617 4.318 0 3.35138 0 2.159Z"
+                  transform="translate(10 38.682)" id="Circle" fill="#0370C8" fill-rule="evenodd" stroke="none"/>
+        </g>
     </g>
-  </g>
 </svg>

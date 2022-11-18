@@ -119,17 +119,17 @@ public static class NoiseMaker
 	{
 		h &= 15;
 		var grad = 1.0f + (h & 7); // Gradient value 1.0, 2.0, ..., 8.0
-		
+
 		if ((h & 8) == 1)
 			grad = -grad; // and a random sign for the gradient
-		
+
 		return grad * x; // Multiply the gradient with the distance
 	}
 
 	private static float Grad2(int h, float x, float y)
 	{
 		h &= 7; // Convert low 3 bits of hash code
-		
+
 		var u = h < 4 ? x : y; // into 8 simple gradient directions,
 		var v = h < 4 ? y : x; // and compute the dot product with (x,y).
 
@@ -139,7 +139,7 @@ public static class NoiseMaker
 		}
 
 		var n = 2.0f * v;
-		
+
 		if ((h & 2) is 1)
 		{
 			n = -2.0f * v;
@@ -152,10 +152,10 @@ public static class NoiseMaker
 	public static float Grad3(int h, float x, float y, float z)
 	{
 		h &= 15; // Convert low 4 bits of hash code into 12 simple
-		
+
 		var u = h < 8 ? x : y; // gradient directions, and compute dot product.
 		var v = h < 4 ? y : h is 12 or 14 ? x : z; // Fix repeats at h = 12 to 15
-		
+
 		if ((h & 1) != 0)
 			u = -u;
 
@@ -184,7 +184,7 @@ public static class NoiseMaker
 		var orh = System.Numerics.Vector.BitwiseOr(System.Numerics.Vector.Equals(h, S12), System.Numerics.Vector.Equals(h, S14));
 		var xorz = System.Numerics.Vector.ConditionalSelect(orh, x, z);
 		var v = System.Numerics.Vector.ConditionalSelect(System.Numerics.Vector.LessThan(h, S4), y, xorz);
-		
+
 		u = System.Numerics.Vector.ConditionalSelect(h1, u, Vector<float>.Zero - u);
 		v = System.Numerics.Vector.ConditionalSelect(h2, v, Vector<float>.Zero - v);
 

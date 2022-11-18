@@ -293,7 +293,7 @@ internal static class PixelHelper
 			var yVal = y + (RandomInt(degree) - half);
 
 			if (xVal > 0 && xVal < pixelWidth && yVal > 0 && yVal < pixelHeight)
-			{	
+			{
 				var val = yVal * pixelWidth + xVal;
 
 				temp[i] = pixels[val];

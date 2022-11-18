@@ -1,0 +1,18 @@
+
+­csharpsquid:S1200"Split this class into smaller and more specialized ones to reduce its dependencies on other types from 40 to the maximum authorized 30 or less.(û½÷
+lcsharpsquid:S4018ª	"IRefactor this method to have parameters matching all the type parameters.(´Ï»øÿÿÿÿ
+gcsharpsquid:S4018Ù	"IRefactor this method to have parameters matching all the type parameters.(Ã€ß™
+gcsharpsquid:S4018¹
+"IRefactor this method to have parameters matching all the type parameters.(ã¹Íâ
+lcsharpsquid:S4018à
+"IRefactor this method to have parameters matching all the type parameters.(§éá†ıÿÿÿÿ
+^csharpsquid:S2360 "AUse the overloading mechanism instead of the optional parameters.(‘æ¨Y
+^csharpsquid:S2360 "AUse the overloading mechanism instead of the optional parameters.(‘æ¨Y
+jcsharpsquid:S3900
+"LRefactor this method to add validation of parameter 'value' before using it.(ªˆ„
+jcsharpsquid:S3900™
+"LRefactor this method to add validation of parameter 'value' before using it.(“½Ğ”
+\csharpsquid:S3717³"?Implement this method or throw 'NotSupportedException' instead.(ŒĞ
+\csharpsquid:S3717¼"?Implement this method or throw 'NotSupportedException' instead.(ŒĞ
+\csharpsquid:S3717Æ"?Implement this method or throw 'NotSupportedException' instead.(ŒĞ
+=csharpsquid:S1128" Remove this unnecessary 'using'.(ÜšÌ˜

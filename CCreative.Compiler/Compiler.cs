@@ -3,11 +3,13 @@ using System.Runtime.CompilerServices;
 using CCreative.Compilers.Enums;
 using CCreative.Compilers.Generators;
 using CCreative.Compilers.Models;
+using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Classification;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.QuickInfo;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.IO;
@@ -33,7 +35,12 @@ namespace CCreative.Compilers
 			workspace = new AdhocWorkspace(MefHostServices.DefaultHost);
 
 			var project = Solution.AddProject(name, assemblyName, "C#");
-			project = project.AddMetadataReferences(assemblies.Select(s => MetadataReference.CreateFromFile(s.Location)));
+
+			if (assemblies is not null)
+			{
+				project = project.AddMetadataReferences(assemblies.Select(s => MetadataReference.CreateFromFile(s.Location)));
+			}
+
 			project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.ConsoleApplication, allowUnsafe: true));
 			var document = project.AddDocument("Usings", "global using static CCreative.Math; global using static CCreative.PApplet; global using CCreative;");
 
@@ -139,20 +146,15 @@ namespace CCreative.Compilers
 		{
 			var document = GetDocument(id);
 
-			if (document is not null)
+			if (document is not null && CompletionService.GetService(document) is { } service)
 			{
-				var service = CompletionService.GetService(document);
+				var completions = await service.GetCompletionsAsync(document, position, cancellationToken: token);
 
-				if (service is not null)
+				if (completions is not null)
 				{
-					var completions = await service.GetCompletionsAsync(document, position, cancellationToken: token);
-
-					if (completions is not null)
+					foreach (var completion in completions.Items.DistinctBy(d => d.DisplayText))
 					{
-						foreach (var completion in completions.Items.DistinctBy(d => d.DisplayText))
-						{
-							yield return completion;
-						}
+						yield return completion;
 					}
 				}
 			}
@@ -161,7 +163,7 @@ namespace CCreative.Compilers
 		public async Task<CompletionChange?> GetChanges(DocumentId id, CompletionItem item, CancellationToken token = default)
 		{
 			var document = GetDocument(id);
-			CompletionChange change = null;
+			CompletionChange? change = null;
 
 			if (document is not null)
 			{

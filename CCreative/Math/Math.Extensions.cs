@@ -83,22 +83,12 @@ public static partial class Math
 					return true;
 				}
 
-				index += 1;
+				index++;
 				length--;
 			}
 
 			return false;
 		}
-	}
-
-	public static T Min<T>(this T[] numbers) where T : struct, INumber<T>, IMinMaxValue<T>
-	{
-		return Min(ref GetReference(numbers), numbers.Length);
-	}
-
-	public static T Max<T>(this T[] numbers) where T : struct, INumber<T>, IMinMaxValue<T>
-	{
-		return Max(ref GetReference(numbers), numbers.Length);
 	}
 
 	public static void Add<T>(this T[] numbers, T number) where T : struct, IAdditionOperators<T, T, T>

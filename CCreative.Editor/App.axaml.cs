@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Versioning;
 using System.Threading;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -8,6 +9,7 @@ using CCreative.Editor.Views;
 
 namespace CCreative.Editor
 {
+	[RequiresPreviewFeatures]
 	public class App : Application
 	{
 		public override void Initialize()

@@ -6,6 +6,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
@@ -18,6 +19,7 @@ using ReactiveUI;
 
 namespace CCreative.Editor.ViewModels
 {
+	[RequiresPreviewFeatures]
 	public class MainWindowViewModel : ViewModelBase, IDisposable
 	{
 		private TabViewModel _currentTab;
@@ -116,7 +118,7 @@ namespace CCreative.Editor.ViewModels
 		{
 			IsRunning = true;
 
-			Task.Run(() => { compiler = new Compiler("Test", "Test", typeof(Vector).Assembly, typeof(object).Assembly, Assembly.Load("System.Runtime"), Assembly.Load("System.Collections")); }).Wait();
+			Task.Run(() => compiler = new Compiler("Test", "Test", typeof(Vector).Assembly, typeof(object).Assembly, Assembly.Load("System.Runtime"), Assembly.Load("System.Collections"))).Wait();
 
 			IsRunning = false;
 			AddTab("Tab 1");
@@ -127,7 +129,7 @@ namespace CCreative.Editor.ViewModels
 			if (compiler is not null)
 			{
 				var tabViewModel = await DialogHost.DialogHost.Show(new AddTabViewModel());
-			
+
 				if (tabViewModel is AddTabViewModel model && !String.IsNullOrWhiteSpace(model.Name))
 				{
 					AddTab(model.Name);
@@ -141,10 +143,10 @@ namespace CCreative.Editor.ViewModels
 			{
 				var editor = TextEditorFactory.CreateTextEditor();
 				var id = compiler.CreateDocument(name);
-			
+
 				TextEditorFactory.RegisterEvents(editor, id, compiler);
 				TextEditorFactory.RegisterLayers(editor, id, compiler);
-			
+
 				Tabs.Add(new TabViewModel(name, editor, id));
 				CurrentTab = Tabs[^1];
 			}

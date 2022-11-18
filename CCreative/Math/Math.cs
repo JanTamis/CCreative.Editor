@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Numerics;
@@ -33,7 +32,7 @@ public static partial class Math
 	/// </summary>
 	/// <param name="number">number to round</param>
 	/// <returns>returns the rounded number</returns>
-	public static int Round<T>(T number) where T : IFloatingPoint<T>
+	public static int Round<T>(T number) where T : INumberBase<T>, IFloatingPoint<T>
 	{
 		return Int(T.Round(number));
 	}
@@ -44,7 +43,7 @@ public static partial class Math
 	/// <param name="number">number to round down</param>
 	/// <returns>the result of the calculation</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int Floor<T>(T number) where T : IFloatingPoint<T>
+	public static int Floor<T>(T number) where T : IFloatingPointIeee754<T>
 	{
 		return Int(T.Floor(number));
 	}
@@ -57,7 +56,7 @@ public static partial class Math
 	/// <param name="high">maximum limit</param>
 	/// <returns>the constraint value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Constrain<T>(T value, T low, T high) where T : IComparisonOperators<T, T>
+	public static T Constrain<T>(T value, T low, T high) where T : IComparisonOperators<T, T, bool>
 	{
 		if (value < low)
 		{
@@ -93,7 +92,7 @@ public static partial class Math
 	public static float Dist(params Vector[] points)
 	{
 		ArgumentNullException.ThrowIfNull(points);
-		
+
 		var d = 0f;
 
 		for (var i = 0; i < points!.Length - 1; i++)
@@ -184,6 +183,13 @@ public static partial class Math
 		return FusedMultiplyAdd(atm, stop - start, start);
 	}
 
+	public static T SmoothStep<T>(T start, T stop, T atm) where T : IFloatingPoint<T>
+	{
+		var x = T.Clamp((atm - start) / (stop - start), T.Zero, T.One);
+
+		return Cb(x) * (x * (x * T.CreateChecked(6) - T.CreateChecked(15)) + T.CreateChecked(10));
+	}
+
 	/// <summary>
 	/// Calculates the square root of the specified number
 	/// </summary>
@@ -191,7 +197,7 @@ public static partial class Math
 	/// <param name="number">the specified number</param>
 	/// <returns>the square root of <paramref name="number"/></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Sqrt<T>(T number) where T : IRootFunctions<T>
+	public static T Sqrt<T>(T number) where T : INumberBase<T>, IRootFunctions<T>
 	{
 		return T.Sqrt(number);
 	}
@@ -199,13 +205,22 @@ public static partial class Math
 	/// <summary>
 	/// Calculates the cube root of the specified number
 	/// </summary>
-	/// <typeparam name="T">the type of the floating point number</typeparam>
+	/// <typeparam name="TSelf">the type of the floating point number</typeparam>
 	/// <param name="number">the specified number</param>
 	/// <returns>the cube root of <paramref name="number"/></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Cbrt<T>(T number) where T : IRootFunctions<T>
+	public static TSelf Cbrt<TSelf>(TSelf number) where TSelf : INumberBase<TSelf>, IRootFunctions<TSelf>
 	{
-		return T.Cbrt(number);
+		return TSelf.Cbrt(number);
+	}
+
+	/// <summary>Computes the n-th root of a value.</summary>
+	/// <param name="x">The value whose <paramref name="n" />-th root is to be computed.</param>
+	/// <param name="n">The degree of the root to be computed.</param>
+	/// <returns>The <paramref name="n" />-th root of <paramref name="x" />.</returns>
+	public static TSelf Root<TSelf>(TSelf x, int n) where TSelf : INumberBase<TSelf>, IRootFunctions<TSelf>
+	{
+		return TSelf.RootN(x, n);
 	}
 
 	/// <summary>
@@ -216,7 +231,7 @@ public static partial class Math
 	/// <param name="exponent"></param>
 	/// <returns></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static T Pow<T>(T @base, T exponent) where T : IPowerFunctions<T>
+	public static T Pow<T>(T @base, T exponent) where T : INumberBase<T>, IPowerFunctions<T>
 	{
 		return T.Pow(@base, exponent);
 	}
@@ -307,8 +322,8 @@ public static partial class Math
 	}
 
 	/// <summary>Computes the log2 of a value.</summary>
-	/// <param name="value">The value whose log2 is to be computed.</param>
-	/// <returns>The log2 of <paramref name="value" />.</returns>
+	/// <param name="x">The value whose log2 is to be computed.</param>
+	/// <returns>The log2 of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static TSelf Log2<TSelf>(TSelf x) where TSelf : IBinaryNumber<TSelf>
 	{
@@ -319,7 +334,7 @@ public static partial class Math
 	/// <param name="x">The value whose natural logarithm is to be computed.</param>
 	/// <returns><c>log<sub>e</sub>(<paramref name="x" />)</c></returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Log<TSelf>(TSelf x) where TSelf : ILogarithmicFunctions<TSelf>
+	public static TSelf Log<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ILogarithmicFunctions<TSelf>
 	{
 		return TSelf.Log(x);
 	}
@@ -328,7 +343,7 @@ public static partial class Math
 	/// <param name="x">The value, in radians, whose sine is to be computed.</param>
 	/// <returns>The sine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Sin<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Sin<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ITrigonometricFunctions<TSelf>
 	{
 		return TSelf.Sin(x);
 	}
@@ -337,17 +352,17 @@ public static partial class Math
 	/// <param name="x">The value, in radians, whose cosine is to be computed.</param>
 	/// <returns>The cosine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Cos<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Cos<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ITrigonometricFunctions<TSelf>
 	{
 		return TSelf.Cos(x);
 	}
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static (float Sin, float Cos) SinCos(float x)
 	{
 		return MathF.SinCos(x);
 	}
-	
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static (double Sin, double Cos) SinCos(double x)
 	{
@@ -358,7 +373,7 @@ public static partial class Math
 	/// <param name="x">The value, in radians, whose tangent is to be computed.</param>
 	/// <returns>The tangent of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Tan<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Tan<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ITrigonometricFunctions<TSelf>
 	{
 		return TSelf.Tan(x);
 	}
@@ -367,7 +382,7 @@ public static partial class Math
 	/// <param name="x">The value, in radians, whose arc-sine is to be computed.</param>
 	/// <returns>The arc-sine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Asin<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Asin<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ITrigonometricFunctions<TSelf>
 	{
 		return TSelf.Asin(x);
 	}
@@ -376,7 +391,7 @@ public static partial class Math
 	/// <param name="x">The value, in radians, whose arc-cosine is to be computed.</param>
 	/// <returns>The arc-cosine of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Acos<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Acos<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ITrigonometricFunctions<TSelf>
 	{
 		return TSelf.Acos(x);
 	}
@@ -385,7 +400,7 @@ public static partial class Math
 	/// <param name="x">The value, in radians, whose arc-tangent is to be computed.</param>
 	/// <returns>The arc-tangent of <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Atan<TSelf>(TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Atan<TSelf>(TSelf x) where TSelf : INumberBase<TSelf>, ITrigonometricFunctions<TSelf>
 	{
 		return TSelf.Atan(x);
 	}
@@ -395,7 +410,7 @@ public static partial class Math
 	/// <param name="x">The x-coordinate of a point.</param>
 	/// <returns>The arc-tangent of <paramref name="y" /> divided-by <paramref name="x" />.</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static TSelf Atan2<TSelf>(TSelf y, TSelf x) where TSelf : ITrigonometricFunctions<TSelf>
+	public static TSelf Atan2<TSelf>(TSelf y, TSelf x) where TSelf : IBinaryFloatingPointIeee754<TSelf>
 	{
 		return TSelf.Atan2(y, x);
 	}
@@ -436,7 +451,6 @@ public static partial class Math
 	/// <param name="x">The value to compare with <paramref name="y" />.</param>
 	/// <param name="y">The value to compare with <paramref name="x" />.</param>
 	/// <returns><paramref name="x" /> if it is less than <paramref name="y" />; otherwise, <paramref name="y" />.</returns>
-	/// <remarks>For <see cref="IFloatingPointIeee754{TSelf}" /> this method matches the IEEE 754:2019 <c>minimumMagnitude</c> function. This requires NaN inputs to be propagated back to the caller and for <c>-0.0</c> to be treated as less than <c>+0.0</c>.</remarks>
 	public static TSelf MinMagnitude<TSelf>(TSelf x, TSelf y) where TSelf : INumber<TSelf>
 	{
 		return TSelf.MinMagnitude(x, y);
@@ -446,7 +460,6 @@ public static partial class Math
 	/// <param name="x">The value to compare with <paramref name="y" />.</param>
 	/// <param name="y">The value to compare with <paramref name="x" />.</param>
 	/// <returns><paramref name="x" /> if it is greater than <paramref name="y" />; otherwise, <paramref name="y" />.</returns>
-	/// <remarks>For <see cref="IFloatingPointIeee754{TSelf}" /> this method matches the IEEE 754:2019 <c>maximumMagnitude</c> function. This requires NaN inputs to be propagated back to the caller and for <c>-0.0</c> to be treated as less than <c>+0.0</c>.</remarks>
 	public static TSelf MaxMagnitude<TSelf>(TSelf x, TSelf y) where TSelf : INumber<TSelf>
 	{
 		return TSelf.MaxMagnitude(x, y);
@@ -568,11 +581,6 @@ public static partial class Math
 	/// <summary>
 	/// Adjusts the character and level of detail produced by the Perlin noise function
 	/// </summary>
-	/// <remarks>
-	/// Similar to harmonics in physics, noise is computed over several octaves. Lower octaves contribute more to the output signal and as such define the overall intensity of the noise, whereas higher octaves create finer-grained details in the noise sequence.
-	///
-	/// By default, noise is computed over 4 octaves with each octave contributing exactly half than its predecessor, starting at 50% strength for the first octave.This falloff amount can be changed by adding an additional function parameter.For example, a falloff factor of 0.75 means each octave will now have 75% impact (25% less) of the previous lower octave.While any number between 0.0 and 1.0 is valid, note that values greater than 0.5 may result in noise() returning values greater than 1.0
-	/// </remarks>
 	/// <param name="lod">number of octaves to be used by the noise</param>
 	public static void NoiseDetail(int lod)
 	{
@@ -582,11 +590,6 @@ public static partial class Math
 	/// <summary>
 	/// Adjusts the character and level of detail produced by the Perlin noise function
 	/// </summary>
-	/// <remarks>
-	/// Similar to harmonics in physics, noise is computed over several octaves. Lower octaves contribute more to the output signal and as such define the overall intensity of the noise, whereas higher octaves create finer-grained details in the noise sequence.
-	///
-	/// By default, noise is computed over 4 octaves with each octave contributing exactly half than its predecessor, starting at 50% strength for the first octave.This falloff amount can be changed by adding an additional function parameter.For example, a falloff factor of 0.75 means each octave will now have 75% impact (25% less) of the previous lower octave.While any number between 0.0 and 1.0 is valid, note that values greater than 0.5 may result in noise() returning values greater than 1.0
-	/// </remarks>
 	/// <param name="lod">number of octaves to be used by the noise</param>
 	/// <param name="falloff">falloff factor for each octave</param>
 	public static void NoiseDetail(int lod, float falloff)
@@ -631,7 +634,7 @@ public static partial class Math
 			{
 				var value = random.Next(33, 127);
 
-				// the code 33 and 126 are in the range of ascii readable characters (see https://www.rapidtables.com/code/text/ascii-table.html)
+				// the code 33 to 126 are in the range of ascii readable characters (see https://www.rapidtables.com/code/text/ascii-table.html)
 				span[i] = Unsafe.As<Int32, Char>(ref value);
 			}
 		});
@@ -686,7 +689,7 @@ public static partial class Math
 		{
 			value = Random() * high;
 		} while (Abs(value - high) < float.Epsilon);
-		
+
 		return value;
 	}
 
@@ -701,18 +704,6 @@ public static partial class Math
 	}
 
 	/// <summary>
-	/// Sets the seed value for random()
-	/// </summary>
-	/// <remarks>
-	/// By default, random() produces different results each time the program is run. Set the seed parameter to a constant to return the same pseudo-random numbers each time the software is run
-	/// </remarks>
-	/// <param name="seed"></param>
-	public static void RandomSeed(int seed)
-	{
-		Rng = new Random(seed);
-	}
-
-	/// <summary>
 	/// Returns a random item from the list
 	/// </summary>
 	/// <param name="enumerable">the array to pick a random item from</param>
@@ -723,7 +714,7 @@ public static partial class Math
 
 		// https://stackoverflow.com/a/648240/6448711
 
-		if (enumerable is IList<T> list)
+		if (enumerable is IList<T> { Count: > 0 } list)
 		{
 			return list[RandomInt(list.Count)];
 		}
@@ -742,6 +733,18 @@ public static partial class Math
 		}
 
 		return current;
+	}
+
+	/// <summary>
+	/// Sets the seed value for random()
+	/// </summary>
+	/// <remarks>
+	/// By default, random() produces different results each time the program is run. Set the seed parameter to a constant to return the same pseudo-random numbers each time the software is run
+	/// </remarks>
+	/// <param name="seed"></param>
+	public static void RandomSeed(int seed)
+	{
+		Rng = new Random(seed);
 	}
 
 	/// <summary> Return a random int number. </summary>
@@ -799,13 +802,13 @@ public static partial class Math
 	{
 		return (short)Rng.Next(0, upperBound);
 	}
-	
+
 	public static short RandomShort(short lowerBound, short upperBound)
 	{
 		return (short)Rng.Next(lowerBound, upperBound);
 	}
 
-	/// <summary> Returns a random number fitting a Gaussian, or normal, distribution. There is theoretically no minimum or maximum value that randomGaussian() might return.  </summary>
+	/// <summary> Returns a random number fitting a Gaussian, or normal, distribution. There is theoretically no minimum or maximum value that randomGaussian() might return. </summary>
 	/// <param name="mean"> The mean. </param>
 	/// <param name="sd"> The standard deviation. </param>
 	/// <returns> A float. </returns>
@@ -946,6 +949,25 @@ public static partial class Math
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(ReadOnlySpan<T> numbers) where T : struct, INumber<T>, IMinMaxValue<T>
+	{
+		return Min(ref GetReference(numbers), numbers.Length);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Min<T>(T[] numbers) where T : struct, INumber<T>, IMinMaxValue<T>
+	{
+		ref var reference = ref GetReference(numbers);
+
+		return numbers.Length switch
+		{
+			1 => reference,
+			2 => Min(reference, Unsafe.Add(ref reference, 1)),
+			_ => Min(ref GetReference(numbers), numbers.Length),
+		};
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Max<T>(T num1, T num2) where T : INumber<T>
 	{
 		return T.Max(num1, num2);
@@ -957,9 +979,21 @@ public static partial class Math
 		return Max(Max(num1, num2), num3);
 	}
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(ReadOnlySpan<T> numbers) where T : struct, INumber<T>, IMinMaxValue<T>
+	{
+		return Max(ref GetReference(numbers), numbers.Length);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Max<T>(T[] numbers) where T : struct, INumber<T>, IMinMaxValue<T>
+	{
+		return Max(ref GetReference(numbers), numbers.Length);
+	}
+
 	/// <summary> Returns the fibonacci of the given number </summary>
 	/// <param name="number"> the number to get the fibonacci of </param>
-	/// <returns> fibonacci of the given number  </returns>
+	/// <returns> fibonacci of the given number </returns>
 	public static T Fibonacci<T>(T number) where T : IBinaryInteger<T>
 	{
 		var a = T.Zero;
@@ -982,11 +1016,16 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static IEnumerable<T> Shuffle<T>(IEnumerable<T> list)
 	{
-		var array = list.ToArray(); // keeps track of count items shuffled
+		ArgumentNullException.ThrowIfNull(list);
 
-		Shuffle(array);
+		var array = list!.ToArray(); // keeps track of count items shuffled
 
-		return array;
+		for (var i = 0; i < array.Length; i++)
+		{
+			var j = RandomInt(i, array.Length);
+
+			yield return array[j];
+		}
 	}
 
 	/// <summary>
@@ -1027,10 +1066,12 @@ public static partial class Math
 	/// <param name="values">the sorted list to search though</param>
 	/// <param name="value">the value to search for</param>
 	/// <returns>the index of <paramref name="value"/></returns>
-	public static int BinarySearch<T>(IList<T> values, T value) where T : IEqualityOperators<T, T>, IComparisonOperators<T, T>
+	public static int BinarySearch<T>(IList<T> values, T value) where T : IEqualityOperators<T, T, bool>, IComparisonOperators<T, T, bool>
 	{
+		ArgumentNullException.ThrowIfNull(values);
+
 		var lo = 0;
-		var hi = values.Count - 1;
+		var hi = values!.Count - 1;
 
 		while (lo <= hi)
 		{
@@ -1060,7 +1101,7 @@ public static partial class Math
 	/// <param name="values">the sorted list to search though</param>
 	/// <param name="value">the value to search for</param>
 	/// <returns>the index of <paramref name="value"/></returns>
-	public static int BinarySearch<T>(ReadOnlySpan<T> values, T value) where T : IEqualityOperators<T, T>, IComparisonOperators<T, T>
+	public static int BinarySearch<T>(ReadOnlySpan<T> values, T value) where T : IComparable<T>
 	{
 		return MemoryExtensions.BinarySearch(values, value);
 	}
@@ -1073,10 +1114,7 @@ public static partial class Math
 	/// <returns>the index of <paramref name="value"/></returns>
 	public static int InterpolationSearch<T>(IList<T> values, T value) where T : struct, INumber<T>, IConvertible
 	{
-		if (values == null)
-		{
-			throw new ArgumentNullException(nameof(values));
-		}
+		ArgumentNullException.ThrowIfNull(values);
 
 		var lo = 0;
 		var hi = values.Count - 1;
@@ -1277,9 +1315,9 @@ public static partial class Math
 	/// <param name="value">the value to convert</param>
 	/// <returns>the converted value</returns>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static string? String<T>(T value) where T : notnull
+	public static string String<T>(T? value)
 	{
-		return value.ToString();
+		return value?.ToString() ?? System.String.Empty;
 	}
 
 	/// <summary>
@@ -1335,7 +1373,7 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool TryParse<T>(ReadOnlySpan<char> text, out T result) where T : ISpanParsable<T>
 	{
-		return T.TryParse(text, CultureInfo.InvariantCulture, out result);
+		return T.TryParse(text, CultureInfo.CurrentCulture, out result);
 	}
 
 	/// <summary>
@@ -1346,7 +1384,7 @@ public static partial class Math
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Parse<T>(ReadOnlySpan<char> text) where T : ISpanParsable<T>
 	{
-		return T.Parse(text, CultureInfo.InvariantCulture);
+		return T.Parse(text, CultureInfo.CurrentCulture);
 	}
 
 	/// <summary>
@@ -1356,6 +1394,17 @@ public static partial class Math
 	/// <param name="progress">the progress between 0 and 1</param>
 	/// <returns>the estimated time</returns>
 	public static TimeSpan EstimateTime(TimeSpan elapsedTime, float progress)
+	{
+		return ReciprocalEstimate(progress) * elapsedTime - elapsedTime;
+	}
+
+	/// <summary>
+	/// Tries the estimate the time to finish the progress
+	/// </summary>
+	/// <param name="elapsedTime">the time that has elapsed</param>
+	/// <param name="progress">the progress between 0 and 1</param>
+	/// <returns>the estimated time</returns>
+	public static TimeSpan EstimateTime(TimeSpan elapsedTime, double progress)
 	{
 		return ReciprocalEstimate(progress) * elapsedTime - elapsedTime;
 	}

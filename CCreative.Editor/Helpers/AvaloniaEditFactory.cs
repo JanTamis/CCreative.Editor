@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -20,6 +21,7 @@ using Microsoft.CodeAnalysis;
 
 namespace CCreative.Editor.Helpers;
 
+[RequiresPreviewFeatures]
 public static class TextEditorFactory
 {
 	public static Card tooltip;
@@ -238,4 +240,3 @@ public static class TextEditorFactory
 		}
 	}
 }
-

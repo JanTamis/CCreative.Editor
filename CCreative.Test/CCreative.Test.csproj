@@ -10,7 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CCreative\CCreative.csproj" />
+        <ProjectReference Include="..\CCreative\CCreative.csproj"/>
     </ItemGroup>
 
 </Project>

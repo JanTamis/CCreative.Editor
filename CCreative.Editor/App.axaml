@@ -22,6 +22,8 @@
 		<StyleInclude Source="avares://DialogHost.Avalonia/Styles.xaml" />
 		<StyleInclude Source="avares://Material.DataGrid/DataGrid.xaml" />
 		<StyleInclude Source="avares://AvaloniaEdit/AvaloniaEdit.xaml" />
+		<StyleInclude Source="avares://NP.Avalonia.Visuals/Themes/CustomWindowStyles.axaml" />
+		<StyleInclude Source="avares://NP.Avalonia.UniDock/Themes/DockStyles.axaml" />
 
 		<Style Selector="dialogHost|DialogHost Border#PART_ContentBackground">
 			<Setter Property="Background" Value="{DynamicResource MaterialDesignCardBackground}" />

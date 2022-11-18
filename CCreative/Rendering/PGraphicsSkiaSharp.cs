@@ -291,7 +291,7 @@ public class PGraphicsSkiaSharp : PGraphics
 
 	public Color Background(Color color)
 	{
-		surface.Canvas.Clear(new SKColor((uint)color.GetHashCode()));
+		surface.Canvas.Clear(Unsafe.As<Color, SKColor>(ref color));
 
 		return color;
 	}

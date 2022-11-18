@@ -1,46 +1,78 @@
-﻿using System.Numerics;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using System.Runtime.Versioning;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Order;
+using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
-using Vector = CCreative.Vector;
+using CCreative;
+using Microsoft.Toolkit.HighPerformance.Helpers;
+using Math = CCreative.Math;
 
 [assembly: RequiresPreviewFeatures]
+
 public static class Program
 {
 	public static void Main()
 	{
 		BenchmarkRunner.Run<SimdTest>();
-		//Vector.Add(new Vector(1, 2, 3), new Vector(4, 5, 6), out var result);
-		
-		//Console.WriteLine(result);
 	}
 }
 
-// [MemoryDiagnoser]
-// [DisassemblyDiagnoser(exportHtml: true, printSource: true)]
-// [ShortRunJob]
-[Orderer(SummaryOrderPolicy.FastestToSlowest)]
+[MemoryDiagnoser]
+[Config(typeof(MyConfig))]
 public class SimdTest
 {
-	private Vector3 v31 = new Vector3(1, 2, 3);
-	private Vector3 v32 = new Vector3(4, 5, 6);
+	private class MyConfig : ManualConfig
+	{
+		public MyConfig()
+		{
+			SummaryStyle = BenchmarkDotNet.Reports.SummaryStyle.Default.WithRatioStyle(RatioStyle.Trend);
+		}
+	}
 
-	private Vector v1 = new Vector(1, 2, 3);
-	private Vector v2 = new Vector(4, 5, 6);
+	private VectorTemp vTemp = new(1, 2, 3);
+	private VectorTemp vTemp2 = new(4, 5, 6);
 
-	private Vector result;
-	private Vector3 result3;
+	private Vector vCcreative = new(1, 2, 3);
+	private Vector vCcreative2 = new(4, 5, 6);
+
+	[GlobalSetup]
+	public void Initialize()
+	{
+
+	}
 
 	[Benchmark]
-	public void CCreative()
+	public Vector CCreative()
 	{
-		Vector.Add(v1, v2, out result);
+		return vCcreative + vCcreative2;
 	}
 
 	[Benchmark(Baseline = true)]
-	public void Microsoft()
+	public VectorTemp Base()
 	{
-		result3 = v31 + v32;
+		var result = Vector128.Add(
+			Unsafe.As<VectorTemp, Vector128<float>>(ref Unsafe.AsRef(in vTemp)),
+			Unsafe.As<VectorTemp, Vector128<float>>(ref Unsafe.AsRef(in vTemp2)));
+
+		return Unsafe.As<Vector128<float>, VectorTemp>(ref result);
+	}
+}
+
+[SkipLocalsInit]
+[StructLayout(LayoutKind.Auto, Size = 12)]
+public readonly struct VectorTemp
+{
+	public readonly float X;
+	public readonly float Y;
+	public readonly float Z;
+
+	public VectorTemp(float x, float y, float z)
+	{
+		X = x;
+		Y = y;
+		Z = z;
 	}
 }

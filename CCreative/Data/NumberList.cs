@@ -39,7 +39,7 @@ public class NumberList<T> : List<T> where T : unmanaged, INumber<T>, IMinMaxVal
 		for (var n = Count; n > 1; n--)
 		{
 			var k = rng.Next(n + 1);
-			
+
 			(this[k], this[n]) = (this[n], this[k]);
 		}
 	}

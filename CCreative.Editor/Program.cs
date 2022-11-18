@@ -4,6 +4,7 @@ using Avalonia.ReactiveUI;
 
 namespace CCreative.Editor
 {
+	[RequiresPreviewFeatures]
 	class Program
 	{
 		// Initialization code. Don't use any Avalonia, third-party APIs or any

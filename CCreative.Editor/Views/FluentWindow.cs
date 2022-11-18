@@ -18,9 +18,9 @@ namespace CCreative.Editor.Views
 				ExtendClientAreaToDecorationsHint = true;
 				ExtendClientAreaTitleBarHeightHint = -1;
 			}
-			
+
 			SystemDecorations = SystemDecorations.Full;
-			TransparencyLevelHint = WindowTransparencyLevel.AcrylicBlur; 
+			TransparencyLevelHint = WindowTransparencyLevel.AcrylicBlur;
 
 			if (ActualTransparencyLevel != WindowTransparencyLevel.AcrylicBlur)
 			{
